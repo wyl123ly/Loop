@@ -25,7 +25,7 @@ void main() {
     expect(AppVersion.compare('0.3.0', 'v0.3.0'), 0);
     expect(AppVersion.compare('0.2.9', '0.3.0'), -1);
     expect(AppVersion.compare('1.0.0-beta', '1.0.0'), -1);
-    expect(AppVersion.isNewer('0.3.1'), isTrue);
+    expect(AppVersion.isNewer('0.3.1', '0.3.0'), isTrue);
   });
 
   test('Release 解析固定附件', () {
