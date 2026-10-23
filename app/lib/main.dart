@@ -7,6 +7,7 @@ import 'backend/job_scheduler.dart';
 import 'backend/start.dart';
 import 'boot_prefs.dart';
 import 'desktop/window_controls.dart';
+import 'diagnostics/frame_log.dart';
 import 'desktop/tray_export.dart';
 import 'screens/agent_screen.dart';
 import 'screens/chat_screen.dart';
@@ -26,6 +27,7 @@ import 'widgets/window_resize_handles.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  installFrameLogger();
   final bootTheme = loadBootTheme();
   final override = themeOverride();
   appState.themeMode = override ?? bootTheme;
@@ -173,6 +175,26 @@ class Shell extends StatefulWidget {
   State<Shell> createState() => _ShellState();
 }
 
+class _ResponsiveSidebar extends StatelessWidget {
+  const _ResponsiveSidebar({required this.index, required this.onSelect});
+
+  final int index;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final autoCompact = MediaQuery.sizeOf(context).width < 1080;
+    final manualCollapsed = appState.settings?.sidebarCollapsed ?? false;
+    return Sidebar(
+      index: index,
+      onSelect: onSelect,
+      compact: autoCompact || manualCollapsed,
+      canToggle: !autoCompact,
+      onToggleCollapse: () => appState.setSidebarCollapsed(!manualCollapsed),
+    );
+  }
+}
+
 class _ShellState extends State<Shell> {
   int _index = _initialTab();
 
@@ -217,9 +239,6 @@ class _ShellState extends State<Shell> {
       SettingsScreen(active: _index == 5),
     ];
 
-    final autoCompact = MediaQuery.sizeOf(context).width < 1080;
-    final manualCollapsed = appState.settings?.sidebarCollapsed ?? false;
-    final compact = autoCompact || manualCollapsed;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ValueListenableBuilder<bool>(
@@ -248,14 +267,7 @@ class _ShellState extends State<Shell> {
                     Expanded(
                       child: Row(
                         children: [
-                          Sidebar(
-                            index: _index,
-                            onSelect: _select,
-                            compact: compact,
-                            canToggle: !autoCompact,
-                            onToggleCollapse: () =>
-                                appState.setSidebarCollapsed(!manualCollapsed),
-                          ),
+                          _ResponsiveSidebar(index: _index, onSelect: _select),
                           Expanded(child: IndexedStack(index: _index, children: screens)),
                         ],
                       ),

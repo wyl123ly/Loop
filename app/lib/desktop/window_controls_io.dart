@@ -15,6 +15,8 @@ class WindowController with WindowListener {
 
   final ValueNotifier<bool> maximized = ValueNotifier<bool>(false);
   final ValueNotifier<bool> readyNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> resizing = ValueNotifier<bool>(false);
+  Timer? _resizeTimer;
 
   bool get ready => readyNotifier.value;
   bool trayActive = false;
@@ -71,15 +73,36 @@ class WindowController with WindowListener {
   }
 
   @override
+  void onWindowResize() {
+    resizing.value = true;
+    _resizeTimer?.cancel();
+    _resizeTimer = Timer(const Duration(milliseconds: 220), () {
+      resizing.value = false;
+    });
+  }
+
+  @override
+  void onWindowResized() {
+    _resizeTimer?.cancel();
+    resizing.value = false;
+  }
+
+  @override
   void onWindowClose() {
     if (trayActive) unawaited(windowManager.hide());
   }
 
   @override
-  void onWindowMaximize() => maximized.value = true;
+  void onWindowMaximize() {
+    maximized.value = true;
+    resizing.value = false;
+  }
 
   @override
-  void onWindowUnmaximize() => maximized.value = false;
+  void onWindowUnmaximize() {
+    maximized.value = false;
+    resizing.value = false;
+  }
 
   Future<void> startResizing(LoopResizeEdge edge) async {
     if (!ready) return;

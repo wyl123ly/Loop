@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../desktop/window_controls.dart';
 import '../theme.dart';
 
 /// 背景：暖色渐变 + 高斯模糊光晕，给玻璃提供可折射的底色。
@@ -26,22 +27,28 @@ class AuroraBackground extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(top: -160, left: -120, child: _orb(480, p.orb1, 110)),
-        Positioned(top: 80, right: -140, child: _orb(440, p.orb2, 120)),
-        Positioned(bottom: -180, left: 260, child: _orb(520, p.orb3, 130)),
-        Positioned(bottom: 120, right: 180, child: _orb(260, p.orb4, 90)),
+        Positioned(top: -160, left: -120, child: _orb(480, p.orb1)),
+        Positioned(top: 80, right: -140, child: _orb(440, p.orb2)),
+        Positioned(bottom: -180, left: 260, child: _orb(520, p.orb3)),
+        Positioned(bottom: 120, right: 180, child: _orb(260, p.orb4)),
         Positioned.fill(child: child),
       ],
     );
   }
 
-  Widget _orb(double size, Color color, double blur) {
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  Widget _orb(double size, Color color) {
+    // 用径向渐变代替高斯模糊，省掉全屏级的 ImageFiltered 图层。
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [color, color.withValues(alpha: 0)],
+            stops: const [0, 1],
+          ),
+        ),
       ),
     );
   }
@@ -74,29 +81,41 @@ class GlassPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal;
     final borderRadius = BorderRadius.circular(radius);
-    return Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        boxShadow: shadow
-            ? [BoxShadow(color: p.shadow, blurRadius: 30, offset: const Offset(0, 14))]
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: p.glassFill.withValues(alpha: p.glassFill.a * (opacity ?? 1.0)),
-              borderRadius: borderRadius,
-              border: Border.all(color: p.glassBorder.withValues(alpha: p.glassBorder.a * (borderOpacity ?? 1.0))),
+    return ValueListenableBuilder<bool>(
+      valueListenable: WindowController.instance.resizing,
+      builder: (context, resizing, _) {
+        final body = Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: resizing
+                ? p.cardSolid
+                : p.glassFill.withValues(alpha: p.glassFill.a * (opacity ?? 1.0)),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: p.glassBorder.withValues(alpha: p.glassBorder.a * (borderOpacity ?? 1.0)),
             ),
-            child: child,
           ),
-        ),
-      ),
+          child: child,
+        );
+        return Container(
+          margin: margin,
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            boxShadow: shadow && !resizing
+                ? [BoxShadow(color: p.shadow, blurRadius: 30, offset: const Offset(0, 14))]
+                : null,
+          ),
+          child: resizing
+              ? ClipRRect(borderRadius: borderRadius, child: body)
+              : ClipRRect(
+                  borderRadius: borderRadius,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                    child: body,
+                  ),
+                ),
+        );
+      },
     );
   }
 }

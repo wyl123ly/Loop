@@ -10,6 +10,7 @@ class WindowController {
 
   final ValueNotifier<bool> maximized = ValueNotifier<bool>(false);
   final ValueNotifier<bool> readyNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> resizing = ValueNotifier<bool>(false);
 
   bool get ready => readyNotifier.value;
 
