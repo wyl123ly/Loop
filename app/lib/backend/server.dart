@@ -287,6 +287,7 @@ class Backend {
       item['steps'] = Db.parseList(item['steps']);
       item['refs'] = Db.parseList(item['refs']);
       item['plan'] = Db.parseList(item['plan']);
+      item['attachments'] = Db.parseList(item['attachments']);
     }
     return _json(request, 200, items);
   }
@@ -317,12 +318,37 @@ class Backend {
     final conversation = Db.one('SELECT * FROM conversations WHERE id=?', [conversationId]);
     if (conversation == null) return _json(request, 404, {'detail': '会话不存在'});
 
+    final attachmentMeta = <Map<String, Object?>>[];
+    for (final attachment in attachments) {
+      if (attachment.startsWith('img_')) {
+        final id = int.tryParse(attachment.substring(4));
+        final row = id == null ? null : Db.one('SELECT name FROM uploads WHERE id=?', [id]);
+        if (row != null) {
+          attachmentMeta.add({
+            'id': attachment,
+            'name': (row['name'] ?? '').toString(),
+            'is_image': true,
+          });
+        }
+      } else if (attachment.startsWith('mat_')) {
+        final id = int.tryParse(attachment.substring(4));
+        final row = id == null ? null : Db.one('SELECT name FROM materials WHERE id=?', [id]);
+        if (row != null) {
+          attachmentMeta.add({
+            'id': attachment,
+            'name': (row['name'] ?? '').toString(),
+            'is_image': false,
+          });
+        }
+      }
+    }
     final userMessageId = Db.insert('messages', {
       'conversation_id': conversationId,
       'role': 'user',
       'content': text,
       'steps': '[]',
       'refs': '[]',
+      'attachments': jsonEncode(attachmentMeta),
       'created_at': Db.nowIso(),
     });
     if ((conversation['title'] ?? '') == '' || conversation['title'] == '新对话') {

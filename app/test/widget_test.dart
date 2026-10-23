@@ -17,6 +17,10 @@ void main() {
       'refs': [
         {'name': '线代讲义.pdf', 'page': 12}
       ],
+      'attachments': [
+        {'id': 'img_7', 'name': '截图-1.png', 'is_image': true},
+        {'id': 'mat_3', 'name': '讲义.pdf', 'is_image': false},
+      ],
       'tokens_in': 100,
       'tokens_out': 50,
     });
@@ -24,6 +28,9 @@ void main() {
     expect(message.content, contains('特征值'));
     expect(message.steps.single.label, '检索资料');
     expect(message.refs.single.page, 12);
+    expect(message.attachments.length, 2);
+    expect(message.attachments.first.isImage, isTrue);
+    expect(message.attachments.last.name, '讲义.pdf');
   });
 
   test('ToolStep label 映射', () {

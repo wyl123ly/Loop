@@ -11,6 +11,7 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets/agent_plan_card.dart';
 import '../widgets/glass.dart';
+import '../widgets/image_preview.dart';
 import '../widgets/markdown_text.dart';
 import 'screenshot_overlay.dart';
 
@@ -268,7 +269,14 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty && _attachments.isEmpty) return;
 
-    final userMessage = Message(role: 'user', content: text.isEmpty ? '（见附件）' : text);
+    final userMessage = Message(
+      role: 'user',
+      content: text.isEmpty ? '（见附件）' : text,
+      attachments: [
+        for (final item in _attachments)
+          AttachmentItem(id: item.id, name: item.name, isImage: item.isImage),
+      ],
+    );
     final assistant = Message(role: 'assistant');
     final attachmentIds = _attachments.map((item) => item.id).toList();
     setState(() {
@@ -744,6 +752,160 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _attachmentTile(_Attachment item) {
+    if (!item.isImage) {
+      return Container(
+        padding: const EdgeInsets.only(left: 8, right: 2),
+        decoration: BoxDecoration(
+          color: pal.chip,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: pal.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.description_outlined, size: 14, color: pal.muted),
+            const SizedBox(width: 5),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: Text(
+                item.name,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11.5, color: pal.ink),
+              ),
+            ),
+            IconButton(
+              onPressed: () => setState(() => _attachments.remove(item)),
+              icon: const Icon(Icons.close_rounded, size: 13),
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+              padding: EdgeInsets.zero,
+              color: pal.muted,
+            ),
+          ],
+        ),
+      );
+    }
+    final url = appState.api.imageUrl(item.id);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Tooltip(
+          message: item.name,
+          child: GestureDetector(
+            onTap: () => ImagePreview.show(context, url, title: item.name),
+            child: Container(
+              width: 66,
+              height: 66,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: pal.border),
+                color: pal.chip,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) => Icon(
+                    Icons.broken_image_outlined,
+                    size: 20,
+                    color: pal.faint,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: Material(
+            color: pal.toastBg,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => setState(() => _attachments.remove(item)),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: Icon(Icons.close_rounded, size: 12, color: pal.toastFg),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _sentImages(List<AttachmentItem> attachments) {
+    final images = attachments.where((item) => item.isImage).toList();
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in images)
+          GestureDetector(
+            onTap: () => ImagePreview.show(
+              context,
+              appState.api.imageUrl(item.id),
+              title: item.name,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                appState.api.imageUrl(item.id),
+                width: 138,
+                height: 104,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stack) => Container(
+                  width: 138,
+                  height: 104,
+                  color: Colors.white.withValues(alpha: 0.14),
+                  child: const Icon(Icons.broken_image_outlined, color: Colors.white70),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _sentFiles(List<AttachmentItem> attachments) {
+    final files = attachments.where((item) => !item.isImage).toList();
+    return Wrap(
+      alignment: WrapAlignment.end,
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final item in files)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.description_outlined, size: 13, color: Colors.white70),
+                const SizedBox(width: 5),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Text(
+                    item.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11.5, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   Widget _messageView(BuildContext context, Message message) {
     if (message.isUser) {
       return Align(
@@ -761,9 +923,26 @@ class _ChatScreenState extends State<ChatScreen> {
               bottomRight: Radius.circular(14),
             ),
           ),
-          child: SelectableText(
-            message.content,
-            style: const TextStyle(fontSize: 14.5, height: 1.6, color: Colors.white),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (message.attachments.any((item) => item.isImage)) ...[
+                _sentImages(message.attachments),
+                const SizedBox(height: 8),
+              ],
+              if (message.attachments.any((item) => !item.isImage)) ...[
+                _sentFiles(message.attachments),
+                const SizedBox(height: 8),
+              ],
+              if (message.content.isNotEmpty &&
+                  !(message.content == '（见附件）' &&
+                      message.attachments.isNotEmpty))
+                SelectableText(
+                  message.content,
+                  style: const TextStyle(fontSize: 14.5, height: 1.6, color: Colors.white),
+                ),
+            ],
           ),
         ),
       );
@@ -936,42 +1115,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      for (final item in _attachments)
-                        Container(
-                          padding: const EdgeInsets.only(left: 8, right: 2),
-                          decoration: BoxDecoration(
-                            color: pal.chip,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: pal.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                item.isImage ? Icons.image_outlined : Icons.description_outlined,
-                                size: 14,
-                                color: pal.muted,
-                              ),
-                              SizedBox(width: 5),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 220),
-                                child: Text(
-                                  item.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 11.5, color: pal.ink),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () => setState(() => _attachments.remove(item)),
-                                icon: const Icon(Icons.close_rounded, size: 13),
-                                visualDensity: VisualDensity.compact,
-                                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                                padding: EdgeInsets.zero,
-                                color: pal.muted,
-                              ),
-                            ],
-                          ),
-                        ),
+                      for (final item in _attachments) _attachmentTile(item),
                     ],
                   ),
                 ),

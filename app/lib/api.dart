@@ -339,6 +339,13 @@ class LoopApi {
     }
   }
 
+  String imageUrl(String attachmentId) {
+    final numeric = attachmentId.startsWith('img_')
+        ? attachmentId.substring(4)
+        : attachmentId;
+    return '$baseUrl/api/uploads/$numeric';
+  }
+
   Future<Map<String, dynamic>> upload(Uint8List bytes, String filename) async {
     http.Response response;
     try {

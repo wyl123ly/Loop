@@ -109,6 +109,20 @@ class PlanItem {
   Map<String, dynamic> toJson() => {'id': id, 'title': title, 'status': status};
 }
 
+class AttachmentItem {
+  const AttachmentItem({required this.id, required this.name, required this.isImage});
+
+  final String id;
+  final String name;
+  final bool isImage;
+
+  factory AttachmentItem.fromJson(Map<String, dynamic> json) => AttachmentItem(
+        id: (json['id'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        isImage: json['is_image'] == true,
+      );
+}
+
 class Message {
   int? id;
   final String role;
@@ -116,6 +130,7 @@ class Message {
   List<ToolStep> steps;
   List<RefItem> refs;
   List<PlanItem> plan;
+  List<AttachmentItem> attachments;
   int tokensIn;
   int tokensOut;
   double cost;
@@ -127,12 +142,14 @@ class Message {
     List<ToolStep>? steps,
     List<RefItem>? refs,
     List<PlanItem>? plan,
+    List<AttachmentItem>? attachments,
     this.tokensIn = 0,
     this.tokensOut = 0,
     this.cost = 0,
   })  : steps = steps ?? [],
         refs = refs ?? [],
-        plan = plan ?? [];
+        plan = plan ?? [],
+        attachments = attachments ?? [];
 
   bool get isUser => role == 'user';
 
@@ -145,6 +162,10 @@ class Message {
         .whereType<Map>()
         .map((e) => PlanItem.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+    final attachments = (json['attachments'] as List? ?? [])
+        .whereType<Map>()
+        .map((e) => AttachmentItem.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
     final refs = (json['refs'] as List? ?? [])
         .whereType<Map>()
         .map((e) => RefItem.fromJson(Map<String, dynamic>.from(e)))
@@ -156,6 +177,7 @@ class Message {
       steps: steps,
       refs: refs,
       plan: plan,
+      attachments: attachments,
       tokensIn: (json['tokens_in'] ?? 0) as int,
       tokensOut: (json['tokens_out'] ?? 0) as int,
     );

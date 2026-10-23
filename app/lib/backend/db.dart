@@ -34,6 +34,7 @@ class Db {
         content TEXT NOT NULL DEFAULT '',
         steps TEXT DEFAULT '[]',
         refs TEXT DEFAULT '[]',
+        attachments TEXT DEFAULT '[]',
         model TEXT DEFAULT '',
         tokens_in INTEGER DEFAULT 0,
         tokens_out INTEGER DEFAULT 0,
@@ -157,6 +158,9 @@ class Db {
     ''');
     try {
       db.execute("ALTER TABLE messages ADD COLUMN plan TEXT DEFAULT '[]'");
+    } catch (_) {}
+    try {
+      db.execute("ALTER TABLE messages ADD COLUMN attachments TEXT DEFAULT '[]'");
     } catch (_) {}
     try {
       db.execute("ALTER TABLE mcp_servers ADD COLUMN working_directory TEXT DEFAULT ''");
