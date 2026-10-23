@@ -188,6 +188,7 @@ class Db {
     'reason_model': 'deepseek-v4-pro',
     'theme': 'system',
     'auto_check_updates': 'true',
+    'sidebar_collapsed': 'false',
     'custom_modes': '[]',
     'workspace_path': '',
     'agent_shell': 'true',

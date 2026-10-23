@@ -82,6 +82,7 @@ class Backend {
             'theme': Db.setting('theme', 'system'),
             'custom_modes': Db.setting('custom_modes', '[]'),
             'auto_check_updates': Db.setting('auto_check_updates', 'true') == 'true',
+            'sidebar_collapsed': Db.setting('sidebar_collapsed', 'false') == 'true',
           });
         }
         if (method == 'PUT') {
@@ -97,6 +98,9 @@ class Backend {
           final theme = body['theme']?.toString();
           if (theme == 'system' || theme == 'light' || theme == 'dark') {
             Db.setSetting('theme', theme!);
+          }
+          if (body['sidebar_collapsed'] is bool) {
+            Db.setSetting('sidebar_collapsed', body['sidebar_collapsed'] == true ? 'true' : 'false');
           }
           if (body['auto_check_updates'] is bool) {
             Db.setSetting('auto_check_updates', body['auto_check_updates'] == true ? 'true' : 'false');

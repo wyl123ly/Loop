@@ -111,6 +111,25 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> setSidebarCollapsed(bool value) async {
+    final current = settings;
+    settings = SettingsData(
+      apiKeyMasked: current?.apiKeyMasked ?? '',
+      hasKey: current?.hasKey ?? false,
+      baseUrl: current?.baseUrl ?? '',
+      model: current?.model ?? 'deepseek-flash',
+      reasonModel: current?.reasonModel ?? 'deepseek-v4-pro',
+      theme: current?.theme ?? 'dark',
+      customModes: current?.customModes ?? '[]',
+      autoCheckUpdates: current?.autoCheckUpdates ?? true,
+      sidebarCollapsed: value,
+    );
+    notifyListeners();
+    try {
+      await api.saveSettings(sidebarCollapsed: value);
+    } catch (_) {}
+  }
+
   Future<void> setAutoCheckUpdates(bool value) async {
     settings = SettingsData(
       apiKeyMasked: settings?.apiKeyMasked ?? '',
@@ -121,6 +140,7 @@ class AppState extends ChangeNotifier {
       theme: settings?.theme ?? 'dark',
       customModes: settings?.customModes ?? '[]',
       autoCheckUpdates: value,
+      sidebarCollapsed: settings?.sidebarCollapsed ?? false,
     );
     notifyListeners();
     try {

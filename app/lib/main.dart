@@ -217,7 +217,9 @@ class _ShellState extends State<Shell> {
       SettingsScreen(active: _index == 5),
     ];
 
-    final compact = MediaQuery.sizeOf(context).width < 1080;
+    final autoCompact = MediaQuery.sizeOf(context).width < 1080;
+    final manualCollapsed = appState.settings?.sidebarCollapsed ?? false;
+    final compact = autoCompact || manualCollapsed;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ValueListenableBuilder<bool>(
@@ -246,7 +248,14 @@ class _ShellState extends State<Shell> {
                     Expanded(
                       child: Row(
                         children: [
-                          Sidebar(index: _index, onSelect: _select, compact: compact),
+                          Sidebar(
+                            index: _index,
+                            onSelect: _select,
+                            compact: compact,
+                            canToggle: !autoCompact,
+                            onToggleCollapse: () =>
+                                appState.setSidebarCollapsed(!manualCollapsed),
+                          ),
                           Expanded(child: IndexedStack(index: _index, children: screens)),
                         ],
                       ),

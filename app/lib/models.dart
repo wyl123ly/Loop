@@ -312,6 +312,7 @@ class SettingsData {
   final String theme;
   final String customModes;
   final bool autoCheckUpdates;
+  final bool sidebarCollapsed;
 
   SettingsData({
     required this.apiKeyMasked,
@@ -322,6 +323,7 @@ class SettingsData {
     this.theme = 'system',
     this.customModes = '[]',
     this.autoCheckUpdates = true,
+    this.sidebarCollapsed = false,
   });
 
   factory SettingsData.fromJson(Map<String, dynamic> json) => SettingsData(
@@ -333,6 +335,7 @@ class SettingsData {
         theme: (json['theme'] ?? 'system') as String,
         customModes: (json['custom_modes'] ?? '[]') as String,
         autoCheckUpdates: (json['auto_check_updates'] ?? true) as bool,
+        sidebarCollapsed: (json['sidebar_collapsed'] ?? false) as bool,
       );
 }
 

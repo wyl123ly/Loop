@@ -6,11 +6,20 @@ import '../theme.dart';
 import 'glass.dart';
 
 class Sidebar extends StatelessWidget {
-  const Sidebar({super.key, required this.index, required this.onSelect, this.compact = false});
+  const Sidebar({
+    super.key,
+    required this.index,
+    required this.onSelect,
+    this.compact = false,
+    this.canToggle = false,
+    this.onToggleCollapse,
+  });
 
   final int index;
   final ValueChanged<int> onSelect;
   final bool compact;
+  final bool canToggle;
+  final VoidCallback? onToggleCollapse;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +102,17 @@ class Sidebar extends StatelessWidget {
     if (compact) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Center(child: mark),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            mark,
+            if (canToggle)
+              SizedBox(
+                width: 20,
+                child: _collapseButton(expand: true),
+              ),
+          ],
+        ),
       );
     }
     return Padding(
@@ -102,17 +121,49 @@ class Sidebar extends StatelessWidget {
         children: [
           mark,
           const SizedBox(width: 11),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('回路',
-                  style: TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
-              Text('Loop · 学习工作台',
-                  style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('回路',
+                    style: TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
+                Text('Loop · 学习工作台',
+                    style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
+              ],
+            ),
           ),
+          if (canToggle) _collapseButton(expand: false),
         ],
+      ),
+    );
+  }
+
+  Widget _collapseButton({required bool expand}) {
+    return Tooltip(
+      message: expand ? '展开侧栏' : '收起侧栏',
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onToggleCollapse,
+          child: SizedBox(
+            width: 24,
+            height: 28,
+            child: Center(
+              child: Text(
+                expand ? '›' : '‹',
+                style: TextStyle(
+                  fontSize: 22,
+                  height: 1,
+                  fontWeight: FontWeight.w500,
+                  color: pal.muted,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
