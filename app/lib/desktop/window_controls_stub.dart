@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'window_resize_edge.dart';
+
 /// Web 端占位，保证同一套界面代码可以编译。
 class WindowController {
   WindowController._();
@@ -13,6 +15,7 @@ class WindowController {
 
   Future<void> init() async {}
   Future<void> startDragging() async {}
+  Future<void> startResizing(LoopResizeEdge edge) async {}
   Future<void> minimize() async {}
   Future<void> toggleMaximize() async {}
   Future<void> close() async {}

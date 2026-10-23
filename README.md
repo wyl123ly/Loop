@@ -1,6 +1,6 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.3.1**。
+Windows 桌面 AI 学习工作台，当前版本 **v0.3.2**。
 对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite，模型使用 DeepSeek。
 
 [下载最新版](https://github.com/wyl123ly/Loop/releases/latest)
@@ -12,6 +12,10 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.3.1**。
 | Agent | 自动更新 |
 |---|---|
 | ![agent](docs/screenshots/agent-page.png) | ![update](docs/screenshots/update-dialog-dark.png) |
+
+| 窄窗口 900×600 |
+|---|
+| ![compact](docs/screenshots/window-compact.png) |
 
 ## 当前版本功能
 
@@ -69,6 +73,12 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.3.1**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.3.2 · 2026-10-23
+- 修复无边框窗口无法拖拽调整大小的问题。
+- 窗口支持四边/四角拖拽缩放，最小 900×600。
+- 启动时按屏幕大小自适应并居中，避免窗口超出屏幕。
+- 窄窗口下侧栏自动收窄为图标栏，对话、资料、设置、Agent 页面均可正常使用。
 
 ### v0.3.1 · 2026-10-23
 - 首个公开 GitHub Release。

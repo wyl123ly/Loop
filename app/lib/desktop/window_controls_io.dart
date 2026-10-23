@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'dwm.dart';
+import 'window_resize_edge.dart';
 
 
 class WindowController with WindowListener {
@@ -21,11 +23,24 @@ class WindowController with WindowListener {
     try {
       await windowManager.ensureInitialized();
       await windowManager.setAsFrameless();
+      await windowManager.setResizable(true);
       await windowManager.setBackgroundColor(Colors.transparent);
-      // 先不启用透明背景，避免 Windows 合成缩放问题
-      await windowManager.setSize(const Size(1440, 900));
-      await windowManager.setMinimumSize(const Size(1120, 720));
-      await windowManager.setPosition(const Offset(24, 24));
+      await windowManager.setMinimumSize(const Size(900, 600));
+      var initialSize = const Size(1440, 900);
+      var initialPosition = const Offset(24, 24);
+      try {
+        final display = await screenRetriever.getPrimaryDisplay();
+        final screen = display.size;
+        final width = (screen.width - 80).clamp(900.0, 1440.0);
+        final height = (screen.height - 80).clamp(600.0, 900.0);
+        initialSize = Size(width, height);
+        initialPosition = Offset(
+          ((screen.width - width) / 2).clamp(0.0, double.infinity),
+          ((screen.height - height) / 2).clamp(0.0, double.infinity),
+        );
+      } catch (_) {}
+      await windowManager.setSize(initialSize);
+      await windowManager.setPosition(initialPosition);
       await windowManager.show();
       await windowManager.focus();
       windowManager.addListener(this);
@@ -65,6 +80,21 @@ class WindowController with WindowListener {
 
   @override
   void onWindowUnmaximize() => maximized.value = false;
+
+  Future<void> startResizing(LoopResizeEdge edge) async {
+    if (!ready) return;
+    final map = {
+      LoopResizeEdge.top: ResizeEdge.top,
+      LoopResizeEdge.topLeft: ResizeEdge.topLeft,
+      LoopResizeEdge.topRight: ResizeEdge.topRight,
+      LoopResizeEdge.left: ResizeEdge.left,
+      LoopResizeEdge.right: ResizeEdge.right,
+      LoopResizeEdge.bottom: ResizeEdge.bottom,
+      LoopResizeEdge.bottomLeft: ResizeEdge.bottomLeft,
+      LoopResizeEdge.bottomRight: ResizeEdge.bottomRight,
+    };
+    await windowManager.startResizing(map[edge]!);
+  }
 
   Future<void> startDragging() async {
     if (!ready) return;

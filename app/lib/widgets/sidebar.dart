@@ -6,74 +6,52 @@ import '../theme.dart';
 import 'glass.dart';
 
 class Sidebar extends StatelessWidget {
-  const Sidebar({super.key, required this.index, required this.onSelect});
+  const Sidebar({super.key, required this.index, required this.onSelect, this.compact = false});
 
   final int index;
   final ValueChanged<int> onSelect;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
-        return Container(
-          width: 250,
-          margin: const EdgeInsets.fromLTRB(14, 8, 0, 14),
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: compact ? 76 : 250,
+          margin: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, 0, 14),
           child: GlassPanel(
-            radius: 30,
+            radius: compact ? 24 : 30,
             blur: 26,
-            padding: const EdgeInsets.fromLTRB(12, 20, 12, 14),
+            padding: compact
+                ? const EdgeInsets.fromLTRB(8, 14, 8, 10)
+                : const EdgeInsets.fromLTRB(12, 20, 12, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          gradient: accentGradient,
-                          borderRadius: BorderRadius.circular(13),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x337B8CFF), blurRadius: 16, offset: Offset(0, 6)),
-                          ],
-                        ),
-                        child: const Icon(Icons.loop_rounded, color: Colors.white, size: 21),
-                      ),
-                      const SizedBox(width: 11),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('回路',
-                              style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
-                          Text('Loop · 学习工作台',
-                              style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                _brand(),
                 _newChatButton(),
-                const SizedBox(height: 16),
+                SizedBox(height: compact ? 10 : 16),
                 _navItem(0, Icons.chat_bubble_outline_rounded, '对话'),
                 _navItem(1, Icons.checklist_rounded, '今日'),
                 _navItem(2, Icons.menu_book_outlined, '笔记'),
                 _navItem(3, Icons.folder_outlined, '资料'),
                 _navItem(4, Icons.smart_toy_outlined, '代理'),
-                const SizedBox(height: 18),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(12, 0, 8, 6),
-                  child: Text('最近对话',
-                      style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.2,
-                          color: pal.faint,
-                          fontWeight: FontWeight.w600)),
-                ),
-                Expanded(child: _history()),
+                if (!compact) ...[
+                  const SizedBox(height: 18),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
+                    child: Text('最近对话',
+                        style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.2,
+                            color: pal.faint,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                  Expanded(child: _history()),
+                ] else
+                  const Spacer(),
                 const SizedBox(height: 6),
                 _navItem(5, Icons.settings_outlined, '设置'),
               ],
@@ -99,36 +77,81 @@ class Sidebar extends StatelessWidget {
     if (ok == true) await appState.deleteConversation(conversation.id);
   }
 
+  Widget _brand() {
+    final mark = Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        gradient: accentGradient,
+        borderRadius: BorderRadius.circular(13),
+        boxShadow: const [
+          BoxShadow(color: Color(0x337B8CFF), blurRadius: 16, offset: Offset(0, 6)),
+        ],
+      ),
+      child: const Icon(Icons.loop_rounded, color: Colors.white, size: 21),
+    );
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Center(child: mark),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
+      child: Row(
+        children: [
+          mark,
+          const SizedBox(width: 11),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('回路',
+                  style: TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
+              Text('Loop · 学习工作台',
+                  style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _newChatButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 4),
+      child: Tooltip(
+        message: compact ? '新对话' : '',
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            onSelect(0);
-            appState.newChat();
-          },
-          child: Ink(
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: accentGradient,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(color: Color(0x337B8CFF), blurRadius: 20, offset: Offset(0, 8)),
-              ],
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_rounded, size: 19, color: Colors.white),
-                SizedBox(width: 5),
-                Text('新对话',
-                    style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
-              ],
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              onSelect(0);
+              appState.newChat();
+            },
+            child: Ink(
+              height: compact ? 44 : 46,
+              decoration: BoxDecoration(
+                gradient: accentGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x337B8CFF), blurRadius: 20, offset: Offset(0, 8)),
+                ],
+              ),
+              child: compact
+                  ? const Icon(Icons.add_rounded, size: 21, color: Colors.white)
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_rounded, size: 19, color: Colors.white),
+                        SizedBox(width: 5),
+                        Text('新对话',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -138,6 +161,36 @@ class Sidebar extends StatelessWidget {
 
   Widget _navItem(int target, IconData icon, String label) {
     final selected = index == target;
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Tooltip(
+          message: label,
+          child: Material(
+            color: selected ? pal.chip : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => onSelect(target),
+              child: Container(
+                height: 38,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: selected ? pal.glassBorder : Colors.transparent,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: selected ? pal.accent : pal.muted,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
       child: Material(

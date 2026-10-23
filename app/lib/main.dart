@@ -22,6 +22,7 @@ import 'update/update_ui.dart';
 import 'widgets/glass.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/title_bar.dart';
+import 'widgets/window_resize_handles.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -216,6 +217,7 @@ class _ShellState extends State<Shell> {
       SettingsScreen(active: _index == 5),
     ];
 
+    final compact = MediaQuery.sizeOf(context).width < 1080;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: ValueListenableBuilder<bool>(
@@ -226,7 +228,7 @@ class _ShellState extends State<Shell> {
           final framed = WindowController.instance.ready;
           final radius = framed && !maximized ? 18.0 : 0.0;
           final borderRadius = BorderRadius.circular(radius);
-          return Container(
+          final content = Container(
             decoration: BoxDecoration(
               color: p.bgTop,
               borderRadius: borderRadius,
@@ -244,7 +246,7 @@ class _ShellState extends State<Shell> {
                     Expanded(
                       child: Row(
                         children: [
-                          Sidebar(index: _index, onSelect: _select),
+                          Sidebar(index: _index, onSelect: _select, compact: compact),
                           Expanded(child: IndexedStack(index: _index, children: screens)),
                         ],
                       ),
@@ -253,6 +255,14 @@ class _ShellState extends State<Shell> {
                 ),
               ),
             ),
+          );
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              content,
+              if (framed && !maximized)
+                const Positioned.fill(child: WindowResizeHandles()),
+            ],
           );
         },
       ),
