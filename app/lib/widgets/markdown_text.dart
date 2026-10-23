@@ -317,6 +317,11 @@ class MarkdownText extends StatelessWidget {
   }
 
   List<InlineSpan> _inline(BuildContext context, String text, TextStyle style) {
+    // 模型有时会把公式写成 \$...\$（Markdown 转义），这里把成对转义还原成公式。
+    text = text.replaceAllMapped(
+      RegExp(r'\\\$([^$\n]+?)\\\$'),
+      (match) => '\$${match[1]}\$',
+    );
     final spans = <InlineSpan>[];
     final pattern = RegExp(
       r'(\*\*.+?\*\*|__.+?__|`[^`\n]+`|\$[^$\n]+\$|(?<!\*)\*[^*\n]+\*(?!\*)|\[[^\]]+\]\([^)]+\))',
@@ -329,9 +334,11 @@ class MarkdownText extends StatelessWidget {
       }
       final token = match.group(0)!;
       if (token.startsWith('**') || token.startsWith('__')) {
+        final inner = token.substring(2, token.length - 2);
+        final boldStyle = style.copyWith(fontWeight: FontWeight.w700);
         spans.add(TextSpan(
-          text: token.substring(2, token.length - 2),
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: boldStyle,
+          children: _inline(context, inner, boldStyle),
         ));
       } else if (token.startsWith('`')) {
         spans.add(_inlineCode(token.substring(1, token.length - 1)));
@@ -352,14 +359,17 @@ class MarkdownText extends StatelessWidget {
         }
       } else if (token.startsWith('[')) {
         final label = token.substring(1, token.indexOf(']'));
+        final linkStyle = TextStyle(color: pal.accent, decoration: TextDecoration.underline);
         spans.add(TextSpan(
-          text: label,
-          style: TextStyle(color: pal.accent, decoration: TextDecoration.underline),
+          style: linkStyle,
+          children: _inline(context, label, linkStyle),
         ));
       } else {
+        final inner = token.substring(1, token.length - 1);
+        final italicStyle = style.copyWith(fontStyle: FontStyle.italic);
         spans.add(TextSpan(
-          text: token.substring(1, token.length - 1),
-          style: const TextStyle(fontStyle: FontStyle.italic),
+          style: italicStyle,
+          children: _inline(context, inner, italicStyle),
         ));
       }
       cursor = match.end;
