@@ -8,11 +8,9 @@ class ScreenshotSession {
     required this.bytes,
     required this.bounds,
     required this.maximized,
-    required this.fullScreen,
   });
 
   final Uint8List bytes;
   final Rect bounds;
   final bool maximized;
-  final bool fullScreen;
 }
