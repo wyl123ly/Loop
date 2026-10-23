@@ -4,12 +4,15 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../desktop/screenshot_capture.dart';
+import '../desktop/screenshot_types.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/agent_plan_card.dart';
 import '../widgets/glass.dart';
 import '../widgets/markdown_text.dart';
+import 'screenshot_overlay.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.active});
@@ -41,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String _thinking = 'medium';
   bool _sending = false;
   bool _uploading = false;
+  bool _screenshotting = false;
   bool _generating = false;
   bool _loadingMessages = false;
   bool _bootstrapped = false;
@@ -202,6 +206,60 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (error) {
       if (mounted) setState(() => _uploading = false);
       _snack(error.toString(), isError: true);
+    }
+  }
+
+  Future<void> _takeScreenshot({required bool hideLoop}) async {
+    if (_screenshotting || _sending || _uploading) return;
+    setState(() => _screenshotting = true);
+    ScreenshotSession? session;
+    try {
+      // 等 PopupMenu 收起，避免“直接截图”把菜单截进去。
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      session = await ScreenshotCapture.start(hideLoop: hideLoop);
+      if (session == null) {
+        _snack('截图仅支持 Windows 桌面版', isError: true);
+        return;
+      }
+      final imageBytes = session.bytes;
+      if (!mounted) {
+        await ScreenshotCapture.restore(session);
+        session = null;
+        return;
+      }
+      final cropped = await Navigator.of(context).push<Uint8List>(
+        PageRouteBuilder(
+          opaque: true,
+          transitionDuration: Duration.zero,
+          pageBuilder: (_, _, _) => ScreenshotOverlay(imageBytes: imageBytes),
+        ),
+      );
+      await ScreenshotCapture.restore(session);
+      session = null;
+      if (cropped == null || cropped.isEmpty) return;
+      final result = await appState.api.upload(
+        cropped,
+        '截图-${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      if (!mounted) return;
+      setState(() {
+        _attachments.add(_Attachment(
+          id: result['id'] as String,
+          name: (result['name'] ?? '截图.png') as String,
+          isImage: true,
+        ));
+      });
+      _focus.requestFocus();
+      _snack('截图已加入附件');
+    } catch (error) {
+      if (mounted) _snack(error.toString(), isError: true);
+    } finally {
+      if (session != null) {
+        try {
+          await ScreenshotCapture.restore(session);
+        } catch (_) {}
+      }
+      if (mounted) setState(() => _screenshotting = false);
     }
   }
 
@@ -917,7 +975,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
-              if (_uploading)
+              if (_uploading || _screenshotting)
                 const Padding(
                   padding: EdgeInsets.only(bottom: 8),
                   child: LinearProgressIndicator(minHeight: 2),
@@ -932,6 +990,34 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    PopupMenuButton<String>(
+                      tooltip: '截图',
+                      enabled: !_sending && !_uploading && !_screenshotting,
+                      onSelected: (value) => _takeScreenshot(hideLoop: value == 'hide'),
+                      icon: Icon(Icons.crop_free_rounded, size: 20, color: pal.muted),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'direct',
+                          child: Row(
+                            children: [
+                              Icon(Icons.fullscreen_rounded, size: 17),
+                              SizedBox(width: 8),
+                              Text('直接截图'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'hide',
+                          child: Row(
+                            children: [
+                              Icon(Icons.visibility_off_outlined, size: 17),
+                              SizedBox(width: 8),
+                              Text('隐藏 Loop 后截图'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     IconButton(
                       tooltip: '上传资料 / 图片',
                       onPressed: _uploading ? null : _pickFile,
