@@ -35,6 +35,40 @@ class ToolContext {
 class PlanState {
   List<PlanItem> items = [];
 
+  bool completeActiveWrite() {
+    final writeWords = RegExp(r'写|保存|创建|修改|生成|笔记|文件|任务|更新|整理');
+    var changed = false;
+    final next = <PlanItem>[];
+    for (final item in items) {
+      if (item.status == 'in_progress' && writeWords.hasMatch(item.title)) {
+        changed = true;
+        next.add(PlanItem(id: item.id, title: item.title, status: 'done'));
+      } else {
+        next.add(item);
+      }
+    }
+    if (changed) items = next;
+    return changed;
+  }
+
+  bool finalizeIncomplete() {
+    var changed = false;
+    final next = <PlanItem>[];
+    for (final item in items) {
+      if (item.status == 'in_progress') {
+        changed = true;
+        next.add(PlanItem(id: item.id, title: item.title, status: 'done'));
+      } else if (item.status == 'pending') {
+        changed = true;
+        next.add(PlanItem(id: item.id, title: item.title, status: 'skipped'));
+      } else {
+        next.add(item);
+      }
+    }
+    if (changed) items = next;
+    return changed;
+  }
+
   void apply(Object? raw) {
     if (raw is! List) throw const ToolFailure('plan items 必须是数组');
     final next = <PlanItem>[];
@@ -159,8 +193,8 @@ List<Map<String, dynamic>> get toolDefinitions => [
         'due': _str('YYYY-MM-DD'),
       }, ['ids', 'due']),
       _fn('list_notes', '列出最近的笔记。', {'limit': _int('数量，默认 20')}),
-      _fn('read_note', '读取一篇笔记的正文。', {'id': _int('笔记 id')}, ['id']),
-      _fn('create_note', '保存一篇 Markdown 学习笔记。', {
+      _fn('read_note', '读取一篇笔记的正文。仅在确实需要正文时读取，不要用来反复确认刚写入的笔记。', {'id': _int('笔记 id')}, ['id']),
+      _fn('create_note', '保存一篇 Markdown 学习笔记。成功返回 note_id 即表示已写入，不要重复创建或反复回读确认。', {
         'title': _str('标题'),
         'body': _str('Markdown 正文'),
       }, ['title', 'body']),
@@ -403,7 +437,14 @@ Future<ToolResult> executeTool(String name, Map<String, dynamic> args, ToolConte
           'source_ref': 'conv:${ctx.conversationId}',
           'created_at': Db.nowIso(),
         });
-        return _ok('已保存笔记《$title》', {'ok': true, 'note_id': noteId});
+        return _ok('已保存笔记《$title》（id=$noteId，已提交，无需重复创建或回读）', {
+          'ok': true,
+          'note_id': noteId,
+          'title': title,
+          'committed': true,
+          'do_not_repeat': true,
+          'message': '笔记已写入数据库。直接汇报完成，不要再次 create_note 或 read_note 验证。',
+        });
 
       case 'update_note':
         final id = (args['id'] as num?)?.toInt();
@@ -417,7 +458,12 @@ Future<ToolResult> executeTool(String name, Map<String, dynamic> args, ToolConte
         if (fields.isEmpty) return _err('没有可修改的字段');
         final sets = fields.keys.map((k) => '$k=?').join(',');
         Db.run('UPDATE notes SET $sets WHERE id=?', [...fields.values, id]);
-        return _ok('已更新笔记 $id', {'ok': true});
+        return _ok('已更新笔记 $id（已提交，无需重复读取确认）', {
+          'ok': true,
+          'note_id': id,
+          'committed': true,
+          'do_not_repeat': true,
+        });
 
       case 'fs_list':
         final path = _jail((args['path'] ?? '').toString());

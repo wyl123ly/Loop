@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:loop/backend/agent_tools.dart';
 import 'package:loop/models.dart';
 import 'package:loop/theme.dart';
 import 'package:loop/widgets/markdown_text.dart';
@@ -57,6 +58,21 @@ void main() {
     expect(today.doneToday, 2);
     expect(today.overdue, 1);
     expect(today.openTotal, 5);
+  });
+
+
+  test('计划写步骤自动完成与未完成收尾', () {
+    final plan = PlanState();
+    plan.apply([
+      {'id': '1', 'title': '检索资料', 'status': 'done'},
+      {'id': '2', 'title': '写测试笔记', 'status': 'in_progress'},
+      {'id': '3', 'title': '回读核对', 'status': 'pending'},
+    ]);
+    expect(plan.completeActiveWrite(), isTrue);
+    expect(plan.items[1].status, 'done');
+    expect(plan.finalizeIncomplete(), isTrue);
+    expect(plan.items.where((item) => item.status == 'in_progress'), isEmpty);
+    expect(plan.items[2].status, 'skipped');
   });
 
   testWidgets('深色主题行内代码使用主题标签色', (tester) async {
