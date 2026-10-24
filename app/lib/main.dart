@@ -414,6 +414,11 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       // 回答内容仍完整保留在主聊天中。
       unawaited(_closeAnswerWindow());
     }
+    // 回答浮窗只属于极简形态；展开回普通浮窗/返回主窗口时关闭，避免
+    // 置顶回答窗继续遮挡非极简界面。
+    if (!_host.minimal) {
+      unawaited(_closeAnswerWindow());
+    }
     _wasFloating = floating;
     setState(() {});
     // T5-05：normal/floating/minimal 切换后下一帧重报输入条矩形。

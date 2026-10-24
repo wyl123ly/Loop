@@ -83,6 +83,7 @@ class _Harness {
 Future<_Harness> _pumpChat(
   WidgetTester tester, {
   bool minimal = false,
+  bool floating = false,
   bool withScreenshots = false,
 }) async {
   tester.view.physicalSize = minimal ? const Size(360, 52) : const Size(900, 600);
@@ -111,6 +112,7 @@ Future<_Harness> _pumpChat(
         key: harness.chatKey,
         active: true,
         state: harness.state,
+        floating: floating,
         minimal: minimal,
         answerSink: harness.sink,
         screenshots: withScreenshots ? harness.screenshots : null,
@@ -169,9 +171,9 @@ void main() {
     captureInProgress.value = false;
   });
 
-  testWidgets('W-TRIG-01 非空提交才创建回答窗；SSE 全事件转发、主聊天不被改写', (tester) async {
-    final h = await _pumpChat(tester);
-    await _send(tester, '  什么是极限？  ');
+  testWidgets('W-TRIG-01 极简形态非空提交才创建回答窗；SSE 全事件转发、主聊天不被改写', (tester) async {
+    final h = await _pumpChat(tester, minimal: true);
+    await _send(tester, '  什么是极限？  ', minimal: true);
 
     expect(h.api.chatCalls, 1);
     expect(h.sink.submissions.length, 1);
@@ -217,7 +219,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(h.sink.completions.single.single.page, 9);
-    expect(find.text('极限'), findsOneWidget);
+    expect(h.chatKey.currentState!.messageCount, 2);
     expect(h.chatKey.currentState!.isSending, isFalse);
   });
 
@@ -266,12 +268,12 @@ void main() {
   });
 
   testWidgets('W-TRIG-04 停止：cancelRun + cancelled → 回答窗“已停止”，主聊天保留正文', (tester) async {
-    final h = await _pumpChat(tester);
-    await _send(tester, '测试停止');
+    final h = await _pumpChat(tester, minimal: true);
+    await _send(tester, '测试停止', minimal: true);
     h.api.events.add(SseEvent('run', {'run_id': 42}));
     h.api.events.add(SseEvent('delta', {'text': '部分回答'}));
     await tester.pump();
-    await tester.tap(find.byKey(const Key('chat-send-stop')));
+    await tester.tap(find.byKey(const Key('minimal-send-stop')));
     await tester.pump();
     await tester.pump();
     expect(h.api.cancelledRuns, [42]);
@@ -279,7 +281,7 @@ void main() {
     h.api.events.add(SseEvent('cancelled', {'message_id': 9, 'partial': true}));
     await tester.pump();
     expect(h.sink.stops, 1);
-    expect(find.text('部分回答'), findsOneWidget);
+    expect(h.chatKey.currentState!.messageCount, 2);
     expect(find.text('已停止本次执行'), findsOneWidget);
 
     await h.api.events.close();
@@ -288,8 +290,8 @@ void main() {
   });
 
   testWidgets('W-TRIG-05 error 事件：回答窗进入 error，主聊天移除空气泡并提示', (tester) async {
-    final h = await _pumpChat(tester);
-    await _send(tester, '会失败的问题');
+    final h = await _pumpChat(tester, minimal: true);
+    await _send(tester, '会失败的问题', minimal: true);
     h.api.events.add(SseEvent('run', {'run_id': 7}));
     h.api.events.add(SseEvent('error', {'message': '模型不可用'}));
     await tester.pump();
@@ -345,5 +347,30 @@ void main() {
     await h.api.events.close();
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('W-TRIG-07 非极简浮窗提交不会创建回答窗，回答留在主聊天', (tester) async {
+    final h = await _pumpChat(tester, floating: true);
+    await _send(tester, '普通浮窗提问');
+
+    expect(h.api.chatCalls, 1);
+    expect(h.sink.submissions, isEmpty, reason: '普通浮窗不应创建回答窗');
+
+    h.api.events.add(SseEvent('delta', {'text': '普通回答'}));
+    await tester.pump();
+    expect(h.sink.deltas, isEmpty, reason: '没有回答窗时不推送镜像');
+    expect(find.text('普通回答'), findsOneWidget);
+
+    h.api.events.add(SseEvent('done', {
+      'message_id': 10,
+      'tokens_in': 1,
+      'tokens_out': 1,
+      'cost': 0.0,
+      'refs': <Map<String, dynamic>>[],
+    }));
+    await tester.pump();
+    await h.api.events.close();
+    await tester.pump();
+    await _flushSnack(tester);
   });
 }

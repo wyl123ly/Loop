@@ -498,9 +498,9 @@ class ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty && _attachments.isEmpty) return;
 
-    // 只有非空文本才创建/更新回答浮窗；附件-only 沿用 v0.5.0 主聊天行为
-    // （规格 §4.1）。输入条矩形用于主窗口计算回答窗位置（§4.5）。
-    final showInAnswerWindow = text.isNotEmpty;
+    // 回答浮窗只属于极简形态：普通窗口/普通浮窗里提问必须留在主聊天。
+    // 只有极简条中提交非空文本才创建/更新回答浮窗；附件-only 仍走主聊天。
+    final showInAnswerWindow = widget.minimal && text.isNotEmpty;
     final inputBarRect = this.inputBarRect;
 
     final userMessage = Message(
