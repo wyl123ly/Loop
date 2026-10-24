@@ -15,7 +15,7 @@ import '../theme.dart';
 ///
 /// 组件只依赖注入的控制器/回调，不直接引用 `WindowController` 或
 /// `AnswerWindowHost`，因此可以在 widget 测试里独立驱动。
-class MinimalBar extends StatelessWidget {
+class MinimalBar extends StatefulWidget {
   const MinimalBar({
     super.key,
     required this.controller,
@@ -79,6 +79,35 @@ class MinimalBar extends StatelessWidget {
 
   final bool inputEnabled;
 
+  @override
+  State<MinimalBar> createState() => _MinimalBarState();
+}
+
+class _MinimalBarState extends State<MinimalBar> {
+  String? _hoverTip;
+
+  TextEditingController get controller => widget.controller;
+  FocusNode get focusNode => widget.focusNode;
+  bool get sending => widget.sending;
+  VoidCallback get onSend => widget.onSend;
+  VoidCallback get onStop => widget.onStop;
+  VoidCallback get onScreenshot => widget.onScreenshot;
+  VoidCallback get onBack => widget.onBack;
+  VoidCallback get onExpand => widget.onExpand;
+  VoidCallback get onDragStart => widget.onDragStart;
+  int get attachmentCount => widget.attachmentCount;
+  String? get firstImageUrl => widget.firstImageUrl;
+  bool get busy => widget.busy;
+  bool get screenshotEnabled => widget.screenshotEnabled;
+  VoidCallback? get onBlockedScreenshot => widget.onBlockedScreenshot;
+  String get hint => widget.hint;
+  bool get inputEnabled => widget.inputEnabled;
+
+  void _setHoverTip(String? value) {
+    if (_hoverTip == value) return;
+    setState(() => _hoverTip = value);
+  }
+
   bool get _canSend => !busy;
 
   bool get _canScreenshot => screenshotEnabled && !busy;
@@ -99,17 +128,20 @@ class MinimalBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = pal;
-    final attachments = math.max(0, attachmentCount);
+    final attachments = math.max(0, widget.attachmentCount);
     return Container(
       key: const Key('minimal-bar'),
       // 无上下留白：撑满窗口内高（52 - 1px 边框 = 50），内容垂直居中。
       height: double.infinity,
       width: double.infinity,
       padding: EdgeInsets.zero,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          _DragHandle(onDragStart: onDragStart, onExpand: onExpand),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+          _DragHandle(onDragStart: onDragStart, onExpand: onExpand, onHover: _setHoverTip),
           const SizedBox(width: 4),
           Expanded(
             child: Container(
@@ -139,6 +171,7 @@ class MinimalBar extends StatelessWidget {
                   if (attachments > 0) _AttachmentBadge(
                     count: attachments,
                     imageUrl: firstImageUrl,
+                    onHover: _setHoverTip,
                   ),
                   Expanded(
                     child: Focus(
@@ -185,7 +218,10 @@ class MinimalBar extends StatelessWidget {
                   SizedBox(
                     width: 30,
                     height: 30,
-                    child: IconButton(
+                    child: MouseRegion(
+                      onEnter: (_) => _setHoverTip(sending ? '停止' : '发送'),
+                      onExit: (_) => _setHoverTip(null),
+                      child: IconButton(
                       key: const Key('minimal-send-stop'),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
@@ -207,6 +243,7 @@ class MinimalBar extends StatelessWidget {
                         padding: EdgeInsets.zero,
                       ),
                     ),
+                    ),
                   ),
                   const SizedBox(width: 3),
                 ],
@@ -220,6 +257,7 @@ class MinimalBar extends StatelessWidget {
             tooltip: '截图（Alt+A）',
             enabled: _canScreenshot,
             onTap: _handleScreenshot,
+            onHover: _setHoverTip,
           ),
           _MinimalIconButton(
             key: const Key('minimal-back'),
@@ -227,8 +265,20 @@ class MinimalBar extends StatelessWidget {
             tooltip: '返回主窗口 (Alt+Q)',
             enabled: true,
             onTap: onBack,
+            onHover: _setHoverTip,
           ),
-          const SizedBox(width: 2),
+            const SizedBox(width: 2),
+          ],
+        ),
+          if (_hoverTip != null)
+            Positioned(
+              left: 8,
+              right: 8,
+              top: 8,
+              child: IgnorePointer(
+                child: Center(child: _MinimalHoverLabel(text: _hoverTip!)),
+              ),
+            ),
         ],
       ),
     );
@@ -253,19 +303,25 @@ class _SingleLineFormatter extends TextInputFormatter {
 }
 
 class _DragHandle extends StatelessWidget {
-  const _DragHandle({required this.onDragStart, required this.onExpand});
+  const _DragHandle({
+    required this.onDragStart,
+    required this.onExpand,
+    required this.onHover,
+  });
 
   final VoidCallback onDragStart;
   final VoidCallback onExpand;
+  final ValueChanged<String?> onHover;
 
   @override
   Widget build(BuildContext context) {
     final p = pal;
-    return Tooltip(
-      message: '拖动；双击展开浮窗',
-      waitDuration: const Duration(milliseconds: 700),
+    return Semantics(
+      label: '拖动；双击展开浮窗',
       child: MouseRegion(
         cursor: SystemMouseCursors.move,
+        onEnter: (_) => onHover('拖动；双击展开浮窗'),
+        onExit: (_) => onHover(null),
         child: GestureDetector(
           key: const Key('minimal-drag-handle'),
           behavior: HitTestBehavior.opaque,
@@ -293,18 +349,27 @@ class _DragHandle extends StatelessWidget {
 }
 
 class _AttachmentBadge extends StatelessWidget {
-  const _AttachmentBadge({required this.count, this.imageUrl});
+  const _AttachmentBadge({
+    required this.count,
+    this.imageUrl,
+    required this.onHover,
+  });
 
   final int count;
   final String? imageUrl;
+  final ValueChanged<String?> onHover;
 
   @override
   Widget build(BuildContext context) {
     final p = pal;
     final url = imageUrl;
-    return Tooltip(
-      message: '已附 $count 个附件；展开浮窗后可管理',
-      child: Container(
+    final label = '已附 $count 个附件；展开浮窗后可管理';
+    return Semantics(
+      label: label,
+      child: MouseRegion(
+        onEnter: (_) => onHover(label),
+        onExit: (_) => onHover(null),
+        child: Container(
         key: const Key('minimal-attachment-badge'),
         height: 20,
         margin: const EdgeInsets.only(left: 4, right: 2),
@@ -345,6 +410,41 @@ class _AttachmentBadge extends StatelessWidget {
           ],
         ),
       ),
+    ),
+  );
+  }
+}
+
+class _MinimalHoverLabel extends StatelessWidget {
+  const _MinimalHoverLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = pal;
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 360),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: p.toastBg,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: p.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.visible,
+        style: TextStyle(fontSize: 10.5, height: 1.25, color: p.toastFg),
+      ),
     );
   }
 }
@@ -356,12 +456,14 @@ class _MinimalIconButton extends StatefulWidget {
     required this.tooltip,
     required this.enabled,
     required this.onTap,
+    required this.onHover,
   });
 
   final IconData icon;
   final String tooltip;
   final bool enabled;
   final VoidCallback onTap;
+  final ValueChanged<String?> onHover;
 
   @override
   State<_MinimalIconButton> createState() => _MinimalIconButtonState();
@@ -374,13 +476,19 @@ class _MinimalIconButtonState extends State<_MinimalIconButton> {
   Widget build(BuildContext context) {
     final p = pal;
     final color = widget.enabled ? p.ink : p.faint;
-    return Tooltip(
-      message: widget.tooltip,
-      waitDuration: const Duration(milliseconds: 600),
+    return Semantics(
+      label: widget.tooltip,
+      button: true,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
+        onEnter: (_) {
+          setState(() => _hover = true);
+          widget.onHover(widget.tooltip);
+        },
+        onExit: (_) {
+          setState(() => _hover = false);
+          widget.onHover(null);
+        },
         child: GestureDetector(
           onTap: widget.onTap,
           child: AnimatedContainer(

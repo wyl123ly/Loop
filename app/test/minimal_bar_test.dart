@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -185,6 +186,29 @@ void main() {
     expect(tester.getSize(find.byKey(const Key('minimal-bar'))).height, 52);
     expect(find.byKey(const Key('minimal-input')), findsOneWidget);
     expect(h.sends, 0);
+  });
+
+  testWidgets('W-MIN-09 图标悬停显示完整文字标签，不被 52 高窗口裁切', (tester) async {
+    await _pumpBar(tester);
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(gesture.removePointer);
+
+    await gesture.moveTo(tester.getCenter(find.byKey(const Key('minimal-screenshot'))));
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(find.text('截图（Alt+A）'), findsOneWidget);
+
+    await gesture.moveTo(tester.getCenter(find.byKey(const Key('minimal-back'))));
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(find.text('返回主窗口 (Alt+Q)'), findsOneWidget);
+
+    await gesture.moveTo(tester.getCenter(find.byKey(const Key('minimal-drag-handle'))));
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(find.text('拖动；双击展开浮窗'), findsOneWidget);
+
+    await gesture.moveTo(const Offset(5, 5));
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(find.text('截图（Alt+A）'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('W-MIN-08 无附件时不渲染 badge；单图 URL 渲染 20px 缩略图', (tester) async {
