@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-24T15:10:00+08:00",
+  "plugins": [
+    {
+      "id": "study-plan",
+      "name": "三步学习计划",
+      "version": "1.0.0",
+      "description": "把一个模糊的学习目标拆成今天就能开始的三步计划。",
+      "author": "wyl123ly",
+      "homepage": "https://github.com/wyl123ly/Loop",
+      "category": "productivity",
+      "type": "prompt",
+      "permissions": [
+        "chat.command"
+      ],
+      "min_app_version": "0.4.0-test.2",
+      "path": "plugins/packages/study-plan-1.0.0.loopplugin",
+      "url": "https://raw.githubusercontent.com/wyl123ly/Loop/main/plugins/packages/study-plan-1.0.0.loopplugin",
+      "sha256": "e086448000ad57beb7ae71998606ce86a764725df0bb6125ce033fd5b678ccb2",
+      "size": 2615,
+      "published_at": "2026-10-24"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "study-plan",
+  "name": "三步学习计划",
+  "version": "1.0.0",
+  "description": "把一个模糊的学习目标拆成今天就能开始的三步计划。",
+  "author": "wyl123ly",
+  "homepage": "https://github.com/wyl123ly/Loop",
+  "icon": "icon.png",
+  "category": "productivity",
+  "permissions": [
+    "chat.command"
+  ],
+  "prompts": [
+    {
+      "command": "plan",
+      "title": "拆成三步学习计划",
+      "description": "把目标拆成三个 30 分钟内可执行的动作。",
+      "file": "prompts/plan.md"
+    }
+  ]
+}
