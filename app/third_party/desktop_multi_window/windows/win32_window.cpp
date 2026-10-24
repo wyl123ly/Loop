@@ -56,6 +56,46 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
   FreeLibrary(user32_module);
 }
 
+// Clip the popup window itself to the same rounded shape as the Flutter
+// AnswerPanel. Without this, pixels outside the panel's ClipRRect are painted
+// with the engine's black surface, producing dark wedges at the corners.
+void ApplyRoundedWindowRegion(HWND window) {
+  RECT rect;
+  if (!GetWindowRect(window, &rect)) {
+    return;
+  }
+  const int width = rect.right - rect.left;
+  const int height = rect.bottom - rect.top;
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+
+  UINT dpi = 96;
+  using GetDpiForWindowFn = UINT(WINAPI*)(HWND);
+  HMODULE user32 = GetModuleHandleW(L"user32.dll");
+  if (user32 != nullptr) {
+    auto get_dpi = reinterpret_cast<GetDpiForWindowFn>(
+        GetProcAddress(user32, "GetDpiForWindow"));
+    if (get_dpi != nullptr) {
+      const UINT window_dpi = get_dpi(window);
+      if (window_dpi != 0) {
+        dpi = window_dpi;
+      }
+    }
+  }
+
+  // Keep in sync with answerRadius in lib/desktop/window_mode.dart.
+  const int ellipse = MulDiv(14, static_cast<int>(dpi), 96) * 2;
+  HRGN region =
+      CreateRoundRectRgn(0, 0, width + 1, height + 1, ellipse, ellipse);
+  if (region == nullptr) {
+    return;
+  }
+  if (SetWindowRgn(window, region, TRUE) == 0) {
+    DeleteObject(region);
+  }
+}
+
 }  // namespace
 
 // Manages the Win32Window's window class registration.
@@ -163,6 +203,7 @@ bool Win32Window::Create(const std::wstring& title,
   }
 
   UpdateTheme(window);
+  ApplyRoundedWindowRegion(window);
 
   return OnCreate();
 }
@@ -217,10 +258,12 @@ Win32Window::MessageHandler(HWND hwnd,
       // Only re-layout the Flutter child view; the host re-applies the final
       // physical rect after DPI settles.
       QueueChildContentResize();
+      ApplyRoundedWindowRegion(hwnd);
       return 0;
     }
     case WM_SIZE: {
       ResizeChildContent();
+      ApplyRoundedWindowRegion(hwnd);
       return 0;
     }
     case WM_WINDOWPOSCHANGED:
@@ -229,6 +272,7 @@ Win32Window::MessageHandler(HWND hwnd,
     case kResizeChildContentMessage:
       child_resize_pending_ = false;
       ResizeChildContent();
+      ApplyRoundedWindowRegion(hwnd);
       return 0;
 
     case WM_ACTIVATE:
