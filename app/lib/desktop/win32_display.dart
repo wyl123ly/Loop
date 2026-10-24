@@ -17,17 +17,24 @@ import 'window_mode.dart';
 
 const int _monitorInfoFPrimary = 0x1;
 const int _monitorDefaultToNearest = 0x2;
+const int _gwlStyle = -16;
 const int _gwlExStyle = -20;
+const int _wsPopup = 0x80000000;
 const int _wsExTopmost = 0x00000008;
+const int _wsExToolWindow = 0x00000080;
+const int _wsExNoActivate = 0x08000000;
 const int _swpNoZOrder = 0x0004;
 const int _swpNoActivate = 0x0010;
 const int _swpNoOwnerZOrder = 0x0200;
 const int _swpNoMove = 0x0002;
 const int _swpNoSize = 0x0001;
 const int _swpShowWindow = 0x0040;
+const int _swpFrameChanged = 0x0020;
+const int _swHide = 0;
 const int _swShowNoActivate = 4;
 const int _swShowNormal = 1;
 const int _swShowMaximized = 3;
+const int _wmClose = 0x0010;
 
 final class _Rect extends Struct {
   @Int32()
@@ -82,6 +89,8 @@ final class _WindowPlacement extends Struct {
 
   external _Rect rcNormalPosition;
 }
+
+typedef _EnumWindowsProcNative = Int32 Function(IntPtr hwnd, IntPtr data);
 
 typedef _MonitorEnumProcNative = Int32 Function(
     IntPtr hMonitor, IntPtr hdc, Pointer<_Rect> rect, IntPtr data);
@@ -188,6 +197,7 @@ class Win32Display {
     Rect physical, {
     required bool topmost,
     bool activate = false,
+    bool frameChanged = false,
   }) {
     if (!available || hwnd == 0) return false;
     final width = math.max(1, physical.width.round());
@@ -195,6 +205,7 @@ class Win32Display {
     var flags = _swpNoOwnerZOrder;
     if (!activate) flags |= _swpNoActivate;
     if (!topmost) flags |= _swpNoZOrder;
+    if (frameChanged) flags |= _swpFrameChanged;
     try {
       final ok = _setWindowPos(
         hwnd,
@@ -312,6 +323,286 @@ class Win32Display {
         logical.height * dpr,
       );
 
+  // -------------------------------------------------------------------------
+  // 第二顶层窗口（回答窗）支持：进程/枚举/样式/无激活显示/关闭。规格 §2.6、附录 D。
+  // -------------------------------------------------------------------------
+
+  /// 当前进程 id。
+  static int currentProcessId() {
+    if (!available) return 0;
+    try {
+      return _getCurrentProcessId();
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// 顶层窗口所属进程 id（GetWindowThreadProcessId）。
+  static int? windowProcessId(int hwnd) {
+    if (!available || hwnd == 0) return null;
+    final pid = calloc<Uint32>();
+    try {
+      final thread = _getWindowThreadProcessId(hwnd, pid);
+      if (thread == 0) return null;
+      return pid.value;
+    } catch (_) {
+      return null;
+    } finally {
+      calloc.free(pid);
+    }
+  }
+
+  /// 顶层窗口类名（GetClassNameW）。
+  static String? classNameOf(int hwnd) {
+    if (!available || hwnd == 0) return null;
+    final buffer = calloc<Uint16>(256);
+    try {
+      final length = _getClassName(hwnd, buffer, 256);
+      if (length <= 0) return null;
+      final units = <int>[];
+      for (var i = 0; i < length; i++) {
+        units.add(buffer[i]);
+      }
+      return String.fromCharCodes(units);
+    } catch (_) {
+      return null;
+    } finally {
+      calloc.free(buffer);
+    }
+  }
+
+  /// 当前进程内所有指定类名的顶层窗口（EnumWindows）。
+  static List<int> windowsOfClass(String className) {
+    if (!available) return const <int>[];
+    final result = <int>[];
+    final callable = NativeCallable<_EnumWindowsProcNative>.isolateLocal(
+      (int hwnd, int data) {
+        try {
+          if (classNameOf(hwnd) == className) result.add(hwnd);
+        } catch (_) {}
+        return 1;
+      },
+      exceptionalReturn: 0,
+    );
+    try {
+      _enumWindows(callable.nativeFunction, 0);
+    } catch (_) {
+      return const <int>[];
+    } finally {
+      callable.close();
+    }
+    return result;
+  }
+
+  /// 当前进程内的顶层窗口（不按类名过滤）。
+  static List<int> topLevelWindows() {
+    if (!available) return const <int>[];
+    final result = <int>[];
+    final callable = NativeCallable<_EnumWindowsProcNative>.isolateLocal(
+      (int hwnd, int data) {
+        result.add(hwnd);
+        return 1;
+      },
+      exceptionalReturn: 0,
+    );
+    try {
+      _enumWindows(callable.nativeFunction, 0);
+    } catch (_) {
+      return const <int>[];
+    } finally {
+      callable.close();
+    }
+    return result;
+  }
+
+  static int? foregroundWindow() {
+    if (!available) return null;
+    try {
+      final hwnd = _getForegroundWindow();
+      return hwnd == 0 ? null : hwnd;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static bool setForeground(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      return _setForegroundWindow(hwnd) != 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool isWindow(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      return _isWindow(hwnd) != 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool isWindowVisible(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      return _isWindowVisible(hwnd) != 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// `ShowWindow(SW_SHOWNOACTIVATE)`：显示但不激活/不抢焦点。
+  static bool showNoActivateWindow(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      _showWindow(hwnd, _swShowNoActivate);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool hideWindow(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      _showWindow(hwnd, _swHide);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// `PostMessage(WM_CLOSE)`（不等待销毁；由 onWindowsChanged/轮询确认）。
+  static bool postClose(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      return _postMessage(hwnd, _wmClose, 0, 0) != 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool setWindowTitle(int hwnd, String title) {
+    if (!available || hwnd == 0) return false;
+    final pointer = title.toNativeUtf16();
+    try {
+      return _setWindowText(hwnd, pointer) != 0;
+    } catch (_) {
+      return false;
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
+  static int windowStyle(int hwnd) {
+    if (!available || hwnd == 0) return 0;
+    try {
+      return _getWindowLongPtr(hwnd, _gwlStyle);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  static int windowExStyle(int hwnd) {
+    if (!available || hwnd == 0) return 0;
+    try {
+      return _getWindowLongPtr(hwnd, _gwlExStyle);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  static bool setWindowStyle(int hwnd, int style) {
+    if (!available || hwnd == 0) return false;
+    try {
+      _setWindowLongPtr(hwnd, _gwlStyle, style);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool setWindowExStyle(int hwnd, int exStyle) {
+    if (!available || hwnd == 0) return false;
+    try {
+      _setWindowLongPtr(hwnd, _gwlExStyle, exStyle);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 回答窗样式：无边框 + 无激活 + 工具窗口（不出现在任务栏/Alt+Tab）+ 置顶。
+  ///
+  /// F-06：不能用“样式必须完全等于期望值”判断成功——Windows/Flutter 会附加
+  /// WS_CLIPSIBLINGS/WS_VISIBLE 等位，且 WS_EX_TOPMOST 不能靠 SetWindowLongPtr
+  /// 判断（需 SetWindowPos(HWND_TOPMOST) 建立）。这里只检查必要位，置顶用
+  /// SetWindowPos 落实；失败时重试一次，仍失败才返回 false。
+  static bool applyAnswerWindowChrome(int hwnd, {required bool topmost}) {
+    if (!available || hwnd == 0) return false;
+    final baseExStyle = _wsExNoActivate | _wsExToolWindow;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      setWindowStyle(hwnd, _wsPopup);
+      setWindowExStyle(hwnd, baseExStyle);
+      final style = windowStyle(hwnd);
+      final ex = windowExStyle(hwnd);
+      final styleOk = (style & _wsPopup) != 0;
+      final exOk = (ex & baseExStyle) == baseExStyle;
+      if (!styleOk || !exOk) continue;
+      try {
+        _setWindowPos(
+          hwnd,
+          topmost ? -1 : 0,
+          0,
+          0,
+          0,
+          0,
+          _swpNoMove |
+              _swpNoSize |
+              _swpNoActivate |
+              _swpFrameChanged |
+              (topmost ? 0 : _swpNoZOrder),
+        );
+      } catch (_) {}
+      return true;
+    }
+    return false;
+  }
+
+  /// 无激活把窗口抬到最上层（主窗重新激活时调用；不改变焦点）。
+  static bool raiseNoActivate(int hwnd) {
+    if (!available || hwnd == 0) return false;
+    try {
+      return _setWindowPos(
+            hwnd,
+            -1, // HWND_TOPMOST
+            0,
+            0,
+            0,
+            0,
+            _swpNoMove | _swpNoSize | _swpNoActivate | _swpNoOwnerZOrder,
+          ) !=
+          0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 鼠标物理坐标（GetCursorPos）。
+  static Offset? cursorPosition() {
+    if (!available) return null;
+    final point = calloc<_Point>();
+    try {
+      if (_getCursorPos(point) == 0) return null;
+      return Offset(point.ref.x.toDouble(), point.ref.y.toDouble());
+    } catch (_) {
+      return null;
+    } finally {
+      calloc.free(point);
+    }
+  }
+
   static DisplayInfo _toDisplayInfo(int monitor, _MonitorInfoEx info) {
     final dpi = _effectiveDpi(monitor);
     final scale = dpi > 0
@@ -392,9 +683,64 @@ final int Function(Pointer<_Point>, int) _monitorFromPoint =
 
 final int Function(int, int) _getWindowLongPtr = _lookupGetWindowLongPtr();
 
+final int Function(int, int, int) _setWindowLongPtr = _lookupSetWindowLongPtr();
+
 final int Function(int, int) _showWindow =
     _user32.lookupFunction<Int32 Function(IntPtr, Int32), int Function(int, int)>(
         'ShowWindow');
+
+final int Function() _getForegroundWindow =
+    _user32.lookupFunction<IntPtr Function(), int Function()>(
+        'GetForegroundWindow');
+
+final int Function(int) _setForegroundWindow =
+    _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>(
+        'SetForegroundWindow');
+
+final int Function(int) _isWindow =
+    _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>('IsWindow');
+
+final int Function(int) _isWindowVisible =
+    _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>(
+        'IsWindowVisible');
+
+final int Function(int, Pointer<Uint16>, int) _getClassName =
+    _user32.lookupFunction<
+        Int32 Function(IntPtr, Pointer<Uint16>, Int32),
+        int Function(int, Pointer<Uint16>, int)>('GetClassNameW');
+
+final int Function(int, Pointer<Uint32>) _getWindowThreadProcessId =
+    _user32.lookupFunction<
+        Uint32 Function(IntPtr, Pointer<Uint32>),
+        int Function(int, Pointer<Uint32>)>('GetWindowThreadProcessId');
+
+final int Function(
+    Pointer<NativeFunction<_EnumWindowsProcNative>>, int) _enumWindows =
+    _user32.lookupFunction<
+        Int32 Function(Pointer<NativeFunction<_EnumWindowsProcNative>>, IntPtr),
+        int Function(Pointer<NativeFunction<_EnumWindowsProcNative>>,
+            int)>('EnumWindows');
+
+final int Function(int, int, int, int) _postMessage =
+    _user32.lookupFunction<
+        Int32 Function(IntPtr, Uint32, IntPtr, IntPtr),
+        int Function(int, int, int, int)>('PostMessageW');
+
+final int Function(int, Pointer<Utf16>) _setWindowText =
+    _user32.lookupFunction<
+        Int32 Function(IntPtr, Pointer<Utf16>),
+        int Function(int, Pointer<Utf16>)>('SetWindowTextW');
+
+final int Function(Pointer<_Point>) _getCursorPos =
+    _user32.lookupFunction<
+        Int32 Function(Pointer<_Point>),
+        int Function(Pointer<_Point>)>('GetCursorPos');
+
+final DynamicLibrary _kernel32 = DynamicLibrary.open('kernel32.dll');
+
+final int Function() _getCurrentProcessId =
+    _kernel32.lookupFunction<Uint32 Function(), int Function()>(
+        'GetCurrentProcessId');
 
 final int Function(int) _isIconic =
     _user32.lookupFunction<Int32 Function(IntPtr), int Function(int)>('IsIconic');
@@ -429,6 +775,22 @@ int Function(int, int) _lookupGetWindowLongPtr() {
       return legacy;
     } catch (_) {
       return (_, _) => 0;
+    }
+  }
+}
+
+int Function(int, int, int) _lookupSetWindowLongPtr() {
+  try {
+    return _user32.lookupFunction<
+        IntPtr Function(IntPtr, Int32, IntPtr),
+        int Function(int, int, int)>('SetWindowLongPtrW');
+  } catch (_) {
+    try {
+      return _user32.lookupFunction<
+          Int32 Function(IntPtr, Int32, Int32),
+          int Function(int, int, int)>('SetWindowLongW');
+    } catch (_) {
+      return (_, _, _) => 0;
     }
   }
 }

@@ -26,7 +26,11 @@ if (Test-Path (Join-Path $out 'loop.exe')) {
 # 清理旧版遗留的 sidecar（如果存在）
 Remove-Item (Join-Path $out 'LoopServer.exe') -Force -ErrorAction SilentlyContinue
 if (Test-Path 'packaging\native-readme.txt') {
-    Copy-Item 'packaging\native-readme.txt' (Join-Path $out '使用说明.txt') -Force
+    # 用码点拼中文文件名，避免 Windows PowerShell 5.1 按 ANSI 读取脚本导致文件名乱码
+    $readmeName = (-join @([char]0x4F7F, [char]0x7528, [char]0x8BF4, [char]0x660E)) + '.txt'
+    $readmePath = Join-Path $out $readmeName
+    Copy-Item 'packaging\native-readme.txt' $readmePath -Force
+    Get-ChildItem $out -Filter '*.txt' | Where-Object { $_.Name -ne $readmeName } | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 # 写入更新校验用的版本文件（不依赖 tag）

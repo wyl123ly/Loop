@@ -3,9 +3,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'answer_ui/answer_drag_stub.dart'
+    if (dart.library.io) 'answer_ui/answer_drag_io.dart';
+import 'answer_ui/answer_window_app.dart';
 import 'backend/job_scheduler.dart';
 import 'backend/start.dart';
 import 'boot_prefs.dart';
+import 'desktop/answer_host/answer_protocol.dart' show AnswerStatus;
+import 'desktop/answer_host/answer_transport_stub.dart'
+    if (dart.library.io) 'desktop/answer_host/answer_transport_io.dart';
+import 'desktop/answer_host/answer_window_host.dart';
 import 'desktop/floating_signals.dart';
 import 'desktop/hotkeys.dart';
 import 'desktop/screenshot_service.dart';
@@ -13,6 +20,7 @@ import 'desktop/window_controls.dart';
 import 'desktop/window_mode.dart';
 import 'diagnostics/frame_log.dart';
 import 'desktop/tray_export.dart';
+import 'models.dart';
 import 'screens/agent_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/materials_screen.dart';
@@ -30,8 +38,23 @@ import 'widgets/sidebar.dart';
 import 'widgets/title_bar.dart';
 import 'widgets/window_resize_handles.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 第二引擎（回答浮窗）：由 desktop_multi_window 以
+  // `["multi_window", windowId, payload]` 启动。这里不得初始化
+  // DB/后端/托盘/WindowController/热键，也不得使用 window_manager
+  // （规格 §2.4/§9.1；子引擎注册 window_manager 会导致崩溃）。
+  if (args.isNotEmpty && args.first == 'multi_window') {
+    final session = await prepareAnswerEngine();
+    if (session == null) return;
+    runApp(AnswerWindowApp(
+      session: session,
+      dragDelegate: createAnswerDragDelegate(),
+    ));
+    return;
+  }
+
   installFrameLogger();
   final bootTheme = loadBootTheme();
   final override = themeOverride();
@@ -81,12 +104,29 @@ class _LoopAppState extends State<LoopApp> with WidgetsBindingObserver {
     if (appState.themeMode == ThemeMode.system) setState(() {});
   }
 
+  /// F-02：主题变化同步到已打开的回答窗（第二引擎不读设置/DB）。
+  ///
+  /// 在 post-frame 调用，避免 build 期间发 IPC；重复值由 host 去重。
+  void _scheduleAnswerThemeSync() {
+    if (!WindowController.instance.ready) return;
+    final mode = appState.themeMode.name;
+    final dark = LoopTheme.palette.isDark;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!WindowController.instance.ready) return;
+      unawaited(WindowController.instance.answers.setTheme(
+        themeMode: mode,
+        dark: dark,
+      ));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
         LoopTheme.palette = _paletteFor(appState.themeMode);
+        _scheduleAnswerThemeSync();
         return MaterialApp(
           title: '回路 Loop',
           debugShowCheckedModeBanner: false,
@@ -187,6 +227,8 @@ class Shell extends StatefulWidget {
     this.modeHost,
     this.screensOverride,
     this.screenshots,
+    this.answerSink,
+    this.pageBuilder,
   });
 
   /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
@@ -200,6 +242,13 @@ class Shell extends StatefulWidget {
 
   /// 截图服务；为空时 ChatScreen 使用平台实现。
   final ScreenshotService? screenshots;
+
+  /// 回答浮窗数据源；生产为 [WindowController.instance.answers] 的适配器。
+  final ChatAnswerSink? answerSink;
+
+  /// 测试替身：只替换对话页以外的 5 页，对话页仍由 Shell 构建，用于验证
+  /// 极简形态的真实接线（screensOverride 会绕过 Shell 的 ChatScreen 参数）。
+  final Widget Function(int index, bool active)? pageBuilder;
 
   @override
   State<Shell> createState() => _ShellState();
@@ -238,8 +287,16 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
 
   late FloatingModeHost _host;
 
+  /// 回答窗宿主适配器（生产在 WindowController 就绪后解析；测试可直接注入）。
+  ChatAnswerSink? _resolvedAnswerSink;
+  bool _answerHostResolved = false;
+
   String? _lastSnackMessage;
   DateTime? _lastSnackAt;
+
+  /// F-05：周期性把输入条/主窗物理矩形同步给回答窗（覆盖程序化
+  /// SetWindowPos/显示器变化等不触发 window_manager onWindowMoved 的路径）。
+  Timer? _answerAnchorTimer;
 
   AppState get _state => widget.state ?? appState;
 
@@ -253,6 +310,15 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     _host.addListener(_onHostChanged);
     _state.addListener(_onStateChanged);
     WindowController.instance.floatingError.addListener(_onFloatingError);
+    WindowController.instance.answerError.addListener(_onAnswerError);
+    newChatSignal.addListener(_onConversationSwitched);
+    openConversationSignal.addListener(_onConversationSwitched);
+    deletedConversationSignal.addListener(_onConversationSwitched);
+    WindowController.instance.geometryEpoch.addListener(_onMainGeometryEpoch);
+    _answerAnchorTimer = Timer.periodic(
+      const Duration(milliseconds: 500),
+      (_) => unawaited(_syncAnswerAnchors()),
+    );
   }
 
   @override
@@ -280,7 +346,49 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     _host.removeListener(_onHostChanged);
     _state.removeListener(_onStateChanged);
     WindowController.instance.floatingError.removeListener(_onFloatingError);
+    WindowController.instance.answerError.removeListener(_onAnswerError);
+    newChatSignal.removeListener(_onConversationSwitched);
+    openConversationSignal.removeListener(_onConversationSwitched);
+    deletedConversationSignal.removeListener(_onConversationSwitched);
+    WindowController.instance.geometryEpoch
+        .removeListener(_onMainGeometryEpoch);
+    _answerAnchorTimer?.cancel();
+    _answerAnchorTimer = null;
     super.dispose();
+  }
+
+  /// T5-05：主窗 resize/move/DPI/最大化/形态切换 tick → 下一帧重报 anchor。
+  void _onMainGeometryEpoch() {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_syncAnswerAnchors());
+    });
+  }
+
+  /// F-05：把当前输入条/主窗物理矩形同步给回答窗（幂等，host 去重）。
+  Future<void> _syncAnswerAnchors() async {
+    if (!WindowController.instance.ready) return;
+    final answers = WindowController.instance.answers;
+    if (!answers.supported || !answers.visible) return;
+    final rect = _chatKey.currentState?.inputBarRect;
+    if (rect == null) return;
+    try {
+      final snapshot = await _host.snapshot();
+      final dpr = snapshot.dpr;
+      final main = snapshot.physicalBounds;
+      final input = Rect.fromLTWH(
+        main.left + rect.left * dpr,
+        main.top + rect.top * dpr,
+        rect.width * dpr,
+        rect.height * dpr,
+      );
+      await answers.updateAnchors(
+        inputBarPhysical: input,
+        mainWindowPhysical: main,
+      );
+    } catch (error) {
+      debugPrint('answer anchor sync failed: $error');
+    }
   }
 
   /// DPI/缩放变化：交给 WindowController 去抖钳制，不 focus、不改 mode（FR-4）。
@@ -302,9 +410,14 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       _indexBeforeFloating = _index;
     } else if (!floating && _wasFloating) {
       _index = _indexBeforeFloating;
+      // 返回主窗口（返回按钮/Alt+Q）时自动关闭回答窗（规格 §0-12）；
+      // 回答内容仍完整保留在主聊天中。
+      unawaited(_closeAnswerWindow());
     }
     _wasFloating = floating;
     setState(() {});
+    // T5-05：normal/floating/minimal 切换后下一帧重报输入条矩形。
+    _onMainGeometryEpoch();
   }
 
   void _onFloatingError() {
@@ -312,6 +425,66 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     if (message == null) return;
     WindowController.instance.floatingError.value = null;
     if (mounted) _snack(message, isError: true);
+  }
+
+  void _onAnswerError() {
+    final message = WindowController.instance.answerError.value;
+    if (message == null) return;
+    WindowController.instance.answerError.value = null;
+    // 显式失败：主聊天不受影响，用户可见一次提示（规格 §0.2）。
+    if (mounted) _snack(message, isError: true);
+  }
+
+  /// 切换/新建/删除会话时关闭回答窗（旧回答已失效，规格 §4.8）。
+  void _onConversationSwitched() {
+    unawaited(_closeAnswerWindow());
+  }
+
+  /// 生产环境解析回答窗 host（测试未初始化 WindowController 时为 null）。
+  void _resolveAnswerHost() {
+    if (_answerHostResolved) return;
+    if (!WindowController.instance.ready) return;
+    _answerHostResolved = true;
+    final answers = WindowController.instance.answers;
+    if (!answers.supported) return;
+    answers.onFocusCompensation = () {
+      _chatKey.currentState?.focusInput();
+    };
+    _resolvedAnswerSink = _ShellChatAnswerSink(
+      host: answers,
+      modeHost: _host,
+      isDark: () => pal.isDark,
+    );
+  }
+
+  ChatAnswerSink? get _answerSink => widget.answerSink ?? _resolvedAnswerSink;
+
+  Future<void> _closeAnswerWindow() async {
+    if (!_answerHostResolved || !WindowController.instance.ready) return;
+    final answers = WindowController.instance.answers;
+    if (!answers.hasWindow) return;
+    await answers.closeWindow();
+  }
+
+  Future<void> _enterMinimal() async {
+    if (_host.transitioning || _host.captureInProgress || _host.minimal) return;
+    final ok = await _host.enterMinimal(focus: true);
+    if (!mounted || ok || _host.minimal) return;
+    _snack('收起为极简条失败，已恢复浮窗', isError: true);
+  }
+
+  Future<void> _expandFromMinimal() async {
+    if (!_host.minimal || _host.transitioning || _host.captureInProgress) return;
+    final ok = await _host.exitMinimal(focus: true);
+    if (!mounted || ok || !_host.minimal) return;
+    _snack('展开浮窗失败，已保持极简条', isError: true);
+  }
+
+  Future<void> _returnFromMinimal() async {
+    if (!_host.isFloating) return;
+    final ok = await _host.exitFloating(focus: true);
+    if (!mounted || ok || !_host.isFloating) return;
+    _snack('返回主窗口失败，已保持极简条', isError: true);
   }
 
   void _snack(String message, {bool isError = false}) {
@@ -363,7 +536,11 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     return title.isEmpty ? '新对话' : title;
   }
 
-  List<Widget> _buildScreens({required bool floating, required bool compact}) {
+  List<Widget> _buildScreens({
+    required bool floating,
+    required bool compact,
+    required bool minimal,
+  }) {
     final override = widget.screensOverride;
     if (override != null) return override;
     final pages = <Widget>[
@@ -373,14 +550,33 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
         state: _state,
         floating: floating,
         compact: compact,
+        minimal: minimal,
         screenshots: widget.screenshots,
+        answerSink: _answerSink,
+        onMinimalBack: () {
+          unawaited(_returnFromMinimal());
+        },
+        onMinimalExpand: () {
+          unawaited(_expandFromMinimal());
+        },
+        onMinimalDragStart: () {
+          unawaited(WindowController.instance.startDragging());
+        },
       ),
-      TodayScreen(active: !floating && _index == 1),
+      TodayScreen(
+        active: !floating && _index == 1,
+      ),
       NotesScreen(active: !floating && _index == 2),
       MaterialsScreen(active: !floating && _index == 3),
       AgentScreen(active: !floating && _index == 4),
       SettingsScreen(active: !floating && _index == 5),
     ];
+    final builder = widget.pageBuilder;
+    if (builder != null) {
+      for (var index = 1; index < pages.length; index++) {
+        pages[index] = builder(index, !floating && _index == index);
+      }
+    }
     if (!floating) return pages;
     // 浮窗只显示对话页，但其余五页仍需“常驻”以保留状态（规格 §5.2）。
     // 它们在 360×420 的窄约束下会 overflow（t5 T5-04：Settings/Materials 等），
@@ -411,7 +607,12 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   Widget _chrome({
     required bool floating,
     required bool compact,
+    required bool minimal,
   }) {
+    if (minimal) {
+      // 极简条本身由 ChatScreen 渲染（三要素）；不显示 FloatingBar/TitleBar。
+      return const SizedBox.shrink();
+    }
     if (floating) {
       return FloatingBar(
         host: _host,
@@ -420,6 +621,9 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
         onDragStart: () => WindowController.instance.startDragging(),
         onClose: () => WindowController.instance.close(),
         onScreenshot: (hideLoop) => requestScreenshot(hideLoop: hideLoop),
+        onMinimize: () {
+          unawaited(_enterMinimal());
+        },
       );
     }
     return TitleBar(
@@ -432,11 +636,18 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    _resolveAnswerHost();
     final floating = _host.isFloating;
+    final minimal = floating && _host.minimal;
     final size = MediaQuery.sizeOf(context);
     final compact = floating &&
+        !minimal &&
         (size.width < compactWidth || size.height < compactHeight);
-    final screens = _buildScreens(floating: floating, compact: compact);
+    final screens = _buildScreens(
+      floating: floating,
+      compact: compact,
+      minimal: minimal,
+    );
     final contentIndex = floating ? 0 : _index.clamp(0, screens.length - 1);
 
     return Scaffold(
@@ -452,9 +663,14 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
               children: [
                 FloatingQaScaffold(
                   floating: floating,
+                  minimal: minimal,
                   framed: framed,
                   maximized: maximized,
-                  chrome: _chrome(floating: floating, compact: compact),
+                  chrome: _chrome(
+                    floating: floating,
+                    compact: compact,
+                    minimal: minimal,
+                  ),
                   sidebar: floating
                       ? const SizedBox.shrink()
                       : _ResponsiveSidebar(index: _index, onSelect: _select),
@@ -464,7 +680,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
                     children: screens,
                   ),
                 ),
-                if (framed && !maximized)
+                if (framed && !maximized && !minimal)
                   const Positioned.fill(child: WindowResizeHandles()),
               ],
             );
@@ -473,4 +689,94 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+/// ChatAnswerSink → t2 `AnswerWindowHost` 的适配器（主窗口唯一数据源）。
+class _ShellChatAnswerSink implements ChatAnswerSink {
+  _ShellChatAnswerSink({
+    required this.host,
+    required this.modeHost,
+    required this.isDark,
+  });
+
+  final AnswerWindowHost host;
+  final FloatingModeHost modeHost;
+  final bool Function() isDark;
+
+  /// ChatScreen 只提供窗口内逻辑矩形；这里结合主窗物理 bounds/dpr 换算成
+  /// 屏幕物理矩形（主机/多屏/DPI 由 host 再做钳制）。
+  Future<void> _submit(ChatSubmission submission) async {
+    Rect? inputBarPhysical;
+    Rect? mainWindowPhysical;
+    try {
+      final snapshot = await modeHost.snapshot();
+      mainWindowPhysical = snapshot.physicalBounds;
+      final rect = submission.inputBarRect;
+      if (rect != null) {
+        final dpr = snapshot.dpr;
+        inputBarPhysical = Rect.fromLTWH(
+          snapshot.physicalBounds.left + rect.left * dpr,
+          snapshot.physicalBounds.top + rect.top * dpr,
+          rect.width * dpr,
+          rect.height * dpr,
+        );
+      }
+    } catch (_) {
+      // 几何不可用也继续创建：host 会退化为窗口底部 120px 排除带（规格 §4.5）。
+    }
+    await host.showOrReplace(AnswerSubmission(
+      question: submission.question,
+      conversationId: '${submission.conversationId}',
+      runId: submission.runId?.toString(),
+      inputBarPhysical: inputBarPhysical,
+      mainWindowPhysical: mainWindowPhysical,
+      themeMode: submission.themeMode.name,
+      dark: submission.themeMode == ThemeMode.dark ||
+          (submission.themeMode == ThemeMode.system && isDark()),
+      fontFamily: 'NotoSC',
+    ));
+  }
+
+  @override
+  void submit(ChatSubmission submission) {
+    unawaited(_submit(submission));
+  }
+
+  @override
+  void appendText(String delta) => host.pushTextDelta(delta);
+
+  @override
+  void setRunId(int? runId) {
+    // 回答窗快照的 runId 在 submit 时已带上；SSE 迟到的 run 事件无需改写。
+  }
+
+  @override
+  void setPlan(List<PlanItem> plan) {
+    host.setPlan([for (final item in plan) item.toJson()]);
+  }
+
+  @override
+  void setStatus(
+    String state, {
+    String? label,
+    bool approvalRequired = false,
+  }) {
+    final status = AnswerStatus.tryParse(state);
+    if (status == null) return;
+    host.setStatus(status, label: label, approvalRequired: approvalRequired);
+  }
+
+  @override
+  void complete({List<RefItem> refs = const []}) {
+    host.setRefs([
+      for (final ref in refs) <String, Object?>{'name': ref.name, 'page': ref.page},
+    ]);
+    host.finish(AnswerStatus.done);
+  }
+
+  @override
+  void stop() => host.finish(AnswerStatus.stopped);
+
+  @override
+  void fail(String message) => host.finish(AnswerStatus.error, error: message);
 }

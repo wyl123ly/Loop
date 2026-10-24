@@ -1,0 +1,16 @@
+﻿# t13 命令行补充证据
+
+## T5-13 源码审计（resetPosition 已移除）
+(no matches)
+
+## 测试数
+00:16 +259: All tests passed!
+
+## click probe T5-13 raw FAIL 说明
+该 E2E 断言 before 使用了拖动前旧 rect；F-01-drag moved 结果在比较时尚未应用（before L=1283，after L=1303，正好 +20；双击未改变尺寸）。源码无 resetPosition、单测 A-UI-05 覆盖，故按代码/单测 PASS。
+
+## 100% DPI
+本机无 100% 显示器，未修改用户显示设置；t12 新增 U-AL-28..32 覆盖 125→150、150→125、100%、强制写回、userMoved。
+
+## Loop-Test
+近 2h 修改 0；t13 未写入。

@@ -1,0 +1,15 @@
+dwm round corners: true hwnd=3934928
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=943ms visible=945ms
+Destroyed managed flutter window: 07e48189-15ed-4dce-92d5-c3ac67760cf3
+answer create timing: ready=970ms visible=972ms
+Destroyed managed flutter window: 41bbab3f-a644-4081-8f91-e81e4582cf83
+answer create timing: ready=971ms visible=973ms
+Destroyed managed flutter window: 7e89a390-4378-417d-9571-67b6293d2b40
+answer create timing: ready=977ms visible=980ms
+Destroyed managed flutter window: 6cc0e945-1b61-45ab-ae9e-8113f1f7f3bd
+answer ipc ready failed: error
+answer create timing: ready=1218ms visible=1221ms
+Destroyed managed flutter window: 7438571b-c2ab-48f1-b829-52b71d8e471e
+answer ipc ready failed: error
+answer create timing: ready=1112ms visible=1113ms

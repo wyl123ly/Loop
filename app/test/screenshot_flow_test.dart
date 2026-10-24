@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:loop/api.dart';
 import 'package:loop/desktop/floating_signals.dart';
+import 'package:loop/desktop/screenshot_types.dart';
 import 'package:loop/desktop/window_mode.dart';
 import 'package:loop/main.dart';
 import 'package:loop/screens/chat_screen.dart';
@@ -318,6 +319,81 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(h.screenshots.startCalls, 1);
     await _cancelOverlay(tester);
+    await _flushSnack(tester);
+  });
+
+  testWidgets('W-SHOT-12 极简条截图：hideLoop=true、恢复回极简条、State 保活', (tester) async {
+    tester.view.physicalSize = const Size(900, 600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final api = FakeLoopApi();
+    final state = fakeAppState(api);
+    final host = FakeFloatingHost();
+    final screenshots = FakeScreenshotService(
+      bytes: await makeTestPng(tester, 360, 52),
+    );
+    ScreenshotSession? session;
+    screenshots.startOverride = () async {
+      session = ScreenshotSession(
+        bytes: screenshots.bytes,
+        snapshot: const WindowSnapshot(
+          mode: LoopWindowMode.floating,
+          bounds: Rect.fromLTWH(0, 0, 360, minimalHeight),
+          physicalBounds: Rect.fromLTWH(0, 0, 360, minimalHeight),
+          dpr: 1.0,
+          maximized: false,
+          alwaysOnTop: true,
+          minSize: minimalMinSize,
+          pinned: true,
+          minimal: true,
+        ),
+        display: const CaptureDisplay(
+          id: 'test-display',
+          physicalWorkArea: Rect.fromLTWH(0, 0, 1920, 1040),
+        ),
+        hidden: true,
+        startedAt: DateTime.now(),
+      );
+      return session;
+    };
+
+    await tester.pumpWidget(MaterialApp(
+      theme: loopTheme(LoopPalette.light),
+      home: Shell(
+        state: state,
+        modeHost: host,
+        screenshots: screenshots,
+        pageBuilder: (index, active) => Placeholder(key: Key('page-$index')),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await host.enterFloating();
+    await tester.pumpAndSettle();
+    tester.view.physicalSize = const Size(360, 52);
+    await tester.pump();
+    await host.enterMinimal();
+    await tester.pumpAndSettle();
+    final chat = tester.state<ChatScreenState>(find.byType(ChatScreen));
+
+    await tester.tap(find.byKey(const Key('minimal-screenshot')));
+    await _requestAndWaitOverlay(tester);
+    expect(screenshots.hideLoopRequests, [true]);
+    expect(session, isNotNull);
+    expect(session!.snapshot.minimal, isTrue);
+    expect(session!.snapshot.minSize, minimalMinSize);
+
+    await _cancelOverlay(tester);
+    expect(screenshots.restoreCalls, 1);
+    expect(screenshots.started, isEmpty, reason: 'startOverride 路径由本测试记录');
+    expect(host.minimal, isTrue, reason: '取消截图后仍保持极简条');
+    expect(find.byKey(const Key('minimal-bar')), findsOneWidget);
+    expect(identical(chat, tester.state<ChatScreenState>(find.byType(ChatScreen))), isTrue);
+    expect(tester.takeException(), isNull);
+
+    // 本测试没有发起 chat，单订阅 StreamController 无监听者时 close() 不会完成。
+    if (api.events.hasListener) await api.events.close();
     await _flushSnack(tester);
   });
 }

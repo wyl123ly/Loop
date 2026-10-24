@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
 import 'floating_signals.dart' as signals;
+import 'minimal_window.dart';
 import 'window_mode.dart';
 
 /// 浮窗形态控制器：唯一的窗口形态状态机（规格 §3 / §4.4）。
@@ -33,9 +34,11 @@ class FloatingWindowController extends ChangeNotifier
 
   LoopWindowMode _mode = LoopWindowMode.normal;
   bool _pinned = false;
+  bool _minimal = false;
   bool _transitioning = false;
   WindowSnapshot? _normalSnapshot;
   WindowSnapshot? _lastFloatingSnapshot;
+  WindowSnapshot? _lastExpandedSnapshot;
   Size _minSize = normalMinSize;
   Timer? _geometryTimer;
   bool _geometryBusy = false;
@@ -64,6 +67,14 @@ class FloatingWindowController extends ChangeNotifier
   @override
   WindowSnapshot? get lastFloatingSnapshot => _lastFloatingSnapshot;
 
+  /// 最近一次进入极简前的浮窗快照（退出极简恢复用）。
+  @override
+  WindowSnapshot? get lastExpandedSnapshot => _lastExpandedSnapshot;
+
+  /// 浮窗的极简子状态。规格 §3.1。
+  @override
+  bool get minimal => _minimal && _mode == LoopWindowMode.floating;
+
   /// 截图覆盖/恢复进行中（与全局信号同步）。
   @override
   bool get captureInProgress => _captureInProgress;
@@ -84,6 +95,7 @@ class FloatingWindowController extends ChangeNotifier
       mode: _mode,
       minSize: _minSize,
       pinned: _mode == LoopWindowMode.floating && _pinned,
+      minimal: _mode == LoopWindowMode.floating && _minimal,
       alwaysOnTop: base.alwaysOnTop,
     );
   }
@@ -183,18 +195,26 @@ class FloatingWindowController extends ChangeNotifier
 
     try {
       // 记住本次浮窗尺寸（退出后用于下一次进入），必须在恢复普通 bounds 前读取。
-      _lastFloatingSnapshot = await this.snapshot();
-
-      var snapshot = _normalSnapshot;
-      if (snapshot == null) {
-        snapshot = await _defaultNormalSnapshot();
-        _normalSnapshot = snapshot;
+      // 极简状态下记录“进入极简前的展开快照”，而不是 360×52 的紧凑条。
+      _lastFloatingSnapshot = _minimal
+          ? (_lastExpandedSnapshot ?? await snapshot())
+          : await snapshot();
+      if (_minimal) {
+        _minimal = false;
+        _lastExpandedSnapshot = null;
+        await platform.setResizable(true);
       }
 
-      await platform.setAlwaysOnTop(snapshot.alwaysOnTop);
-      await platform.setMinimumSize(snapshot.minSize);
-      _minSize = snapshot.minSize;
-      await _restoreNormalBounds(snapshot, retryOnFailure: true);
+      var normal = _normalSnapshot;
+      if (normal == null) {
+        normal = await _defaultNormalSnapshot();
+        _normalSnapshot = normal;
+      }
+
+      await platform.setAlwaysOnTop(normal.alwaysOnTop);
+      await platform.setMinimumSize(normal.minSize);
+      _minSize = normal.minSize;
+      await _restoreNormalBounds(normal, retryOnFailure: true);
       await platform.show();
       if (focus) await platform.focus();
 
@@ -223,10 +243,174 @@ class FloatingWindowController extends ChangeNotifier
     return isFloating ? exitFloating(focus: focus) : enterFloating(focus: focus);
   }
 
+  // -------------------------------------------------------------------------
+  // 极简形态（floating 的子状态）。规格 §3.4。
+  // -------------------------------------------------------------------------
+
+  @override
+  Future<bool> enterMinimal({bool focus = true}) async {
+    if (!platform.supported) return false;
+    if (_mode != LoopWindowMode.floating) return false;
+    if (_minimal) return true;
+    if (_transitioning || _captureInProgress) return false;
+
+    _transitioning = true;
+    notifyListeners();
+
+    final expanded = await snapshot();
+    _lastExpandedSnapshot = expanded;
+    try {
+      await platform.setResizable(false);
+      await platform.setMinimumSize(minimalMinSize);
+      _minSize = minimalMinSize;
+
+      final displays = await _safeDisplays();
+      final target = FloatingWindowPlanner.chooseDisplay(
+        displays,
+        expanded.physicalBounds,
+      );
+      final dpr = FloatingWindowPlanner.normalizedDpr(
+        target?.scaleFactor ?? expanded.dpr,
+      );
+      final work = target?.physicalWorkArea ?? _fallbackWorkArea(expanded);
+      final physical = MinimalWindowPlanner.barPhysical(
+        workPhysical: work,
+        expandedPhysical: expanded.physicalBounds,
+        dpr: dpr,
+      );
+      final logical = _toLogical(physical, dpr);
+
+      await platform.setAlwaysOnTop(true);
+      await _applyBounds(physical, logical);
+      await platform.show();
+      if (focus) await platform.focus();
+      await _verifyBounds(physical, logical, dpr);
+
+      _minimal = true;
+      _pinned = true;
+      _transitioning = false;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      debugPrint('enterMinimal failed: $error');
+      await _rollback(expanded);
+      _minimal = false;
+      _transitioning = false;
+      _pinned = true;
+      _raiseError('切到极简模式失败，已恢复浮窗');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> exitMinimal({bool focus = true}) async {
+    if (!platform.supported) return false;
+    if (!_minimal) return true;
+    if (_transitioning || _captureInProgress) return false;
+
+    _transitioning = true;
+    notifyListeners();
+
+    final expanded = _lastExpandedSnapshot;
+    try {
+      await platform.setResizable(true);
+      if (expanded != null) {
+        await platform.setMinimumSize(expanded.minSize);
+        _minSize = expanded.minSize;
+        await platform.setAlwaysOnTop(expanded.alwaysOnTop);
+        await _restoreBounds(expanded);
+        final dpr = FloatingWindowPlanner.normalizedDpr(expanded.dpr);
+        await _verifyBounds(expanded.physicalBounds, expanded.bounds, dpr);
+        _pinned = expanded.pinned;
+      } else {
+        // 快照丢失的兜底：默认浮窗尺寸/位置，不得停在 52px 半条状态。
+        await platform.setMinimumSize(floatingMinSize);
+        _minSize = floatingMinSize;
+        final displays = await _safeDisplays();
+        final dpr = FloatingWindowPlanner.normalizedDpr(
+          displays.isEmpty ? 1.0 : (displays.first.scaleFactor),
+        );
+        final work = displays.isEmpty
+            ? _fallbackWorkArea(await snapshot())
+            : FloatingWindowPlanner.chooseDisplay(
+                  displays,
+                  await platform.physicalRect(),
+                )?.physicalWorkArea ??
+                displays.first.physicalWorkArea;
+        final logical = FloatingWindowPlanner.placeFloating(
+          work,
+          dpr,
+          floatingDefaultSize,
+          floatingMinSize,
+          floatingMargin,
+        );
+        final physical = _toPhysical(logical, dpr);
+        await platform.setAlwaysOnTop(true);
+        await _applyBounds(physical, logical);
+        _pinned = true;
+      }
+      await platform.show();
+      if (focus) await platform.focus();
+      _minimal = false;
+      _lastExpandedSnapshot = null;
+      _transitioning = false;
+      notifyListeners();
+      return true;
+    } catch (error) {
+      debugPrint('exitMinimal failed: $error');
+      // 兜底：退出到默认浮窗（不得停在半 bar/半 fullscreen）。
+      try {
+        await platform.setResizable(true);
+        await platform.setMinimumSize(floatingMinSize);
+        _minSize = floatingMinSize;
+        final displays = await _safeDisplays();
+        final dpr = FloatingWindowPlanner.normalizedDpr(
+          displays.isEmpty ? 1.0 : displays.first.scaleFactor,
+        );
+        final work = displays.isEmpty
+            ? _fallbackWorkArea(await snapshot())
+            : displays.first.physicalWorkArea;
+        final logical = FloatingWindowPlanner.placeFloating(
+          work,
+          dpr,
+          floatingDefaultSize,
+          floatingMinSize,
+          floatingMargin,
+        );
+        await platform.setAlwaysOnTop(true);
+        await _applyBounds(_toPhysical(logical, dpr), logical);
+        await platform.show();
+      } catch (fallbackError) {
+        debugPrint('exitMinimal fallback failed: $fallbackError');
+      }
+      _minimal = false;
+      _lastExpandedSnapshot = null;
+      _transitioning = false;
+      _pinned = true;
+      _raiseError('恢复浮窗失败，已使用默认浮窗');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> toggleMinimal({bool focus = true}) {
+    return _minimal ? exitMinimal(focus: focus) : enterMinimal(focus: focus);
+  }
+
   @override
   Future<void> setPinned(bool value) async {
     if (!supported) return;
     if (_mode != LoopWindowMode.floating) return; // 普通窗口不主动置顶
+    if (_minimal) {
+      // 极简条恒置顶；退出极简时恢复进入前的 pinned（规格 §3.5）。
+      if (!_pinned) {
+        _pinned = true;
+        notifyListeners();
+      }
+      return;
+    }
     if (_pinned == value) return;
     await platform.setAlwaysOnTop(value);
     _pinned = value;
@@ -258,7 +442,23 @@ class FloatingWindowController extends ChangeNotifier
       final physical = await platform.physicalRect();
       final dpr = FloatingWindowPlanner.normalizedDpr(await platform.dpr());
 
-      if (_mode == LoopWindowMode.floating) {
+      if (_mode == LoopWindowMode.floating && _minimal) {
+        final target = FloatingWindowPlanner.chooseDisplay(displays, physical);
+        if (target == null) return;
+        final clamped = MinimalWindowPlanner.clampBar(
+          physical: physical,
+          workPhysical: target.physicalWorkArea,
+          dpr: dpr,
+        );
+        if (clamped == physical) {
+          if (_pinned && !await platform.isAlwaysOnTop()) {
+            await platform.setAlwaysOnTop(true);
+          }
+          return;
+        }
+        await _applyBounds(clamped, _toLogical(clamped, dpr));
+        if (_pinned) await platform.setAlwaysOnTop(true);
+      } else if (_mode == LoopWindowMode.floating) {
         final target = FloatingWindowPlanner.chooseDisplay(displays, physical);
         if (target == null) return;
         if (FloatingWindowPlanner.isInsideWorkArea(
@@ -345,7 +545,8 @@ class FloatingWindowController extends ChangeNotifier
   }) async {
     if (!supported) return;
     try {
-      await platform.setResizable(true);
+      final minimal = snapshot.minimal && snapshot.mode == LoopWindowMode.floating;
+      await platform.setResizable(!minimal);
       await platform.setMinimumSize(snapshot.minSize);
       _minSize = snapshot.minSize;
       await platform.setAlwaysOnTop(snapshot.alwaysOnTop);
@@ -360,6 +561,9 @@ class FloatingWindowController extends ChangeNotifier
       }
       await platform.show();
       if (focus) await platform.focus();
+      // 截图恢复：极简快照恢复回 52px 紧凑条（规格 §3.7 / I-9）。
+      _minimal = minimal;
+      if (minimal) _pinned = true;
       if (_mode != snapshot.mode) {
         // applySnapshot 不修改形态：截图前是浮窗，恢复后仍是浮窗。
         debugPrint(
@@ -423,6 +627,13 @@ class FloatingWindowController extends ChangeNotifier
         logical.top * dpr,
         logical.width * dpr,
         logical.height * dpr,
+      );
+
+  Rect _toLogical(Rect physical, double dpr) => Rect.fromLTWH(
+        physical.left / dpr,
+        physical.top / dpr,
+        physical.width / dpr,
+        physical.height / dpr,
       );
 
   Future<void> _applyBounds(Rect physical, Rect logical) async {

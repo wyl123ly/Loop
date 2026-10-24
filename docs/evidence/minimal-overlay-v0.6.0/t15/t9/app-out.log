@@ -1,0 +1,7 @@
+dwm round corners: true hwnd=19663918
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=981ms visible=983ms
+answer userMoved nudged for input bar: rect=(1158,188,896,950) input=(2064,964,1018,133)
+answer userMoved nudged for input bar: rect=(1050,188,896,950) input=(1956,961,573,133)
+Destroyed managed flutter window: d63b5557-0f5c-44bb-adc3-a14887fe4802
+answer create timing: ready=1073ms visible=1075ms

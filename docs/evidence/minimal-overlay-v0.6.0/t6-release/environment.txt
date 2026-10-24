@@ -1,0 +1,9 @@
+﻿# t6 发布环境快照（2026-10-25 00:19–00:30 +08:00）
+
+- HEAD ac3f767（v0.5.0）→ v0.6.0 集成；pubspec 0.6.0+15，AppVersion 0.6.0
+- Flutter 3.47.7 / Dart 3.13.5；build windows --release 成功；build_native 成功
+- release/Loop-Desktop、release/Loop-Desktop-win64.zip 已重建
+- 构建前 loopCount=0 / port8765=0；未停止任何用户实例
+- 官方产物冒烟：release/Loop-Desktop/Loop.exe + 隔离 LOOP_DATA_DIR + mock LLM @9999
+- 显示器：主 2560×1440@125%，副 2560×1600@150%（任务栏自动隐藏）；无 100% DPI
+- Loop-Test 未改；未推送 GitHub Release

@@ -1,0 +1,20 @@
+dwm round corners: true hwnd=19205178
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=974ms visible=977ms
+Destroyed managed flutter window: 4390ee68-8f67-4efd-8df1-33193423a465
+answer create timing: ready=1042ms visible=1046ms
+Destroyed managed flutter window: c79822c6-ff8d-46ca-9eab-9682eef87975
+answer create timing: ready=974ms visible=977ms
+Destroyed managed flutter window: a5d671f8-285d-4764-a135-d8246211d342
+answer create timing: ready=947ms visible=950ms
+answer anchors updated: input=(2189,1077,1018,133)
+answer anchors updated: input=(2081,896,448,86)
+answer anchors updated: input=(2081,1358,450,86)
+answer anchors updated: input=(2081,919,448,63)
+answer anchors updated: input=(2081,1358,450,86)
+Destroyed managed flutter window: f2a47530-789f-42aa-b3aa-4977e740ff64
+answer ipc ready failed: error
+answer create timing: ready=1190ms visible=1193ms
+Destroyed managed flutter window: 67552545-0cbc-4a45-929d-2fcc0da06931
+answer create timing: ready=999ms visible=1001ms
+answer ipc content_height failed: CHANNEL_UNREGISTERED

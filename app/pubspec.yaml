@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.5.0+14
+version: 0.6.0+15
 
 environment:
   sdk: ^3.13.5
@@ -53,6 +53,11 @@ dependencies:
   launch_at_startup: ^0.5.1
   local_notifier: ^0.1.6
   web_socket_channel: ^3.0.3
+  # R1-B：vendored 补丁（WM_MOUSEACTIVATE→MA_NOACTIVATE、创建即
+  # WS_EX_NOACTIVATE|WS_EX_TOOLWINDOW、SW_SHOWNOACTIVATE），见
+  # third_party/desktop_multi_window/README-LOOP-PATCH.md（v0.3.1）。
+  desktop_multi_window:
+    path: third_party/desktop_multi_window
 
 dev_dependencies:
   flutter_test:

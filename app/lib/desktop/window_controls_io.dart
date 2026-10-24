@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'answer_host/answer_transport_io.dart';
+import 'answer_host/answer_window_host.dart';
 import 'dwm.dart';
 import 'floating_signals.dart';
 import 'floating_window.dart';
 import 'hotkeys.dart';
+import 'minimal_window.dart';
 import 'screenshot_service.dart';
 import 'system_scale.dart';
 import 'win32_display.dart';
@@ -30,7 +33,10 @@ class WindowController with WindowListener, ScreenListener {
   final ValueNotifier<bool> maximized = ValueNotifier<bool>(false);
   final ValueNotifier<bool> readyNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> resizing = ValueNotifier<bool>(false);
+  /// T5-05：主窗几何/形态变化 tick；UI 监听后重报回答窗 anchor rect。
+  final ValueNotifier<int> geometryEpoch = ValueNotifier<int>(0);
   Timer? _resizeTimer;
+  bool _floatingGeometryListenerAttached = false;
 
   final _DesktopWindowPlatform _platform = _DesktopWindowPlatform();
 
@@ -40,8 +46,28 @@ class WindowController with WindowListener, ScreenListener {
     onError: (message) => floatingError.value = message,
   );
 
+  /// 回答浮窗宿主：第二顶层窗口 + IPC + 动态尺寸（t3 提交钩子调用）。
+  late final AnswerWindowHost answers = AnswerWindowHost(
+    platform: DesktopAnswerWindowPlatform(
+      mainWindowHwnd: () => hwnd(),
+      focusMain: () async {
+        if (!ready) return;
+        try {
+          await windowManager.focus();
+        } catch (error) {
+          debugPrint('answer focus main failed: $error');
+        }
+      },
+    ),
+    onError: (message) => answerError.value = message,
+    onPresenceChanged: _onAnswerPresenceChanged,
+  );
+
   /// 形态切换失败的提示（UI 可监听并 snack 一次）。
   final ValueNotifier<String?> floatingError = ValueNotifier<String?>(null);
+
+  /// 回答浮窗创建/渲染失败的提示（主聊天继续；显式失败，不静默降级）。
+  final ValueNotifier<String?> answerError = ValueNotifier<String?>(null);
 
   /// 平台截图服务（ChatScreen 可注入 fake；默认走 ScreenshotCapture）。
   final ScreenshotService screenshots = const PlatformScreenshotService();
@@ -53,6 +79,9 @@ class WindowController with WindowListener, ScreenListener {
 
   int? _hwnd;
   bool _screenListenerAttached = false;
+  bool _closing = false;
+  bool _quitting = false;
+  Timer? _minimalTriggerTimer;
 
   Future<void> init() async {
     try {
@@ -92,6 +121,10 @@ class WindowController with WindowListener, ScreenListener {
       _hwnd = hwnd == 0 ? null : hwnd;
       debugPrint('dwm round corners: $rounded hwnd=$hwnd');
       readyNotifier.value = true;
+      if (!_floatingGeometryListenerAttached) {
+        floating.addListener(_bumpGeometry);
+        _floatingGeometryListenerAttached = true;
+      }
       // 快捷键注册失败不阻塞启动，按钮始终可用（规格 §8.3）。
       await _registerHotkeys();
     } catch (error) {
@@ -114,12 +147,34 @@ class WindowController with WindowListener, ScreenListener {
 
   Future<void> enableTray() async {
     trayActive = true;
-    await windowManager.setPreventClose(true);
+    await _syncPreventClose();
+  }
+
+  /// 回答窗存在期间主窗口必须 preventClose（避免原生 WM_CLOSE 先销毁主窗
+  /// 留下孤儿；规格 §2.9）。
+  Future<void> _syncPreventClose() async {
+    if (!ready) return;
+    final shouldPrevent = trayActive || answers.hasWindow;
+    try {
+      await windowManager.setPreventClose(shouldPrevent);
+    } catch (error) {
+      debugPrint('setPreventClose($shouldPrevent) failed: $error');
+    }
+  }
+
+  void _onAnswerPresenceChanged(bool present) async {
+    await _syncPreventClose();
+  }
+
+  /// T5-05：通知 UI 主窗几何/形态已变化（DEBOUNCE 由 Shell post-frame 合并）。
+  void _bumpGeometry() {
+    geometryEpoch.value++;
   }
 
   /// 显示窗口。仅托盘“显示回路”/启动等白名单路径允许 `focus: true`。
   Future<void> show({bool focus = true}) async {
     await _platform.show();
+    await answers.restoreVisibility();
     if (focus) await _platform.focus();
   }
 
@@ -133,7 +188,17 @@ class WindowController with WindowListener, ScreenListener {
   }
 
   Future<void> quit() async {
+    if (_quitting) return;
+    _quitting = true;
     trayActive = false;
+    _minimalTriggerTimer?.cancel();
+    _minimalTriggerTimer = null;
+    // 先关回答窗，再退主窗；否则主窗先关会留下孤儿进程（规格 §2.9）。
+    try {
+      await answers.shutdown();
+    } catch (error) {
+      debugPrint('answer shutdown failed: $error');
+    }
     try {
       await HotkeyService.instance.unregister();
     } catch (error) {
@@ -146,18 +211,26 @@ class WindowController with WindowListener, ScreenListener {
       _screenListenerAttached = false;
     }
     floating.dispose();
-    await windowManager.setPreventClose(false);
+    try {
+      await windowManager.setPreventClose(false);
+    } catch (error) {
+      debugPrint('setPreventClose(false) failed: $error');
+    }
     await windowManager.close();
   }
 
   /// DPI/缩放变化（由 Shell 的 `didChangeMetrics` 调用）。不 focus、不改 mode。
   void onMetricsChanged() {
     floating.scheduleEnsureGeometry();
+    _bumpGeometry();
+    unawaited(answers.ensureOnScreen());
   }
 
   @override
   void onScreenEvent(String eventName) {
     floating.scheduleEnsureGeometry();
+    _bumpGeometry();
+    unawaited(answers.ensureOnScreen());
   }
 
   @override
@@ -173,23 +246,126 @@ class WindowController with WindowListener, ScreenListener {
   void onWindowResized() {
     _resizeTimer?.cancel();
     resizing.value = false;
+    _maybeEnterMinimalAfterResize();
+    unawaited(_notifyMainWindowGeometry());
+    _bumpGeometry();
+  }
+
+  @override
+  void onWindowMoved() {
+    unawaited(_notifyMainWindowGeometry());
+    _bumpGeometry();
+  }
+
+  @override
+  void onWindowMinimize() {
+    // 主窗最小化：回答窗一并隐藏（保留引擎/状态），恢复时无激活显示。
+    unawaited(answers.hide());
+  }
+
+  @override
+  void onWindowRestore() {
+    unawaited(answers.restoreVisibility());
+  }
+
+  @override
+  void onWindowFocus() {
+    // 主窗重新激活：无激活把回答窗抬到最上层，不改变焦点（规格 §2.8）。
+    unawaited(answers.bringToFront());
   }
 
   @override
   void onWindowClose() {
-    if (trayActive) unawaited(windowManager.hide());
+    if (_quitting) return;
+    if (trayActive) {
+      // 关闭到托盘：隐藏而不是退出；回答窗随之隐藏（不销毁）。
+      unawaited(_hideToTray());
+      return;
+    }
+    unawaited(_closeWithAnswerCleanup());
+  }
+
+  Future<void> _hideToTray() async {
+    await answers.hide();
+    await windowManager.hide();
+  }
+
+  /// 主窗关闭顺序：先关回答窗（≤1s+兜底 500ms）再恢复 preventClose 并关主窗。
+  Future<void> _closeWithAnswerCleanup() async {
+    if (_closing) return;
+    _closing = true;
+    try {
+      await answers.shutdown();
+    } catch (error) {
+      debugPrint('answer shutdown before close failed: $error');
+    }
+    try {
+      await windowManager.setPreventClose(false);
+    } catch (error) {
+      debugPrint('setPreventClose(false) failed: $error');
+    }
+    try {
+      await windowManager.close();
+    } catch (error) {
+      debugPrint('window close failed: $error');
+    } finally {
+      _closing = false;
+    }
+  }
+
+  Future<void> _notifyMainWindowGeometry() async {
+    if (!ready) return;
+    try {
+      final rect = await _platform.physicalRect();
+      await answers.onMainWindowMoved(rect);
+    } catch (error) {
+      debugPrint('answer main window geometry sync failed: $error');
+    }
+  }
+
+  /// 用户把浮窗缩放到最小（360×420）后 250ms 去抖进入极简条（规格 §3.3）。
+  void _maybeEnterMinimalAfterResize() {
+    if (!ready) return;
+    if (!floating.isFloating || floating.minimal) return;
+    if (floating.transitioning || floating.captureInProgress) return;
+    _minimalTriggerTimer?.cancel();
+    _minimalTriggerTimer = Timer(minimalEnterDelay, () async {
+      if (!ready ||
+          !floating.isFloating ||
+          floating.minimal ||
+          floating.transitioning ||
+          floating.captureInProgress) {
+        return;
+      }
+      try {
+        final physical = await _platform.physicalRect();
+        final dpr = FloatingWindowPlanner.normalizedDpr(await _platform.dpr());
+        final logical = Rect.fromLTWH(
+          physical.left / dpr,
+          physical.top / dpr,
+          physical.width / dpr,
+          physical.height / dpr,
+        );
+        if (!MinimalWindowPlanner.isAtFloatingMinimum(logical)) return;
+        await floating.enterMinimal();
+      } catch (error) {
+        debugPrint('auto enter minimal failed: $error');
+      }
+    });
   }
 
   @override
   void onWindowMaximize() {
     maximized.value = true;
     resizing.value = false;
+    _bumpGeometry();
   }
 
   @override
   void onWindowUnmaximize() {
     maximized.value = false;
     resizing.value = false;
+    _bumpGeometry();
   }
 
   Future<void> startResizing(LoopResizeEdge edge) async {

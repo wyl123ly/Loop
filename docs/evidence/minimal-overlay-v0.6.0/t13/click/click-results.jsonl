@@ -1,0 +1,14 @@
+{"id":"F-01-click-1","status":"PASS","detail":"第 1 次点击正文 fg=23397372 focus=10423288","at":"23:50:32.107","data":{"focus":"10423288","fg":"23397372"}}
+{"id":"F-01-click-2","status":"PASS","detail":"第 2 次点击正文 fg=23397372 focus=10423288","at":"23:50:32.984","data":{"focus":"10423288","fg":"23397372"}}
+{"id":"F-01-click-3","status":"PASS","detail":"第 3 次点击正文 fg=23397372 focus=10423288","at":"23:50:33.837","data":{"focus":"10423288","fg":"23397372"}}
+{"id":"F-01-click-4","status":"PASS","detail":"第 4 次点击正文 fg=23397372 focus=10423288","at":"23:50:34.708","data":{"focus":"10423288","fg":"23397372"}}
+{"id":"F-01-click-5","status":"PASS","detail":"第 5 次点击正文 fg=23397372 focus=10423288","at":"23:50:35.573","data":{"focus":"10423288","fg":"23397372"}}
+{"id":"F-01-drag","status":"PASS","detail":"拖标题后 fg/focus 不变 fg=23397372 focus=10423288","at":"23:50:37.034"}
+{"id":"F-01-scrollbar","status":"PASS","detail":"拖滚动条后 fg/focus 不变 fg=23397372 focus=10423288","at":"23:50:38.587"}
+{"id":"F-01-wheel","status":"PASS","detail":"滚轮后 fg/focus 不变 fg=23397372 focus=10423288","at":"23:50:39.457"}
+{"id":"T5-13-dblclick","status":"FAIL","detail":"双击标题不改变布局（resetPosition 已移除）","at":"23:50:40.838","data":{"before":{"L":1283,"T":913,"W":896,"H":225},"after":{"Hwnd":36832080,"HwndInt":36832080,"Class":"FLUTTER_MULTI_WINDOW_WIN32_WINDOW","ProcId":19056,"Left":1303,"Top":913,"Right":2199,"Bottom":1138,"Width":896,"Height":225,"Visible":true,"Style":"0x94000000","ExStyle":"0x8000088","Foreground":false,"Dpi":120}}}
+{"id":"F-01-submit","status":"PASS","detail":"交互后继续输入并提交成功","at":"23:50:42.626"}
+{"id":"F-01-episodes","status":"PASS","detail":"focus 阶段前台 episodes=0 max=0ms over100=0","at":"23:50:42.655","data":{"episodes":[]}}
+{"id":"T5-04","status":"PASS","detail":"resync_requested=0","at":"23:50:42.665"}
+{"id":"F-06","status":"PASS","detail":"chrome failed=0","at":"23:50:42.667"}
+{"id":"F-01-text","status":"PASS","detail":"中文文本完整提交（messages 含 测试好）","at":"23:50:42.759","data":{"messages":{"value":["测试好","焦点保持"],"Count":2}}}

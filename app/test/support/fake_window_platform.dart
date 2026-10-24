@@ -51,6 +51,7 @@ class FakeWindowPlatform implements WindowPlatform {
   bool maximizedValue;
   bool alwaysOnTopValue;
   Size minSizeValue;
+  bool resizableValue = true;
 
   /// false 时模拟平台不支持 SetWindowPlacement（走回退流程）。
   bool supportsWindowPlacementValue;
@@ -252,6 +253,7 @@ class FakeWindowPlatform implements WindowPlatform {
   @override
   Future<void> setResizable(bool value) async {
     await _enter('setResizable', value);
+    resizableValue = value;
   }
 
   @override

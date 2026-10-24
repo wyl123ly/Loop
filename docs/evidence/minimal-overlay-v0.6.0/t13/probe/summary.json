@@ -1,0 +1,22 @@
+﻿{
+    "failures":  1,
+    "t5timings":  [
+                      {
+                          "round":  1,
+                          "visibleMs":  1125
+                      },
+                      {
+                          "round":  2,
+                          "visibleMs":  1030
+                      },
+                      {
+                          "round":  3,
+                          "visibleMs":  1051
+                      }
+                  ],
+    "maxAnswerForegroundMs":  94,
+    "anchors":  0,
+    "overlaps":  0,
+    "resync":  0,
+    "chrome":  0
+}

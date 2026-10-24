@@ -1,0 +1,80 @@
+﻿# t4 验证环境快照（2026-10-24 22:36 +08:00）
+
+## 应用与构建
+- 仓库: D:\DSH_Workspace\Prog2_app
+- HEAD: ac3f767 (v0.5.0-1-gac3f767)
+- app/pubspec.yaml version: 0.5.0+14（未提升；v0.6.0 留 t6）
+- Flutter: 3.47.7 stable; Dart 3.13.5
+- 构建命令: .tools\flutter\bin\flutter.bat build windows --release（在 app/ 下）
+- 构建产物: app\build\windows\x64\runner\Release\loop.exe
+- loop.exe SHA256: 110BE3EAD0CCC94534F136C51C5A4F07A69D0E13AEA03B1F325C2A131BE00C95
+- 构建日期: 2026-10-24 21:28（本任务重新构建验证，未覆盖 release\Loop-Desktop）
+
+## 显示器（DPI-aware 查询）
+- 主屏: 0,0 2560x1440 @125% (DPI 120)；rcWork=rcMonitor（任务栏自动隐藏/不在主屏）
+- 副屏: -2560,-58 2560x1600 @150% (DPI 144)；rcWork=rcMonitor
+- DISPLAY1/DISPLAY2 逻辑工作区: 主 2048x1152; 副 1706.7x1066.7
+
+## 隔离与 mock
+- LOOP_DATA_DIR 每次使用 %TEMP%\loop-t4-evidence\runN\data（空 loop.db）
+- mock LLM: docs\streaming-evidence\tools\mock_llm.py @127.0.0.1:9999
+- backend: 127.0.0.1:8765（进程内）；运行前确认无用户 loop 实例、端口空闲
+- 未停止用户实例（运行前/后均检查 Get-Process loop）
+- 证据目录不包含桌面全屏截图；截图覆盖层/附件缩略图相关桌面图已排除或未入库
+
+## 快捷键环境
+- 独立 P/Invoke RegisterHotKey(Alt+Q/Alt+A) 均返回 False, error=1409 (ERROR_HOTKEY_ALREADY_REGISTERED)
+- 应用 stdout: hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+- UI 按钮路径可用；Alt+Q/Alt+A 热键路径本环境不可测
+
+## IME 环境
+- HKCU Preload: 00000804；Microsoft Pinyin TSF 已安装；Get-WinUserLanguageList 返回空
+- 自动化 ImmGetContext(focus child/top-level) 返回 0，无法启动真实中文组合；列为人工限制
+
+## 版本控制状态
+- 本任务只新增 docs/minimal-overlay-test-report.md 与 docs/evidence/minimal-overlay-v0.6.0/**；未改 app/lib、app/test、windows、pubspec、release/
+- Loop-Test: 最近修改时间 2026-10-24 14:5x，早于本任务开始（21:55），t4 未写入
+- 未执行 git push/tag、未创建 GitHub Release
+
+## 本任务基线（HEAD ac3f767）
+- flutter analyze --no-pub: No issues found
+- flutter test --no-pub: 241/241 All tests passed
+- flutter build windows --release: success
+
+## git status --short（本任务开始时）
+ M app/lib/desktop/floating_window.dart
+ M app/lib/desktop/screenshot_capture_io.dart
+ M app/lib/desktop/screenshot_types.dart
+ M app/lib/desktop/win32_display.dart
+ M app/lib/desktop/window_controls_io.dart
+ M app/lib/desktop/window_controls_stub.dart
+ M app/lib/desktop/window_mode.dart
+ M app/lib/main.dart
+ M app/lib/screens/chat_screen.dart
+ M app/lib/widgets/floating_bar.dart
+ M app/lib/widgets/floating_qa_scaffold.dart
+ M app/pubspec.lock
+ M app/pubspec.yaml
+ M app/test/floating_shell_test.dart
+ M app/test/screenshot_capture_test.dart
+ M app/test/screenshot_flow_test.dart
+ M app/test/support/fake_floating_host.dart
+ M app/test/support/fake_window_platform.dart
+ M app/windows/flutter/generated_plugin_registrant.cc
+ M app/windows/flutter/generated_plugins.cmake
+?? .agent-teams/
+?? app/lib/answer_ui/
+?? app/lib/desktop/answer_host/
+?? app/lib/desktop/minimal_window.dart
+?? app/lib/widgets/minimal_bar.dart
+?? app/test/answer_geometry_test.dart
+?? app/test/answer_lifecycle_test.dart
+?? app/test/answer_protocol_test.dart
+?? app/test/answer_window_test.dart
+?? app/test/chat_answer_trigger_test.dart
+?? app/test/minimal_bar_test.dart
+?? app/test/minimal_window_test.dart
+?? app/test/support/fake_answer_platform.dart
+?? app/test/support/fake_answer_transport.dart
+?? docs/evidence/
+?? docs/minimal-overlay-spec.md

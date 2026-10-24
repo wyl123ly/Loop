@@ -22,6 +22,7 @@ class FloatingBar extends StatelessWidget {
     required this.onDragStart,
     required this.onClose,
     required this.onScreenshot,
+    this.onMinimize,
     this.compact = false,
   });
 
@@ -38,6 +39,9 @@ class FloatingBar extends StatelessWidget {
 
   /// 发起截图：`true`=隐藏 Loop 后截图（默认），`false`=直接截图。
   final ValueChanged<bool> onScreenshot;
+
+  /// 最小化到极简条（规格 §3.3）。为空时不渲染该按钮（兼容旧测试构造）。
+  final VoidCallback? onMinimize;
 
   final bool compact;
 
@@ -190,6 +194,16 @@ class FloatingBar extends StatelessWidget {
                 active: host.pinned,
                 onTap: _togglePin,
               ),
+              if (onMinimize != null)
+                _BarButton(
+                  key: const Key('floating-minimize'),
+                  icon: Icons.unfold_less_rounded,
+                  tooltip: '收起为极简条',
+                  width: _buttonWidth,
+                  height: _buttonHeight,
+                  enabled: !busy,
+                  onTap: onMinimize!,
+                ),
               _BarButton(
                 key: const Key('floating-back'),
                 icon: Icons.open_in_full_rounded,

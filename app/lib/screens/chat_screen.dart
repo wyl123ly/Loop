@@ -16,7 +16,54 @@ import '../widgets/agent_plan_card.dart';
 import '../widgets/glass.dart';
 import '../widgets/image_preview.dart';
 import '../widgets/markdown_text.dart';
+import '../widgets/minimal_bar.dart';
 import 'screenshot_overlay.dart';
+
+/// 主窗口提交问题时的载荷（t3 侧；Shell 转成 t2 `AnswerSubmission`）。
+@immutable
+class ChatSubmission {
+  const ChatSubmission({
+    required this.conversationId,
+    required this.question,
+    this.runId,
+    this.inputBarRect,
+    this.themeMode = ThemeMode.system,
+  });
+
+  final int conversationId;
+
+  /// 已 trim 的非空问题文本（附件-only 不会生成该对象）。
+  final String question;
+  final int? runId;
+
+  /// 输入条在**主窗口逻辑坐标**中的矩形；主窗口/DPI 换算由 host 完成。
+  final Rect? inputBarRect;
+  final ThemeMode themeMode;
+}
+
+/// ChatScreen SSE → 回答窗 host 的数据源接口。
+///
+/// 生产实现由 Shell 适配 t2 的 `AnswerWindowHost`；widget 测试用 fake 记录
+/// 调用。回答窗是只读镜像，所有写操作仍只发生在主窗口。
+abstract class ChatAnswerSink {
+  void submit(ChatSubmission submission);
+
+  /// 流式增量（stream_output=false 时只收到一次整段文本）。
+  void appendText(String delta);
+
+  void setRunId(int? runId);
+
+  void setPlan(List<PlanItem> plan);
+
+  /// `state` 取协议 wire 值：thinking/streaming/tool/waiting_approval/done/stopped/error。
+  void setStatus(String state, {String? label, bool approvalRequired = false});
+
+  void complete({List<RefItem> refs = const []});
+
+  void stop();
+
+  void fail(String message);
+}
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -25,8 +72,13 @@ class ChatScreen extends StatefulWidget {
     this.state,
     this.floating = false,
     this.compact = false,
+    this.minimal = false,
     this.screenshots,
     this.screenshotSignal,
+    this.answerSink,
+    this.onMinimalBack,
+    this.onMinimalExpand,
+    this.onMinimalDragStart,
   });
 
   final bool active;
@@ -40,11 +92,27 @@ class ChatScreen extends StatefulWidget {
   /// 浮窗紧凑模式（宽 <420 或高 <520）。
   final bool compact;
 
+  /// 极简形态（规格 §3）：只渲染 52px 紧凑条，消息区/页头不 build；
+  /// 本 State（消息/附件/SSE/输入）保持不销毁。
+  final bool minimal;
+
   /// 截图服务；测试注入 fake，生产使用平台实现。
   final ScreenshotService? screenshots;
 
   /// 截图请求信号（Alt+A / 浮窗截图按钮）；为空时监听全局信号。
   final ValueListenable<ScreenshotRequest?>? screenshotSignal;
+
+  /// 回答浮窗数据源（可选；未注入时不产生任何回答窗行为）。
+  final ChatAnswerSink? answerSink;
+
+  /// 极简条“返回”= 退出浮窗到主窗口（不是展开到浮窗）。
+  final VoidCallback? onMinimalBack;
+
+  /// 双击极简条拖动区 = 退出极简、恢复展开浮窗。
+  final VoidCallback? onMinimalExpand;
+
+  /// 极简条拖动（注入 WindowController.startDragging）。
+  final VoidCallback? onMinimalDragStart;
 
   @override
   State<ChatScreen> createState() => ChatScreenState();
@@ -88,6 +156,13 @@ class ChatScreenState extends State<ChatScreen> {
   /// 已消费的截图请求 nonce，避免同一次请求重复触发。
   int _lastScreenshotNonce = 0;
 
+  /// 输入条（常规 composer / 极简条）在窗口内的逻辑矩形，用于回答窗定位；
+  /// 物理像素与窗口原点换算由主窗口 host 完成（规格 §4.5）。
+  final GlobalKey _inputBarKey = GlobalKey(debugLabel: 'chat-input-bar');
+
+  /// 进入极简前输入框是否有焦点（退出时按需恢复一次）。
+  bool _hadInputFocusBeforeMinimal = false;
+
   // ---------------------------------------------------------------------------
   // 测试可观测接口（只读；字段保持私有）。
   // ---------------------------------------------------------------------------
@@ -114,6 +189,21 @@ class ChatScreenState extends State<ChatScreen> {
 
   @visibleForTesting
   bool get followTail => _followTail;
+
+  /// 输入条当前逻辑矩形；未布局时返回 null。
+  ///
+  /// 生产用途：回答窗几何排除区（提交载荷 + Shell anchor 周期同步）。
+  Rect? get inputBarRect {
+    final render = _inputBarKey.currentContext?.findRenderObject();
+    if (render is! RenderBox || !render.hasSize) return null;
+    return render.localToGlobal(Offset.zero) & render.size;
+  }
+
+  /// 回答窗创建后的一次性焦点补偿（`AnswerWindowHost.onFocusCompensation`）。
+  void focusInput() {
+    if (!mounted) return;
+    _focus.requestFocus();
+  }
 
   ValueListenable<ScreenshotRequest?> get _screenshotSignal =>
       widget.screenshotSignal ?? screenshotRequestSignal;
@@ -153,6 +243,20 @@ class ChatScreenState extends State<ChatScreen> {
     if (!identical(oldSignal, newSignal)) {
       oldSignal.removeListener(_onScreenshotRequest);
       newSignal.addListener(_onScreenshotRequest);
+    }
+    // 极简形态切换：进入时聚焦输入一次（用户动作）；退出时仅当进入前有焦点
+    // 才恢复一次（规格 §2.8/§3.5），拖动/流式不抢焦。
+    if (widget.minimal && !oldWidget.minimal) {
+      _hadInputFocusBeforeMinimal = _focus.hasFocus;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.minimal && widget.active) _focus.requestFocus();
+      });
+    } else if (!widget.minimal && oldWidget.minimal) {
+      if (_hadInputFocusBeforeMinimal) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && widget.active) _focus.requestFocus();
+        });
+      }
     }
     // 只有“从别的页签切到对话页”才聚焦一次；浮窗↔主窗口且一直在对话页
     // 时 active 不变，不重复抢焦点（规格 §8.4 / FR-11）。
@@ -394,6 +498,11 @@ class ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty && _attachments.isEmpty) return;
 
+    // 只有非空文本才创建/更新回答浮窗；附件-only 沿用 v0.5.0 主聊天行为
+    // （规格 §4.1）。输入条矩形用于主窗口计算回答窗位置（§4.5）。
+    final showInAnswerWindow = text.isNotEmpty;
+    final inputBarRect = this.inputBarRect;
+
     final userMessage = Message(
       role: 'user',
       content: text.isEmpty ? '（见附件）' : text,
@@ -416,12 +525,24 @@ class ChatScreenState extends State<ChatScreen> {
     });
     _scrollToEnd();
 
+    var submitted = false;
     try {
       var convId = _conversationId;
       if (convId == null) {
         convId = await _appState.api.createConversation();
         _conversationId = convId;
         _appState.setCurrentConversation(convId);
+      }
+      if (showInAnswerWindow) {
+        // 用户按下发送即创建（显示“思考中”），不等首个 delta（规格 §4.1）。
+        widget.answerSink?.submit(ChatSubmission(
+          conversationId: convId,
+          question: text,
+          runId: _runId,
+          inputBarRect: inputBarRect,
+          themeMode: _appState.themeMode,
+        ));
+        submitted = true;
       }
       await for (final event in _appState.api.chat(
         conversationId: convId,
@@ -436,25 +557,33 @@ class ChatScreenState extends State<ChatScreen> {
           case 'delta':
             final delta = (event.data['text'] ?? '') as String;
             setState(() => assistant.content += delta);
+            if (submitted) widget.answerSink?.appendText(delta);
             _scrollToEnd();
           case 'run':
-            setState(() => _runId = (event.data['run_id'] as num?)?.toInt());
+            final runId = (event.data['run_id'] as num?)?.toInt();
+            setState(() => _runId = runId);
+            if (submitted) widget.answerSink?.setRunId(runId);
           case 'plan':
             final items = (event.data['items'] as List? ?? [])
                 .whereType<Map>()
                 .map((e) => PlanItem.fromJson(Map<String, dynamic>.from(e)))
                 .toList();
             setState(() => assistant.plan = items);
+            if (submitted) widget.answerSink?.setPlan(items);
           case 'approval':
             setState(() {
               _approval = Map<String, dynamic>.from(event.data);
             });
+            if (submitted) {
+              widget.answerSink?.setStatus('waiting_approval', approvalRequired: true);
+            }
           case 'cancelled':
             setState(() {
               _sending = false;
               _approval = null;
               _runId = null;
             });
+            if (submitted) widget.answerSink?.stop();
             _snack('已停止本次执行');
           case 'step':
             final step = ToolStep.fromJson(event.data);
@@ -466,6 +595,13 @@ class ChatScreenState extends State<ChatScreen> {
                 assistant.steps.add(step);
               }
             });
+            if (submitted) {
+              if (step.status == 'running') {
+                widget.answerSink?.setStatus('tool', label: step.label);
+              } else if (assistant.content.isEmpty) {
+                widget.answerSink?.setStatus('thinking');
+              }
+            }
           case 'done':
             setState(() {
               _approval = null;
@@ -479,10 +615,13 @@ class ChatScreenState extends State<ChatScreen> {
                   .map((e) => RefItem.fromJson(Map<String, dynamic>.from(e)))
                   .toList();
             });
+            if (submitted) widget.answerSink?.complete(refs: assistant.refs);
             _appState.refreshConversations();
           case 'error':
             setState(() => _messages.remove(assistant));
-            _snack((event.data['message'] ?? '出错了') as String, isError: true);
+            final message = (event.data['message'] ?? '出错了') as String;
+            if (submitted) widget.answerSink?.fail(message);
+            _snack(message, isError: true);
         }
       }
     } catch (error) {
@@ -491,6 +630,7 @@ class ChatScreenState extends State<ChatScreen> {
           if (assistant.content.isEmpty) _messages.remove(assistant);
         });
       }
+      if (submitted) widget.answerSink?.fail(error.toString());
       _snack(error.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -589,14 +729,55 @@ class ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.minimal) return _minimalBar(context);
     return Column(
       children: [
         // 浮窗形态使用 FloatingBar，不再渲染主窗口页头（规格 §6.1）。
         if (!widget.floating) _header(context),
         Expanded(child: _body()),
         if (_approval != null) _approvalCard(),
-        _composer(context),
+        KeyedSubtree(key: _inputBarKey, child: _composer(context)),
       ],
+    );
+  }
+
+  /// 极简条：与主聊天共用 controller/focus/附件/发送/截图，State 不重建。
+  /// 高度由窗口（52 高，减 1px 边框）强制，内部无上下留白。
+  Widget _minimalBar(BuildContext context) {
+    final busy = _uploading || _screenshotting || captureInProgress.value;
+    final screenshotEnabled =
+        !_sending && !_uploading && !_screenshotting && !captureInProgress.value;
+    String? firstImageUrl;
+    for (final item in _attachments) {
+      if (item.isImage) {
+        firstImageUrl = _appState.api.imageUrl(item.id);
+        break;
+      }
+    }
+    return KeyedSubtree(
+      key: _inputBarKey,
+      child: MinimalBar(
+        controller: _controller,
+        focusNode: _focus,
+        sending: _sending,
+        busy: busy,
+        screenshotEnabled: screenshotEnabled,
+        attachmentCount: _attachments.length,
+        firstImageUrl: firstImageUrl,
+        onSend: () {
+          unawaited(_send());
+        },
+        onStop: () {
+          unawaited(_stop());
+        },
+        onScreenshot: () {
+          unawaited(_takeScreenshot(hideLoop: true));
+        },
+        onBlockedScreenshot: () => _snack('等这条回答结束再截图'),
+        onBack: () => widget.onMinimalBack?.call(),
+        onExpand: () => widget.onMinimalExpand?.call(),
+        onDragStart: () => widget.onMinimalDragStart?.call(),
+      ),
     );
   }
 

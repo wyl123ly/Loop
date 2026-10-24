@@ -1,0 +1,84 @@
+{"id":"E-ENV-01","status":"PASS","detail":"backend health ok version=0.5.0","at":"23:11:34.138","data":{"ok":true,"version":"0.5.0","has_key":false}}
+{"id":"E-ENV-02","status":"PASS","detail":"primary display dpr=1.25","at":"23:11:35.560","data":{"dpr":1.25,"dpi":120}}
+{"id":"E-ENV-03","status":"PASS","detail":"启动时不创建回答窗","at":"23:11:35.663"}
+{"id":"N-01-01","status":"PASS","detail":"normal 1440x900@1.25 (1800x1125)","at":"23:11:35.684","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":380,"Top":157,"Right":2180,"Bottom":1282,"Width":1800,"Height":1125,"Visible":true,"Style":"0x14CF0000","ExStyle":"0x100","Foreground":true,"Dpi":120}}
+{"id":"N-01-02","status":"PASS","detail":"normal WM_GETMINMAXINFO min=900x600 logical (1125x750 phys)","at":"23:11:35.688","data":{"MinW":1125,"MinH":750,"MaxW":0,"MaxH":0}}
+{"id":"N-01-03","status":"PASS","detail":"normal 窗口非置顶 ex=0x100","at":"23:11:35.700"}
+{"id":"N-01-04","status":"PASS","detail":"空提交不创建回答窗","at":"23:11:37.942"}
+{"id":"N-01-05","status":"INFO","detail":"Alt+Q/Alt+A system-wide conflict (RegisterHotKey error=1409); tooltip screenshot saved","at":"23:11:39.210"}
+{"id":"N-02-01","status":"PASS","detail":"maximize -\u003e work area (2578x1458)","at":"23:11:40.627","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":-9,"Top":-9,"Right":2569,"Bottom":1449,"Width":2578,"Height":1458,"Visible":true,"Style":"0x15CF0000","ExStyle":"0x100","Foreground":true,"Dpi":120}}
+{"id":"N-02-02","status":"PASS","detail":"restore -\u003e 1440x900 (1800x1125)","at":"23:11:42.149","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":380,"Top":157,"Right":2180,"Bottom":1282,"Width":1800,"Height":1125,"Visible":true,"Style":"0x14CF0000","ExStyle":"0x100","Foreground":true,"Dpi":120}}
+{"id":"N-02-03","status":"PASS","detail":"normal restore 非置顶","at":"23:11:42.153"}
+{"id":"M-01-01","status":"PASS","detail":"点击浮窗按钮进入浮窗","at":"23:11:43.112"}
+{"id":"M-01-02","status":"PASS","detail":"floating 460x600 (575x750)","at":"23:11:43.170","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":1955,"Top":345,"Right":2530,"Bottom":1095,"Width":575,"Height":750,"Visible":true,"Style":"0x14CF0000","ExStyle":"0x108","Foreground":true,"Dpi":120}}
+{"id":"M-01-03","status":"PASS","detail":"floating min 360x420 (450x525 phys)","at":"23:11:43.173","data":{"MinW":450,"MinH":525,"MaxW":0,"MaxH":0}}
+{"id":"M-01-04","status":"PASS","detail":"floating 置顶 ex=0x108","at":"23:11:43.180"}
+{"id":"M-01-05","status":"PASS","detail":"unpin -\u003e 非置顶 ex=0x100","at":"23:11:44.238"}
+{"id":"M-01-06","status":"PASS","detail":"re-pin -\u003e 置顶 ex=0x108","at":"23:11:45.287"}
+{"id":"M-01-07","status":"PASS","detail":"Alt+Q 被系统占用时为 no-op（浮窗仍 460 宽）","at":"23:11:46.207"}
+{"id":"M-02-01","status":"PASS","detail":"最小化按钮进入极简","at":"23:11:48.314"}
+{"id":"M-02-02","status":"PASS","detail":"minimal 460x52 (575x65 phys)","at":"23:11:48.367","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":1955,"Top":1030,"Right":2530,"Bottom":1095,"Width":575,"Height":65,"Visible":true,"Style":"0x14CB0000","ExStyle":"0x108","Foreground":true,"Dpi":120}}
+{"id":"M-02-03","status":"PASS","detail":"minimal minSize 360x52 (450x65 phys)","at":"23:11:48.370","data":{"MinW":450,"MinH":65,"MaxW":0,"MaxH":0}}
+{"id":"M-02-04","status":"PASS","detail":"minimal 恒置顶 ex=0x108","at":"23:11:48.378"}
+{"id":"M-02-05","status":"PASS","detail":"minimal 禁用缩放 style=0x14CB0000","at":"23:11:48.386"}
+{"id":"M-02-06","status":"INFO","detail":"minimal bar pixel colors=196, size=575x65 (52 logical), no message area","at":"23:11:48.425","data":{"colors":196}}
+{"id":"M-02-07","status":"PASS","detail":"极简条可拖动且保持 460x52 delta=(-244,-206)","at":"23:11:50.501","data":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":1711,"Top":824,"Right":2286,"Bottom":889,"Width":575,"Height":65,"Visible":true,"Style":"0x14CB0000","ExStyle":"0x108","Foreground":true,"Dpi":120}}
+{"id":"M-03-01","status":"PASS","detail":"极简条非空提交创建回答窗（firstVisible 935ms）","at":"23:11:52.790","data":{"latencyMs":935}}
+{"id":"M-03-02","status":"PASS","detail":"回答窗宽度 896 phys = 716.8 逻辑（35% of 2048）","at":"23:11:53.897","data":{"logical":716.8,"width":896}}
+{"id":"M-03-03","status":"PASS","detail":"短回答高度 225 phys = 180 逻辑 (minH)","at":"23:11:53.901","data":{"height":225,"logical":180}}
+{"id":"M-03-04","status":"PASS","detail":"回答窗与极简条零交集","at":"23:11:53.911"}
+{"id":"M-03-05","status":"PASS","detail":"创建回答窗后前台仍为主窗","at":"23:11:53.917"}
+{"id":"M-03-06","status":"PASS","detail":"标题栏关闭按钮销毁回答窗","at":"23:11:54.472"}
+{"id":"M-04-01","status":"PASS","detail":"双击拖动区恢复展开浮窗 460x600","at":"23:11:55.302"}
+{"id":"M-04-02","status":"PASS","detail":"极简条返回恢复 1440x900 主窗口","at":"23:11:56.491"}
+{"id":"M-04-03","status":"PASS","detail":"返回后 minSize/置顶恢复","at":"23:11:56.541","data":{"MinW":1125,"MinH":750,"MaxW":0,"MaxH":0}}
+{"id":"A-01-01","status":"PASS","detail":"长回答高度达 maxH 950 phys = 760 逻辑","at":"23:12:04.834","data":{"Samples":233,"Changes":[{"T":0,"L":1283,"Top":913,"W":896,"H":225,"Vis":"True"},{"T":129,"L":1283,"Top":773,"W":896,"H":365,"Vis":"True"},{"T":330,"L":1283,"Top":188,"W":896,"H":950,"Vis":"True"}],"DistinctHeightsPhysical":[225,365,950],"DistinctWidthsPhysical":[896],"MinHeightPhysical":225,"MaxHeightPhysical":950,"MinIntervalMs":129,"MaxIntervalMs":201,"Intervals":[129,201],"MaxHeightLogical":760,"WidthLogical":716.8}}
+{"id":"A-01-02","status":"PASS","detail":"高度从 minH 开始增长（首帧 225 phys, 采样最小 225）","at":"23:12:04.839","data":{"min":225,"initial":225}}
+{"id":"A-01-03","status":"PASS","detail":"高度变化中宽度固定 896","at":"23:12:04.849","data":[896]}
+{"id":"A-01-04","status":"PASS","detail":"观测到高度多步增长 (3 次)","at":"23:12:04.857","data":[{"T":0,"L":1283,"Top":913,"W":896,"H":225,"Vis":"True"},{"T":129,"L":1283,"Top":773,"W":896,"H":365,"Vis":"True"},{"T":330,"L":1283,"Top":188,"W":896,"H":950,"Vis":"True"}]}
+{"id":"A-01-05","status":"PASS","detail":"测高/改高节流下限 \u003e=55ms (min=129ms)","at":"23:12:04.865","data":{"min":129,"intervals":[129,201],"max":201}}
+{"id":"A-01-06","status":"PASS","detail":"改高频率 \u003c=12.5 次/秒 (observed 0.83/s)","at":"23:12:04.870"}
+{"id":"A-01-07a","status":"INFO","detail":"未激活回答窗悬停滚轮像素差 0.2373","at":"23:12:05.986","data":{"diff":{"DiffPixels":12651,"Samples":53312,"Ratio":0.2373}}}
+{"id":"A-01-07","status":"PASS","detail":"maxH 下内部滚动（滚轮差 0.2373 / 滚动条差 0）height 不变=True","at":"23:12:07.908","data":{"heightBefore":950,"heightAfter":950,"wheelDiff":{"DiffPixels":12651,"Samples":53312,"Ratio":0.2373},"scrollbarDiff":{"DiffPixels":0,"Samples":53312,"Ratio":0}}}
+{"id":"A-01-08","status":"PASS","detail":"回答窗不与输入条重叠 gap=10 phys (\u003e= 10)","at":"23:12:09.374","data":{"composerTopAbs":1148,"answerBottom":1138,"gap":10,"composerTopRel":991}}
+{"id":"A-02-01","status":"PASS","detail":"再次提交复用同一回答窗（单实例替换语义）","at":"23:12:14.677","data":{"expected":24512556,"before":[24512556],"after":[24512556]}}
+{"id":"A-02-02","status":"FAIL","detail":"替换后重新增长到 maxH","at":"23:12:14.680"}
+{"id":"A-02-03","status":"PASS","detail":"标题栏拖动改变位置 delta=(-260,-140)","at":"23:12:17.055","data":{"Hwnd":24512556,"HwndInt":24512556,"Class":"FLUTTER_MULTI_WINDOW_WIN32_WINDOW","ProcId":33396,"Left":1023,"Top":187,"Right":1919,"Bottom":1137,"Width":896,"Height":950,"Visible":true,"Style":"0x94000000","ExStyle":"0x8000088","Foreground":false,"Dpi":120}}
+{"id":"A-02-04","status":"PASS","detail":"替换为短回答后缩回 minH 225","at":"23:12:22.069","data":{"height":225}}
+{"id":"A-02-05","status":"PASS","detail":"user-moved 模式高度增长时顶边固定 (top 187 -\u003e 187, height 950)","at":"23:12:27.695"}
+{"id":"A-02-06","status":"PASS","detail":"收起为 36 逻辑高标题条（45 phys）","at":"23:12:28.205"}
+{"id":"A-02-07","status":"PASS","detail":"展开恢复高度 950","at":"23:12:28.773"}
+{"id":"A-02-08","status":"PASS","detail":"收起/展开后前台仍为主窗","at":"23:12:28.826"}
+{"id":"A-03-01","status":"PASS","detail":"流式中发送按钮变红（stop 可定位 count=16）","at":"23:12:33.068","data":{"X":1582,"Y":1037,"Count":16}}
+{"id":"A-03-02","status":"PASS","detail":"停止后回答窗保留","at":"23:12:34.808"}
+{"id":"A-03-03","status":"PASS","detail":"停止复用同一回答窗","at":"23:12:34.822"}
+{"id":"A-04-01","status":"PASS","detail":"错误回答保留窗口（不静默降级）","at":"23:12:40.238"}
+{"id":"A-05-01","status":"PASS","detail":"stream_output=false 仍自适应到 maxH 950","at":"23:12:46.318","data":{"Samples":388,"Changes":[{"T":0,"L":1023,"Top":187,"W":896,"H":225,"Vis":"True"},{"T":3945,"L":1023,"Top":187,"W":896,"H":950,"Vis":"True"}],"DistinctHeightsPhysical":[225,950],"DistinctWidthsPhysical":[896],"MinHeightPhysical":225,"MaxHeightPhysical":950,"MinIntervalMs":3945,"MaxIntervalMs":3945,"Intervals":[3945],"MaxHeightLogical":760,"WidthLogical":716.8}}
+{"id":"A-05-02","status":"PASS","detail":"stream_output=false 高度变化少（2 次）","at":"23:12:46.322"}
+{"id":"A-06-01","status":"PASS","detail":"回答窗被外部关闭后主窗检测 absent, 不崩溃","at":"23:12:46.574"}
+{"id":"A-06-02","status":"PASS","detail":"外部关闭后下一次提交创建新窗口 hwnd=14156282","at":"23:12:50.626"}
+{"id":"S-00-01","status":"PASS","detail":"极简条提交问题后回答窗可见（为截图隐藏/恢复做准备）","at":"23:13:00.609"}
+{"id":"S-01-01","status":"PASS","detail":"极简条截图进入全屏覆盖层（work area 2560x1440）","at":"23:13:02.633"}
+{"id":"S-01-02","status":"PASS","detail":"截图期间回答窗隐藏（若此前可见）","at":"23:13:03.519","data":{"ansWasOpen":true}}
+{"id":"S-01-03","status":"PASS","detail":"截图覆盖层铺满工作区","at":"23:13:03.557"}
+{"id":"S-01-04","status":"PASS","detail":"截图完成恢复极简条 460x52","at":"23:13:05.233"}
+{"id":"S-01-05","status":"PASS","detail":"截图结束回答窗可见性恢复","at":"23:13:06.844"}
+{"id":"S-01-06","status":"PASS","detail":"截图附件 + 非空问题 -\u003e 回答窗（闭环）","at":"23:13:09.092"}
+{"id":"S-02-01","status":"PASS","detail":"Esc 取消截图恢复极简条","at":"23:13:15.481"}
+{"id":"S-02-02","status":"PASS","detail":"截图/极简后返回主窗口 1440x900","at":"23:13:16.032"}
+{"id":"X-01-01","status":"PASS","detail":"退出前回答窗存在","at":"23:13:20.891"}
+{"id":"X-01-02","status":"PASS","detail":"主窗最小化时回答窗隐藏","at":"23:13:21.835","data":[{"Hwnd":14289966,"HwndInt":14289966,"Class":"FLUTTER_MULTI_WINDOW_WIN32_WINDOW","ProcId":33396,"Left":1283,"Top":723,"Right":2179,"Bottom":1138,"Width":896,"Height":415,"Visible":false,"Style":"0x84000000","ExStyle":"0x8000088","Foreground":false,"Dpi":120}]}
+{"id":"X-01-03","status":"PASS","detail":"主窗恢复时回答窗无激活恢复显示","at":"23:13:22.905","data":[{"Hwnd":14289966,"HwndInt":14289966,"Class":"FLUTTER_MULTI_WINDOW_WIN32_WINDOW","ProcId":33396,"Left":1283,"Top":188,"Right":2179,"Bottom":1138,"Width":896,"Height":950,"Visible":true,"Style":"0x94000000","ExStyle":"0x8000088","Foreground":false,"Dpi":120}]}
+{"id":"X-02-01","status":"PASS","detail":"tray 激活时关闭主窗 -\u003e 隐藏到托盘（进程存活）","at":"23:13:24.248","data":{"main":{"Hwnd":2230286,"HwndInt":2230286,"Class":"FLUTTER_RUNNER_WIN32_WINDOW","ProcId":33396,"Left":380,"Top":157,"Right":2180,"Bottom":1282,"Width":1800,"Height":1125,"Visible":false,"Style":"0x4CF0000","ExStyle":"0x100","Foreground":false,"Dpi":120},"exited":false}}
+{"id":"X-02-02","status":"PASS","detail":"托盘隐藏时回答窗一并隐藏（保留引擎/状态）","at":"23:13:24.251","data":[{"Hwnd":14289966,"HwndInt":14289966,"Class":"FLUTTER_MULTI_WINDOW_WIN32_WINDOW","ProcId":33396,"Left":1283,"Top":188,"Right":2179,"Bottom":1138,"Width":896,"Height":950,"Visible":false,"Style":"0x84000000","ExStyle":"0x8000088","Foreground":false,"Dpi":120}]}
+{"id":"X-02-03","status":"PASS","detail":"tray 退出 -\u003e 进程退出 (answerGoneMs=144 exitMs=144)","at":"23:13:24.643"}
+{"id":"X-02-04","status":"PASS","detail":"回答窗先关闭、后进程退出（无孤儿）","at":"23:13:24.646","data":{"exitMs":144,"answerGoneMs":144}}
+{"id":"X-02-05","status":"PASS","detail":"退出后无残留窗口 windowsLeft=0","at":"23:13:24.654"}
+{"id":"X-02-06","status":"PASS","detail":"退出后 8765 无监听 portLeft=0","at":"23:13:24.660"}
+{"id":"F-01-01","status":"FAIL","detail":"回答窗前台停留均不超过 100ms 补偿上限（episodes=6 max=287ms）","at":"23:13:24.690","data":{"answerTransitions":6,"mainForegroundTransitions":10,"episodes":[{"StartMs":17008,"DurationMs":16,"Hwnd":"21301292"},{"StartMs":25402,"DurationMs":31,"Hwnd":"24512556"},{"StartMs":75781,"DurationMs":108,"Hwnd":"14156282"},{"StartMs":83843,"DurationMs":31,"Hwnd":"14289630"},{"StartMs":104739,"DurationMs":16,"Hwnd":"14289966"},{"StartMs":104755,"DurationMs":287,"Hwnd":"14289966"}],"over100":[{"StartMs":75781,"DurationMs":108,"Hwnd":"14156282"},{"StartMs":104755,"DurationMs":287,"Hwnd":"14289966"}]}}
+{"id":"F-01-02","status":"INFO","detail":"foreground sampler: transitions main=10 answer=6 maxAnswerEpisode=287ms; log=C:\\Users\\Wuyanlin\\AppData\\Local\\Temp\\loop-t8-evidence\\run1\\foreground.tsv","at":"23:13:24.692"}
+{"id":"T5-08","status":"EXCEPTION","detail":"首次可见未达 spec 400ms 目标（EXCEPTION，非 PASS）：ready=964/visible=967, ready=989/visible=992, ready=1091/visible=1094；待 t9 决定是否接受（第二引擎冷启动，未预热）","at":"23:13:24.730","data":{"timings":[{"readyMs":964,"visibleMs":967},{"readyMs":989,"visibleMs":992},{"readyMs":1091,"visibleMs":1094}]}}
+{"id":"T5-04","status":"PASS","detail":"长回答/改高/形态切换后 resync_requested=0（无全量风暴）","at":"23:13:24.732"}
+{"id":"F-06","status":"PASS","detail":"applyAnswerWindowChrome failed=0","at":"23:13:24.739"}
+{"id":"T5-05","status":"INFO","detail":"geometry/answer anchors updated=1 次；answer overlaps input bar=0","at":"23:13:24.746"}
+{"id":"S-01-07","status":"PASS","detail":"截图上传落库 uploads=1","at":"23:13:24.832","data":{"value":[{"id":1,"name":"截图-1792854785077.png","path":"C:\\Users\\Wuyanlin\\AppData\\Local\\Temp\\loop-t8-evidence\\run1\\data\\files\\1792854785093691_2fc84679.png","mime":"image/png","created_at":"2026-10-24T23:13:05+08:00"}],"Count":1}}

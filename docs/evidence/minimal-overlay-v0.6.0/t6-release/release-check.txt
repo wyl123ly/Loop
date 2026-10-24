@@ -1,0 +1,19 @@
+﻿# v0.6.0 正式产物检查
+
+- zip: release/Loop-Desktop-win64.zip
+- zipSize: 20773594 bytes (19.81 MiB)
+- zipSHA256: F63F539BEDACC0297C30A82A0B685AFF3DC486F2CD52EA10FB62E33097A1D7C9
+- Loop.exe: 114688 bytes, FileVersion 0.6.0+15, SHA256 4CC23EDDA929D27BEADDA81B6B9257E680DD839B0F7137E2310B49B9EE7A6416
+- version.json: {"version":"0.6.0"}, SHA256 9F2A0F085AF1D8D75C044CB7D0B9B45DB4E975A2FA9354CFDF62731A791A0899
+- health smoke: ok=true, version=0.6.0（隔离 LOOP_DATA_DIR；官方 release/Loop-Desktop/Loop.exe）
+- smoke T9-01: 14/14 PASS（第二窗/极简/输入提交/替换/零遮挡；host nudge=2 overlapWarn=0）
+- no leftovers: after smoke no Loop process / 8765/9999 listener
+- 用户默认 data/loop.db 未触碰（mtime 2026-10-24 16:32，早于本轮 00:2x 验证）
+- Loop-Test 近2h 修改 0；version 0.6.0+15；tag v0.6.0；未自动创建 GitHub Release
+
+## ZIP 条目（关键）
+desktop_multi_window_plugin.dll	135168
+flutter_windows.dll	21274112
+Loop.exe	114688
+version.json	19
+使用说明.txt	3153

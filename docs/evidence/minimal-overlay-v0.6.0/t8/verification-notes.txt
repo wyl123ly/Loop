@@ -1,0 +1,23 @@
+﻿# t8 命令行补充证据
+
+## T5-13：resetPosition 已移除（全仓无引用）
+
+(no matches)
+
+## 测试数
+00:15 +254: All tests passed!
+
+## click probe T5-13 raw FAIL 说明
+该 E2E 断言用了拖动前的旧 rect 作为 before；F-01-drag 的 moved 结果在比较后才被 host 应用（before L=1283，after L=1303，正好 +20），所以双击本身未改变布局。源码无 onResetPosition、单测 A-UI-05 覆盖，该项按代码/单测通过。
+
+## 证据源脚本
+anchor-probe.ps1
+scroll-probe.ps1
+t8-probe-click-only.ps1
+t8-probe-click.ps1
+t8-probe-focus-modes.ps1
+t8-probe-modes.ps1
+t8-run1.ps1
+t8-run2.ps1
+t8-run3.ps1
+ui.ps1

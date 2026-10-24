@@ -1,0 +1,17 @@
+{"id":"E-03-01","status":"INFO","detail":"light launch main rect=380,157,1800,1125 dpr=1.25","at":"23:49:13.577"}
+{"id":"T-01-01","status":"PASS","detail":"LOOP_THEME=light 主窗口为亮色 (brightness=238.6)","at":"23:49:13.778","data":{"brightness":238.6}}
+{"id":"T-01-02","status":"PASS","detail":"亮色主题下创建回答窗 firstVisible=4296ms","at":"23:49:18.082"}
+{"id":"T-01-03","status":"PASS","detail":"回答窗首帧亮色 (brightness=240.1)","at":"23:49:20.691","data":{"brightness":240.1}}
+{"id":"T-01-04","status":"PASS","detail":"收起回答窗仍为亮色 (height=45, brightness=244.9)","at":"23:49:21.290","data":{"height":45,"brightness":244.9}}
+{"id":"T-02-01","status":"PASS","detail":"主窗口切到深色 (brightness=38.9)","at":"23:49:24.718","data":{"brightness":38.9}}
+{"id":"T-02-02","status":"PASS","detail":"主窗切深色后回答窗跟随变暗 (brightness=40.6)","at":"23:49:24.782","data":{"before":244.9,"after":40.6}}
+{"id":"T-02-03","status":"PASS","detail":"深色主题下重建回答窗","at":"23:49:30.961"}
+{"id":"T-02-04","status":"PASS","detail":"重建回答窗使用深色首帧 (brightness=27.6)","at":"23:49:32.538","data":{"brightness":27.6}}
+{"id":"IME-01-00","status":"INFO","detail":"IME context: hwnd=2818938 focus=8653894 himc=0 openOk=False convOk=False comp=\u0027\u0027","at":"23:49:38.786"}
+{"id":"IME-01-01","status":"INFO","detail":"自动化未能启动真实中文 IME 组合（Microsoft Pinyin 已安装但仅一个键盘布局、TSF 未响应合成）；改为验证焦点/前台不被回答窗抢走，真实 IME 组合列为人工限制","at":"23:49:38.790"}
+{"id":"IME-01-02","status":"PASS","detail":"点击回答窗后前台仍为主窗 (before=2818938 after=2818938)","at":"23:49:41.424"}
+{"id":"IME-01-03","status":"PASS","detail":"点击回答窗后文本输入焦点未变 (before=8653894 after=8653894)","at":"23:49:41.427","data":{"before":"8653894","after":"8653894"}}
+{"id":"IME-01-04","status":"INFO","detail":"点击回答窗正文 1.5s 后焦点快照 fg=2818938 class=FLUTTER_RUNNER_WIN32_WINDOW textFocus=8653894","at":"23:49:41.435"}
+{"id":"IME-02-01","status":"PASS","detail":"关闭回答窗后前台为主窗","at":"23:49:42.785"}
+{"id":"F-03-01","status":"PASS","detail":"全流程回答窗前台停留 \u003c=100ms（episodes=2 max=32ms）","at":"23:49:42.821","data":{"episodes":[{"StartMs":4406,"DurationMs":32},{"StartMs":17240,"DurationMs":16}]}}
+{"id":"X-03-01","status":"PASS","detail":"tray 退出进程","at":"23:49:42.957"}

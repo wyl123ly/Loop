@@ -34,6 +34,79 @@ const double compactWidth = 420;
 /// 浮窗紧凑模式高度阈值。
 const double compactHeight = 520;
 
+// ---------------------------------------------------------------------------
+// 极简形态（floating 的子状态）常量。规格 §3.2 / §12.A。
+// ---------------------------------------------------------------------------
+
+/// 极简条总高（逻辑像素；含 1px 边框，内容填满，无上下留白）。
+const double minimalHeight = 52;
+
+/// 极简条窗口最小尺寸（动态 minSize）。
+const Size minimalMinSize = Size(360, 52);
+
+/// 极简条宽度下限（与浮窗最小宽一致）。
+const double minimalMinWidth = 360;
+
+/// 极简条宽度上限；超出则钳制。
+const double minimalMaxWidth = 560;
+
+/// 极简条圆角。
+const double minimalRadius = 12;
+
+/// 判定“拖到最小”的容差（逻辑像素）。
+const double minimalEnterTolerance = 2;
+
+/// 用户缩放结束后的去抖，避免拖动/缩放中误触发极简形态。
+const Duration minimalEnterDelay = Duration(milliseconds: 250);
+
+/// 极简条按钮热区（截图/返回）。
+const double minimalButtonSize = 32;
+
+/// 极简条输入容器高度（含内嵌发送/停止）。
+const double minimalInputHeight = 38;
+
+// ---------------------------------------------------------------------------
+// 回答浮窗常量。规格 §4.2 / §4.3 / §12.A。
+// ---------------------------------------------------------------------------
+
+/// 回答窗固定宽度 = 工作区宽度 × 该比例（约 30%–40%）。
+const double answerWidthRatio = 0.35;
+
+/// 回答窗宽度钳制（逻辑像素）。
+const double answerWidthMin = 420;
+const double answerWidthMax = 900;
+
+/// 回答窗最小高度（逻辑像素）。
+const double answerMinHeight = 180;
+
+/// 回答窗最大高度 = min(工作区高度 × 比例, cap)。
+const double answerMaxHeightRatio = 0.70;
+const double answerMaxHeightCap = 760;
+
+/// 回答窗标题条高度。
+const double answerHeaderHeight = 36;
+
+/// 收起后的回答窗高度（只留标题条）。
+const double answerCollapsedHeight = 36;
+
+/// 回答窗与输入条/主窗口的间距。
+const double answerGap = 8;
+
+/// 回答窗圆角。
+const double answerRadius = 14;
+
+/// 回答窗非正文（header/问题/状态/padding）占用高度 = 36 + 18 + 22 + 16。
+const double answerChromeHeight = answerHeaderHeight + 18 + 22 + 16;
+
+/// 回答窗创建（等待第二引擎 ready）超时。
+const Duration answerCreateTimeout = Duration(milliseconds: 4000);
+
+/// 流式 IPC / 测高 / 改高节流（规格允许 60–100ms）。
+const Duration answerStreamThrottle = Duration(milliseconds: 80);
+
+/// 回答窗高度变化去抖阈值（像素）。
+const double answerHeightEpsilon = 2;
+
 /// 隐藏窗口后等待 DWM 动画完成再截图。
 const Duration captureHideDelay = Duration(milliseconds: 280);
 
@@ -141,6 +214,7 @@ class WindowSnapshot {
     required this.alwaysOnTop,
     required this.minSize,
     this.pinned = false,
+    this.minimal = false,
     this.displayId,
     this.normalPlacement,
   });
@@ -166,6 +240,9 @@ class WindowSnapshot {
   /// 仅 floating 有意义。
   final bool pinned;
 
+  /// 浮窗的极简子状态（规格 §3.1）。normal/maximized 时为 false。
+  final bool minimal;
+
   /// 例如 `\\.\DISPLAY2`（Win32）。
   final String? displayId;
 
@@ -185,6 +262,7 @@ class WindowSnapshot {
     bool? alwaysOnTop,
     Size? minSize,
     bool? pinned,
+    bool? minimal,
     String? displayId,
     Rect? normalPlacement,
     bool clearDisplayId = false,
@@ -199,6 +277,7 @@ class WindowSnapshot {
       alwaysOnTop: alwaysOnTop ?? this.alwaysOnTop,
       minSize: minSize ?? this.minSize,
       pinned: pinned ?? this.pinned,
+      minimal: minimal ?? this.minimal,
       displayId: clearDisplayId ? null : (displayId ?? this.displayId),
       normalPlacement:
           clearNormalPlacement ? null : (normalPlacement ?? this.normalPlacement),
@@ -212,7 +291,8 @@ class WindowSnapshot {
   String toString() =>
       'WindowSnapshot(mode=$mode, bounds=$bounds, physical=$physicalBounds, '
       'dpr=$dpr, maximized=$maximized, top=$alwaysOnTop, min=$minSize, '
-      'pinned=$pinned, display=$displayId, normalPlacement=$normalPlacement)';
+      'pinned=$pinned, minimal=$minimal, display=$displayId, '
+      'normalPlacement=$normalPlacement)';
 }
 
 /// 浮窗形态宿主：Shell / FloatingBar 只依赖该抽象。
@@ -228,6 +308,9 @@ abstract class FloatingModeHost implements Listenable {
 
   bool get supported;
 
+  /// 浮窗的极简子状态（规格 §3.1；normal 时恒 false）。
+  bool get minimal;
+
   /// 截图覆盖/恢复进行中（t3 用于禁用切换/截图按钮）。
   bool get captureInProgress;
 
@@ -235,11 +318,20 @@ abstract class FloatingModeHost implements Listenable {
 
   WindowSnapshot? get lastFloatingSnapshot;
 
+  /// 最近一次进入极简前的浮窗快照（退出极简恢复用）。
+  WindowSnapshot? get lastExpandedSnapshot;
+
   Future<bool> enterFloating({bool focus = true});
 
   Future<bool> exitFloating({bool focus = true});
 
   Future<bool> toggleFloating({bool focus = true});
+
+  Future<bool> enterMinimal({bool focus = true});
+
+  Future<bool> exitMinimal({bool focus = true});
+
+  Future<bool> toggleMinimal({bool focus = true});
 
   Future<void> setPinned(bool value);
 
@@ -438,5 +530,330 @@ class FloatingWindowPlanner {
     final overlap = a.intersect(b);
     if (overlap.width <= 0 || overlap.height <= 0) return 0;
     return overlap.width * overlap.height;
+  }
+}
+
+/// 回答浮窗纯几何规划（输入/输出均为物理像素；可单测）。规格 §4.2/§4.3/§5.2。
+///
+/// - 宽度：工作区逻辑宽度 × 35%，钳制 420–900；
+/// - 高度：`chromeHeight + 正文高`，钳制 `[180, min(工作区高×70%, 760)]`；
+/// - 位置：auto 模式优先“输入条上方”，其次下方/主窗右侧/左侧/兜底；
+///   user 模式尊重用户位置，仅在覆盖输入条/越界时做最小位移；
+/// - 所有输出保证与输入条（含 gap）零交集、且位于工作区内（容差 2px）。
+class AnswerWindowPlanner {
+  const AnswerWindowPlanner._();
+
+  /// 固定舒适宽度（逻辑像素）。
+  static double widthLogical(Rect workLogical) =>
+      (workLogical.width * answerWidthRatio)
+          .clamp(answerWidthMin, answerWidthMax)
+          .toDouble();
+
+  /// 最大高度（逻辑像素）。
+  static double maxHeightLogical(Rect workLogical) {
+    final limit = math.min(
+      workLogical.height * answerMaxHeightRatio,
+      answerMaxHeightCap,
+    );
+    return math.max(answerMinHeight, limit);
+  }
+
+  /// 期望高度（逻辑像素）= 固定行高 + 正文测量高度，再钳制。
+  static double desiredHeightLogical(
+    double contentHeightLogical, {
+    required Rect workLogical,
+    double chromeHeight = answerChromeHeight,
+  }) {
+    final desired = chromeHeight + math.max(0.0, contentHeightLogical);
+    return desired
+        .clamp(answerMinHeight, maxHeightLogical(workLogical))
+        .toDouble();
+  }
+
+  /// 计算回答窗物理矩形。
+  ///
+  /// [userMoved] 为 true 时用 [userRect] 的左上角作为锚点（顶边固定，
+  /// 高度变化向下生长）；auto 模式高度变化时保持输入条上方的底边固定。
+  static Rect place({
+    required Rect workPhysical,
+    required Rect inputBarPhysical,
+    required Rect mainWindowPhysical,
+    required double dpr,
+    required double widthLogical,
+    required double heightLogical,
+    required bool userMoved,
+    Rect? userRect,
+    double gap = answerGap,
+  }) {
+    final scale = FloatingWindowPlanner.normalizedDpr(dpr);
+    final work = _validRect(workPhysical)
+        ? workPhysical
+        : Rect.fromLTWH(
+            0,
+            0,
+            math.max(1.0, workPhysical.width),
+            math.max(1.0, workPhysical.height),
+          );
+    final widthPhysical = math.max(
+      1.0,
+      math.min(widthLogical * scale, work.width),
+    );
+    final heightPhysical = math.max(
+      1.0,
+      math.min(heightLogical * scale, work.height),
+    );
+    final gapPhysical = math.max(0.0, gap * scale);
+    final input =
+        _validRect(inputBarPhysical) ? inputBarPhysical : Rect.zero;
+    final exclusion = input.isEmpty ? Rect.zero : input.inflate(gapPhysical);
+    final mainWindow =
+        _validRect(mainWindowPhysical) ? mainWindowPhysical : input;
+
+    Rect clampInside(Rect rect) => _clampInside(rect, work);
+
+    Rect autoPlace() => _autoPlace(
+          work: work,
+          input: input,
+          exclusion: exclusion,
+          mainWindow: mainWindow,
+          widthPhysical: widthPhysical,
+          heightPhysical: heightPhysical,
+          gapPhysical: gapPhysical,
+          scale: scale,
+        );
+
+    if (!userMoved || !_validRect(userRect)) return autoPlace();
+
+    final base = userRect!;
+    var desired = clampInside(
+      Rect.fromLTWH(base.left, base.top, widthPhysical, heightPhysical),
+    );
+    if (!_intersects(desired, exclusion)) return desired;
+    if (exclusion.isEmpty) return desired;
+
+    // 最小位移候选：上方、下方、左侧、右侧。
+    final candidates = <Rect>[];
+    void addIfSpace(Rect rect) {
+      final candidate = clampInside(rect);
+      if (!_intersects(candidate, exclusion)) candidates.add(candidate);
+    }
+
+    addIfSpace(Rect.fromLTWH(
+      desired.left,
+      exclusion.top - heightPhysical,
+      widthPhysical,
+      heightPhysical,
+    ));
+    addIfSpace(Rect.fromLTWH(
+      desired.left,
+      exclusion.bottom,
+      widthPhysical,
+      heightPhysical,
+    ));
+    addIfSpace(Rect.fromLTWH(
+      exclusion.left - widthPhysical,
+      desired.top,
+      widthPhysical,
+      heightPhysical,
+    ));
+    addIfSpace(Rect.fromLTWH(
+      exclusion.right,
+      desired.top,
+      widthPhysical,
+      heightPhysical,
+    ));
+
+    Rect? best;
+    var bestDistance = double.infinity;
+    for (final candidate in candidates) {
+      final distance = (candidate.topLeft - desired.topLeft).distance;
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = candidate;
+      }
+    }
+    if (best != null) return best;
+
+    // 用户位置无法避开输入条（例如输入条占据整个宽度）：回到 auto 候选。
+    return autoPlace();
+  }
+
+  /// 回答窗是否与输入条排除区（含 gap）相交。
+  static bool overlapsInputBar({
+    required Rect answerPhysical,
+    required Rect inputBarPhysical,
+    required double dpr,
+    double gap = answerGap,
+  }) {
+    if (!_validRect(answerPhysical) || !_validRect(inputBarPhysical)) {
+      return false;
+    }
+    final scale = FloatingWindowPlanner.normalizedDpr(dpr);
+    return _intersects(
+      answerPhysical,
+      inputBarPhysical.inflate(math.max(0.0, gap * scale)),
+    );
+  }
+
+  static Rect _autoPlace({
+    required Rect work,
+    required Rect input,
+    required Rect exclusion,
+    required Rect mainWindow,
+    required double widthPhysical,
+    required double heightPhysical,
+    required double gapPhysical,
+    required double scale,
+  }) {
+    Rect placeAboveBelow({required bool above}) {
+      // exclusion 已包含 gap：上方底边 = exclusion.top，下方顶边 = exclusion.bottom。
+      final available = above
+          ? exclusion.top - work.top
+          : work.bottom - exclusion.bottom;
+      final effectiveHeight = math.min(heightPhysical, math.max(0.0, available));
+      final left = _clamp(
+        input.right - widthPhysical,
+        work.left,
+        work.right - widthPhysical,
+      );
+      final top = above
+          ? exclusion.top - effectiveHeight
+          : exclusion.bottom;
+      return Rect.fromLTWH(left, top, widthPhysical, effectiveHeight);
+    }
+
+    bool fitsVertically(bool above) {
+      if (input.isEmpty) return false;
+      final available = above
+          ? (input.top - gapPhysical) - work.top
+          : work.bottom - (input.bottom + gapPhysical);
+      final minimum = math.min(heightPhysical, answerMinHeight * scale);
+      return available >= minimum - 0.5;
+    }
+
+    // 1) 输入条上方（右对齐）。
+    if (fitsVertically(true)) return placeAboveBelow(above: true);
+    // 2) 输入条下方。
+    if (fitsVertically(false)) return placeAboveBelow(above: false);
+
+    // 3) 主窗口/极简条右侧，顶部对齐输入条。
+    final rightLeft = mainWindow.right + gapPhysical;
+    if (rightLeft + widthPhysical <= work.right + 0.5) {
+      final top = _clamp(
+        input.top,
+        work.top,
+        work.bottom - heightPhysical,
+      );
+      final effectiveHeight = math.min(heightPhysical, work.bottom - top);
+      return Rect.fromLTWH(rightLeft, top, widthPhysical, effectiveHeight);
+    }
+    // 4) 主窗口/极简条左侧。
+    final leftRight = mainWindow.left - gapPhysical;
+    final leftLeft = leftRight - widthPhysical;
+    if (leftLeft >= work.left - 0.5) {
+      final top = _clamp(
+        input.top,
+        work.top,
+        work.bottom - heightPhysical,
+      );
+      final effectiveHeight = math.min(heightPhysical, work.bottom - top);
+      return Rect.fromLTWH(leftLeft, top, widthPhysical, effectiveHeight);
+    }
+
+    // 5) 兜底：工作区内不覆盖输入条的最大可用矩形（高度可小于 minH）。
+    final bands = <Rect>[
+      if (!input.isEmpty)
+        Rect.fromLTWH(
+          work.left,
+          work.top,
+          work.width,
+          math.max(0.0, input.top - gapPhysical - work.top),
+        ),
+      if (!input.isEmpty)
+        Rect.fromLTWH(
+          work.left,
+          input.bottom + gapPhysical,
+          work.width,
+          math.max(0.0, work.bottom - (input.bottom + gapPhysical)),
+        ),
+      if (!input.isEmpty)
+        Rect.fromLTWH(
+          work.left,
+          work.top,
+          math.max(0.0, input.left - gapPhysical - work.left),
+          work.height,
+        ),
+      if (!input.isEmpty)
+        Rect.fromLTWH(
+          input.right + gapPhysical,
+          work.top,
+          math.max(0.0, work.right - (input.right + gapPhysical)),
+          work.height,
+        ),
+    ];
+    Rect? bestBand;
+    var bestArea = 0.0;
+    for (final band in bands) {
+      final area = band.width * band.height;
+      if (area > bestArea) {
+        bestArea = area;
+        bestBand = band;
+      }
+    }
+    if (bestBand == null) {
+      return Rect.fromLTWH(
+        work.left,
+        work.top,
+        widthPhysical,
+        heightPhysical,
+      );
+    }
+    final width = math.min(widthPhysical, bestBand.width);
+    final height = math.min(heightPhysical, bestBand.height);
+    final isVerticalBand = bestBand.width >= work.width - 0.5;
+    double left;
+    double top;
+    if (isVerticalBand) {
+      left = _clamp(
+        input.right - width,
+        bestBand.left,
+        bestBand.right - width,
+      );
+      top = bestBand.top == work.top
+          ? bestBand.bottom - height
+          : bestBand.top;
+    } else {
+      left = bestBand.left == work.left
+          ? bestBand.right - width
+          : bestBand.left;
+      top = _clamp(input.top, bestBand.top, bestBand.bottom - height);
+    }
+    return Rect.fromLTWH(left, top, width, height);
+  }
+
+  static Rect _clampInside(Rect rect, Rect work) {
+    final width = math.min(rect.width, work.width);
+    final height = math.min(rect.height, work.height);
+    final left = _clamp(rect.left, work.left, work.right - width);
+    final top = _clamp(rect.top, work.top, work.bottom - height);
+    return Rect.fromLTWH(left, top, width, height);
+  }
+
+  static bool _intersects(Rect a, Rect b) {
+    if (a.isEmpty || b.isEmpty) return false;
+    final overlap = a.intersect(b);
+    return overlap.width > 0 && overlap.height > 0;
+  }
+
+  static bool _validRect(Rect? rect) =>
+      rect != null &&
+      rect.width.isFinite &&
+      rect.height.isFinite &&
+      rect.width >= 1 &&
+      rect.height >= 1;
+
+  static double _clamp(double value, double min, double max) {
+    if (max < min) return min;
+    return value.clamp(min, max).toDouble();
   }
 }

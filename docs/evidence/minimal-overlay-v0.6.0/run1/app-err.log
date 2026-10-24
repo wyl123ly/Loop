@@ -1,0 +1,20 @@
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+[ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Null check operator used on a null value
+#0      SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345)
+#1      SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1198)
+#2      _invoke (dart:ui/hooks.dart:441)
+#3      PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:450)
+#4      _drawFrame (dart:ui/hooks.dart:413)
+
+[ERROR:flutter/runtime/dart_vm_initializer.cc(40)] Unhandled Exception: Null check operator used on a null value
+#0      SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1345)
+#1      SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1198)
+#2      _invoke (dart:ui/hooks.dart:441)
+#3      PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:450)
+#4      _drawFrame (dart:ui/hooks.dart:413)
+

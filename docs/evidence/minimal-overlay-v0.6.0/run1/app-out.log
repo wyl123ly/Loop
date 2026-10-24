@@ -1,0 +1,15 @@
+dwm round corners: true hwnd=11469250
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+applyAnswerWindowChrome failed hwnd=23267412
+Destroyed managed flutter window: 6ec392f5-d17e-4cd4-9354-0158327b5db4
+applyAnswerWindowChrome failed hwnd=23332948
+answer window closed externally (windowId=b40d6a8c-fe4a-46c4-9a7f-9539834202f2)
+Destroyed managed flutter window: b40d6a8c-fe4a-46c4-9a7f-9539834202f2
+applyAnswerWindowChrome failed hwnd=23398484
+answer ipc ready failed: error
+Destroyed managed flutter window: 0ea840f5-e278-4531-ad53-1b5fa6d07e97
+applyAnswerWindowChrome failed hwnd=23464020
+Destroyed managed flutter window: 5a1841d5-5f33-4614-9ac5-2362383355e6
+applyAnswerWindowChrome failed hwnd=29100116
+answer ipc ready failed: error
+answer ipc content_height failed: error

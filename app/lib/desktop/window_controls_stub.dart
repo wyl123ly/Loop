@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'answer_host/answer_window_host.dart';
+import 'answer_host/answer_window_platform.dart';
 import 'floating_window.dart';
 import 'screenshot_service.dart';
 import 'window_mode.dart';
@@ -18,12 +20,23 @@ class WindowController {
   final ValueNotifier<bool> readyNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> resizing = ValueNotifier<bool>(false);
 
+  /// T5-05 API 对等：非桌面无真实窗口几何，永不 tick。
+  final ValueNotifier<int> geometryEpoch = ValueNotifier<int>(0);
+
   late final FloatingWindowController floating = FloatingWindowController(
     const _StubWindowPlatform(),
     onError: (message) => floatingError.value = message,
   );
 
+  /// 回答浮窗宿主（Web/非桌面为 no-op；不创建第二窗口）。
+  late final AnswerWindowHost answers = AnswerWindowHost(
+    platform: const UnsupportedAnswerWindowPlatform(),
+    onError: (message) => answerError.value = message,
+  );
+
   final ValueNotifier<String?> floatingError = ValueNotifier<String?>(null);
+
+  final ValueNotifier<String?> answerError = ValueNotifier<String?>(null);
 
   final ScreenshotService screenshots = const PlatformScreenshotService();
 
@@ -39,7 +52,9 @@ class WindowController {
   Future<void> toggleMaximize() async {}
   Future<void> close() async {}
   Future<void> enableTray() async {}
-  Future<void> show({bool focus = true}) async {}
+  Future<void> show({bool focus = true}) async {
+    await answers.restoreVisibility();
+  }
   Future<void> showInactive() async {}
   Future<void> focusOnce() async {}
   Future<void> quit() async {}

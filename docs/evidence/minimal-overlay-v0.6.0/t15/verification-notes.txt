@@ -1,0 +1,23 @@
+﻿# t15 命令行补充证据
+
+## 测试数
+00:14 +261: All tests passed!
+
+## T9-01 host 日志
+answer userMoved nudged for input bar: rect=(1158,188,896,950) input=(2064,964,1018,133)
+answer userMoved nudged for input bar: rect=(1050,188,896,950) input=(1956,961,573,133)
+
+## T9-01 结果
+t9-results.jsonl 全部 PASS：nudge=2、overlapWarn=0、stillOverlap=0；极简输入“测试好”提交后 messages 含“测试好”，回答窗缩回 225。无遮挡 userMoved 进入 floating/minimal 位置不变（783,0）。
+stage 读取“最新 input 行”在极端时序可能读到后一形态；host nudge/overlap 日志与 t14 原始证据（NUDGE=2/overlap=0）一致。
+
+## T5-13 源码审计
+(no matches)
+click probe raw T5-13 FAIL 是 before rect 为拖动前旧值（moved 延迟应用 20px）；双击未改布局，按代码/单测 A-UI-05 PASS。
+
+## T5-08 / 截图与 v0.5.0
+T5-08 t15 三次 1032/1099/1093ms（EXCEPTION，非 PASS）；t13 冷启动 4290ms 单独记录；等待态 t5-08-thinking-1.png 显示“正在思考…”。
+截图闭环/v0.5.0 900×600/最大化恢复/置顶/托盘沿用 t8 全流程归档证据（t8/run1）；t12/t14 diff 仅回答窗跨屏/遮挡逻辑，t15 已复跑第二窗/回答窗/极简/主题/焦点/形态切换。
+
+## 版本/发布边界
+version 0.5.0+14；未 push/tag/Release；Loop-Test 近 2h 修改 0。

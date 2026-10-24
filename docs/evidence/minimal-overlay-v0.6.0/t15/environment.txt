@@ -1,0 +1,64 @@
+﻿# t15 复验环境快照（2026-10-25 00:08–00:16 +08:00）
+
+- 基线 HEAD ac3f767（v0.5.0-1-gac3f767）；pubspec version 0.5.0+14（未提升）
+- loop.exe SHA256: 110BE3EAD0CCC94534F136C51C5A4F07A69D0E13AEA03B1F325C2A131BE00C95
+- data/app.so SHA256: 9579140F2A368617FEF03F0BD50340F68B7D43CB56BD1369CEA33619F00856EA
+- desktop_multi_window_plugin.dll SHA256: D2707CF5C3E2F0361E7728B32C7D6A6A7C50FA1FE4AE32E3C77E7EE2F5E985DC
+- Flutter 3.47.7 / Dart 3.13.5；flutter build windows --release exit 0
+- 显示器：主 0,0 2560x1440@125%(dpi120)；副 -2560,-58 2560x1600@150%(dpi144)；rcWork=rcMonitor（任务栏自动隐藏）
+- 无 100% DPI 显示器；未改用户显示设置（100% 单测覆盖）
+- 隔离 LOOP_DATA_DIR=%TEMP%\\loop-t15-evidence\\...\\data（空 loop.db）；mock LLM @9999；backend @8765
+- 运行前无用户 loop 实例；未停止用户实例；Loop-Test 近 2h 修改 0；未 push/tag/Release
+
+## t15 证据
+- quality: analyze 0 / 261 tests / release build；新增 U-AL-33/34
+- t9: normal 长回答 → userMoved 轻拖 → floating/minimal 零交集、dpr/宽保持、极简输入可提交；无遮挡 userMoved 不被移动
+- anchor/run2/run3/click/modes: 跨屏/主题/焦点/形态切换回归
+- probe: T5-08 三次 1032/1099/1093ms EXCEPTION（非 PASS）；T5-14 三循环/拖到最小；T5-07 创建期退出 1186ms
+- t14-reference: t14 原始 NUDGE=2/overlap=0 证据
+
+## 说明
+- T9 探针首次 staged input 读取为最新输入条（极端情况下可能读到后一形态），但 host 自身 `answer userMoved nudged` 2 次、overlapWarn=0、stillOverlap=0，且无遮挡路径位置保持不变；T14 原始证据亦为 nudge=2/overlap=0。
+- T5-08 按 EXCEPTION 记录，不标 PASS；t13 冷启动 4290ms 单独记录，不单独卡交付。
+- T5-13 源码无 resetPosition + A-UI-05；click raw T5-13 FAIL 为旧 rect 对比 artifact。
+- 100%/物理拔显示器/真实中文 IME 组合不可自动化，单测/限制记录。
+
+## git status
+ M app/lib/desktop/floating_window.dart
+ M app/lib/desktop/screenshot_capture_io.dart
+ M app/lib/desktop/screenshot_types.dart
+ M app/lib/desktop/win32_display.dart
+ M app/lib/desktop/window_controls_io.dart
+ M app/lib/desktop/window_controls_stub.dart
+ M app/lib/desktop/window_mode.dart
+ M app/lib/main.dart
+ M app/lib/screens/chat_screen.dart
+ M app/lib/widgets/floating_bar.dart
+ M app/lib/widgets/floating_qa_scaffold.dart
+ M app/pubspec.lock
+ M app/pubspec.yaml
+ M app/test/floating_shell_test.dart
+ M app/test/screenshot_capture_test.dart
+ M app/test/screenshot_flow_test.dart
+ M app/test/support/fake_floating_host.dart
+ M app/test/support/fake_window_platform.dart
+ M app/windows/flutter/generated_plugin_registrant.cc
+ M app/windows/flutter/generated_plugins.cmake
+?? .agent-teams/
+?? app/lib/answer_ui/
+?? app/lib/desktop/answer_host/
+?? app/lib/desktop/minimal_window.dart
+?? app/lib/widgets/minimal_bar.dart
+?? app/test/answer_geometry_test.dart
+?? app/test/answer_lifecycle_test.dart
+?? app/test/answer_protocol_test.dart
+?? app/test/answer_window_test.dart
+?? app/test/chat_answer_trigger_test.dart
+?? app/test/minimal_bar_test.dart
+?? app/test/minimal_window_test.dart
+?? app/test/support/fake_answer_platform.dart
+?? app/test/support/fake_answer_transport.dart
+?? app/third_party/
+?? docs/evidence/
+?? docs/minimal-overlay-spec.md
+?? docs/minimal-overlay-test-report.md

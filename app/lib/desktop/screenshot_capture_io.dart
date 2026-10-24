@@ -29,6 +29,7 @@ class ScreenshotCapture {
 
   static Future<ScreenshotSession?> start({required bool hideLoop}) async {
     final controller = WindowController.instance.floating;
+    final answers = WindowController.instance.answers;
     if (!controller.supported) return null;
 
     final snapshot = await controller.snapshot();
@@ -37,7 +38,10 @@ class ScreenshotCapture {
       throw Exception('截图失败：未找到可用显示器');
     }
 
+    final answersWereVisible = answers.visible && !answers.hiddenByOwner;
     try {
+      // 回答窗恒置顶，截图/覆盖层期间必须隐藏（规格 §3.7）；结束恢复。
+      if (answersWereVisible) await answers.hide();
       if (hideLoop) {
         await windowManager.hide();
         await Future<void>.delayed(captureHideDelay);
@@ -59,19 +63,23 @@ class ScreenshotCapture {
         display: plan.display,
         hidden: hideLoop,
         startedAt: DateTime.now(),
+        answersWereVisible: answersWereVisible,
       );
     } catch (error) {
       await _restoreQuietly(controller, snapshot, focus: hideLoop);
+      if (answersWereVisible) await answers.restoreVisibility();
       rethrow;
     }
   }
 
-  /// 恢复截图前的完整窗口状态（含浮窗形态/置顶/最小尺寸）。
+  /// 恢复截图前的完整窗口状态（含浮窗形态/置顶/最小尺寸/极简标记）。
   ///
   /// 幂等：重复调用不累积副作用（[FloatingWindowController.applySnapshot]）。
   static Future<void> restore(ScreenshotSession session) async {
     final controller = WindowController.instance.floating;
+    final answers = WindowController.instance.answers;
     await controller.applySnapshot(session.snapshot, focus: session.hidden);
+    if (session.answersWereVisible) await answers.restoreVisibility();
     controller.scheduleEnsureGeometry();
   }
 

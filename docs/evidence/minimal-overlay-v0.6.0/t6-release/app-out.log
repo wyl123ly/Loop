@@ -1,0 +1,8 @@
+dwm round corners: true hwnd=13698830
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=948ms visible=950ms
+answer userMoved nudged for input bar: rect=(1158,188,896,950) input=(2064,964,1018,133)
+answer userMoved nudged for input bar: rect=(1050,188,896,950) input=(1956,961,573,133)
+Destroyed managed flutter window: 692e85b7-b5fd-4da9-a22b-067ab3feebf9
+answer ipc ready failed: error
+answer create timing: ready=1072ms visible=1075ms

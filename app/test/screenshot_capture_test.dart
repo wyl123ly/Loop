@@ -87,7 +87,7 @@ void main() {
   });
 
   group('禁止项静态检查（AC-1.3 / AC-8.5 / AC-1.1）', () {
-    test('lib 无 setFullScreen / 单 runApp / 无 FlutterEngine', () {
+    test('lib 无 setFullScreen / 仅主入口+multi_window 分支两个 runApp / 无 FlutterEngine', () {
       final dartFiles = Directory('lib')
           .listSync(recursive: true)
           .whereType<File>()
@@ -103,11 +103,30 @@ void main() {
           isFalse,
           reason: '${file.path} 不得调用 setFullScreen',
         );
-        runAppCount += 'runApp('.allMatches(source).length;
-        engineCount += 'FlutterEngine'.allMatches(source).length;
+        // 只统计真实代码：注释里的 `runApp`/`FlutterEngine` 描述不算调用/实例化。
+        final code = source
+            .replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '')
+            .replaceAll(RegExp(r'//[^\n]*'), '');
+        runAppCount += 'runApp('.allMatches(code).length;
+        engineCount += 'FlutterEngine'.allMatches(code).length;
       }
-      expect(runAppCount, 1, reason: '只允许一个 runApp 入口');
-      expect(engineCount, 0, reason: '不得创建第二个 FlutterEngine');
+      // v0.6.0：允许主入口 + `multi_window` 第二引擎分支各 1 个 runApp；
+      // 第二个入口必须走 desktop_multi_window（不手建 FlutterEngine），
+      // 由 t2 的 prepareAnswerEngine 统一分流（规格 §2.4/§9.1）。
+      final mainSource = File('lib/main.dart').readAsStringSync();
+      final hasMultiWindowBranch = mainSource.contains("'multi_window'") ||
+          mainSource.contains('"multi_window"');
+      if (hasMultiWindowBranch) {
+        expect(
+          mainSource.contains('prepareAnswerEngine'),
+          isTrue,
+          reason: 'multi_window 分支必须走 t2 的第二引擎入口 helper',
+        );
+        expect(runAppCount, 2, reason: '只允许主入口与 multi_window 分支各一个 runApp');
+      } else {
+        expect(runAppCount, 1, reason: '无第二引擎时只允许一个 runApp 入口');
+      }
+      expect(engineCount, 0, reason: '不得手建第二个 FlutterEngine');
     });
   });
 }

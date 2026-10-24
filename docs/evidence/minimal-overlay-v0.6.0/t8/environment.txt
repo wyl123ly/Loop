@@ -1,0 +1,69 @@
+﻿# t8 复验环境快照（2026-10-24 23:09–23:30 +08:00）
+
+- 基线 HEAD ac3f767（v0.5.0-1-gac3f767）；pubspec version 0.5.0+14（未提升）
+- loop.exe: D:\DSH_Workspace\Prog2_app\app\build\windows\x64\runner\Release\loop.exe
+- loop.exe(runner) SHA256: 110BE3EAD0CCC94534F136C51C5A4F07A69D0E13AEA03B1F325C2A131BE00C95
+- data/app.so SHA256: F8BFC8DC294C5122E1B51C8C2D7FFA3D72BE6DC6559C44032CC5CABA4BE3E862（Dart AOT，包含本轮修复；runner exe 时间戳不变属正常增量构建）
+- desktop_multi_window_plugin.dll SHA256: 98DFB07181A143E1424561B72285BBE19955D658A35661AAFDE3844F11A8D975（vendored path dependency；t7 构建）
+- Flutter 3.47.7 stable / Dart 3.13.5；flutter build windows --release exit 0
+- 显示器：主 0,0 2560x1440 @125%（dpi120）；副 -2560,-58 2560x1600 @150%（dpi144）；两屏 rcWork=rcMonitor（任务栏自动隐藏）
+- 无 100% DPI 显示器；未修改用户显示设置（100% 仅单测覆盖，列限制）
+- 隔离：每次 LOOP_DATA_DIR=%TEMP%\\loop-t8-evidence\\...\\data（空 loop.db）；mock LLM @9999；backend @8765
+- 运行前检查无用户 loop 实例；未停止用户实例；未修改 Loop-Test（近 2h 修改 0）
+- 未执行 git push/tag/GitHub Release
+
+## t8 证据目录
+- quality/: analyze.log, flutter-test.log, build-release.log（No issues / 254/254 / build success）
+- run1/: 全流程 E2E（主屏 125%）
+- run2/: 150% 副屏创建/程序化跨屏（D-03 修复验证；D-05 程序化 auto-follow finding）
+- run3/: light/dark 主题 + 点击回答窗焦点（全 PASS）
+- click/: 5 次点击正文/拖标题/滚轮 + 文本焦点（0 回答窗前台事件）
+- probe/: T5-08 三次创建、T5-14 3 次极简循环 + 拖到最小、T5-05 形态切换、T5-07 创建期退出
+- modes/: 单独 T5-05 形态切换 clean run（4/4 PASS）
+- anchor/: 真实拖动主窗 125%↔150% 的自动跨屏尺寸（发现 auto-resize finding）
+
+## 说明
+- run1 原始 A-02-02 是等待 1.8s 太短（下一次 A-02-03 数据高度 950），非功能失败；F-01-01 聚合记录到创建/恢复型补偿 outlier 108/287ms，点击/拖动/滚轮专项 click probe 为 0 次回答窗前台事件。
+- T5-08 实测 1058/1182/1100ms >400ms 目标，标 EXCEPTION（非 PASS），等待态截图 t5-08-thinking-*.png、需 t9 决定。
+- T5-13：源码无 onResetPosition/reset_position；单测 A-UI-05 覆盖；E2E 双击标题矩形比较受前一步 moved 延迟应用干扰，不能作为产品失败证据。
+- T5-10：物理拔显示器不可自动化，U-AL-26 单测覆盖；列限制。
+
+## git status（仅 docs/evidence 由 t8 新增）
+ M app/lib/desktop/floating_window.dart
+ M app/lib/desktop/screenshot_capture_io.dart
+ M app/lib/desktop/screenshot_types.dart
+ M app/lib/desktop/win32_display.dart
+ M app/lib/desktop/window_controls_io.dart
+ M app/lib/desktop/window_controls_stub.dart
+ M app/lib/desktop/window_mode.dart
+ M app/lib/main.dart
+ M app/lib/screens/chat_screen.dart
+ M app/lib/widgets/floating_bar.dart
+ M app/lib/widgets/floating_qa_scaffold.dart
+ M app/pubspec.lock
+ M app/pubspec.yaml
+ M app/test/floating_shell_test.dart
+ M app/test/screenshot_capture_test.dart
+ M app/test/screenshot_flow_test.dart
+ M app/test/support/fake_floating_host.dart
+ M app/test/support/fake_window_platform.dart
+ M app/windows/flutter/generated_plugin_registrant.cc
+ M app/windows/flutter/generated_plugins.cmake
+?? .agent-teams/
+?? app/lib/answer_ui/
+?? app/lib/desktop/answer_host/
+?? app/lib/desktop/minimal_window.dart
+?? app/lib/widgets/minimal_bar.dart
+?? app/test/answer_geometry_test.dart
+?? app/test/answer_lifecycle_test.dart
+?? app/test/answer_protocol_test.dart
+?? app/test/answer_window_test.dart
+?? app/test/chat_answer_trigger_test.dart
+?? app/test/minimal_bar_test.dart
+?? app/test/minimal_window_test.dart
+?? app/test/support/fake_answer_platform.dart
+?? app/test/support/fake_answer_transport.dart
+?? app/third_party/
+?? docs/evidence/
+?? docs/minimal-overlay-spec.md
+?? docs/minimal-overlay-test-report.md

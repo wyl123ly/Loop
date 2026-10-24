@@ -1,0 +1,14 @@
+dwm round corners: true hwnd=27329532
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=984ms visible=987ms
+answer auto-follow display \\.\DISPLAY2 dpr=1.25
+answer anchors updated: input=(711,1373,1829,133)
+answer anchors updated: input=(711,1373,1828,133)
+answer anchors updated: input=(711,1148,1468,133)
+answer geometry stabilized: display=\\.\DISPLAY2 dpr=1.25 rect=(1432,188,747,950)
+answer auto-follow display \\.\DISPLAY1 dpr=1.5
+answer anchors updated: input=(-2103,1065,1402,159)
+answer anchors updated: input=(-2103,1065,1401,159)
+answer anchors updated: input=(-2103,1065,1401,159)
+answer anchors updated: input=(-2103,1290,1761,159)
+answer geometry stabilized: display=\\.\DISPLAY1 dpr=1.5 rect=(-1238,158,896,1120)

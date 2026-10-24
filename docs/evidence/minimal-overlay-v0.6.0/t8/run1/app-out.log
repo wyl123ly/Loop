@@ -1,0 +1,13 @@
+dwm round corners: true hwnd=2230286
+hotkeys: HotkeyRegistration(toggle=false/1409, screenshot=false/1409, unsupported=false)
+answer create timing: ready=964ms visible=967ms
+Destroyed managed flutter window: 020ebb73-99d8-43df-818e-0713e7151fac
+answer create timing: ready=989ms visible=992ms
+answer window closed externally (windowId=35d0d29d-24db-4055-8e3f-8fa55579e332)
+Destroyed managed flutter window: 35d0d29d-24db-4055-8e3f-8fa55579e332
+answer create timing: ready=1091ms visible=1094ms
+Destroyed managed flutter window: 64c2cfda-52d0-4f82-a5a5-f064c5405c5b
+answer create timing: ready=986ms visible=988ms
+Destroyed managed flutter window: 92ded96e-80c6-49da-b0d1-2b4a4fc3b18a
+answer create timing: ready=1261ms visible=1264ms
+answer anchors updated: input=(711,1148,1468,133)

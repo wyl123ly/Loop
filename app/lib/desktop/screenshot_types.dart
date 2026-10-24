@@ -14,11 +14,12 @@ class ScreenshotSession {
     required this.display,
     required this.hidden,
     required this.startedAt,
+    this.answersWereVisible = false,
   });
 
   final Uint8List bytes;
 
-  /// 截图前完整窗口状态（含 mode / minSize / alwaysOnTop）。
+  /// 截图前完整窗口状态（含 mode / minSize / alwaysOnTop / minimal）。
   final WindowSnapshot snapshot;
 
   /// 捕获显示器（物理工作区/scale），用于参数与覆盖层对齐。
@@ -29,8 +30,11 @@ class ScreenshotSession {
 
   final DateTime startedAt;
 
+  /// 截图前回答浮窗是否可见（隐藏后需在截图结束恢复；规格 §3.7）。
+  final bool answersWereVisible;
+
   @override
   String toString() =>
       'ScreenshotSession(bytes=${bytes.length}, hidden=$hidden, '
-      'display=${display.id}, snapshot=$snapshot)';
+      'display=${display.id}, answers=$answersWereVisible, snapshot=$snapshot)';
 }
