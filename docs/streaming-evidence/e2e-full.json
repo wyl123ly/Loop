@@ -1,0 +1,194 @@
+{
+  "mode": "full",
+  "base": "http://127.0.0.1:8767",
+  "pass": 24,
+  "fail": 0,
+  "results": [
+    {
+      "name": "E0 启动健康",
+      "ok": true,
+      "detail": "health={'ok': True, 'version': '0.3.9', 'has_key': False}"
+    },
+    {
+      "name": "E1 新库默认 stream_output=true 且为布尔",
+      "ok": true,
+      "detail": "stream_output=True"
+    },
+    {
+      "name": "E2 PUT 后 GET stream_output=false / base_url/mock/has_key",
+      "ok": true,
+      "detail": "settings={'stream_output': False, 'base_url': 'http://127.0.0.1:9999', 'has_key': True}"
+    },
+    {
+      "name": "E2b 工作区隔离",
+      "ok": true,
+      "detail": "workspace_path=C:\\Users\\Wuyanlin\\AppData\\Local\\Temp\\loop-t4\\workspace"
+    },
+    {
+      "name": "E3 false 普通问答：仅 1 条 delta 且内容完整、落库一致、token 正确",
+      "ok": true,
+      "detail": "events=['run', 'delta', 'done'] deltas=1 tokens=260/90 cost=0.000186"
+    },
+    {
+      "name": "E4 true 普通问答：多个 delta 逐段，拼接与 false 单条一致",
+      "ok": true,
+      "detail": "delta_count=4 first_deltas=['直接回答：这', '是一条普通问', '答，不调用工']"
+    },
+    {
+      "name": "E5 false 计划：plan/step 先于 delta，delta 恰好 1 条且含完成文本，plan/steps 落库",
+      "ok": true,
+      "detail": "events=['run', 'plan', 'step', 'step', 'step', 'plan', 'delta', 'done'] plan_t=[0.082, 0.227] step_t=[0.082, 0.139, 0.174] delta_t=0.23"
+    },
+    {
+      "name": "E5b true 计划：多 delta 拼接 == false 单条；plan/step 仍出现",
+      "ok": true,
+      "detail": "delta_count=4 events=['run', 'plan', 'step', 'step', 'step', 'delta', 'delta', 'delta', 'delta', 'plan', 'done']"
+    },
+    {
+      "name": "E7 false 审批：approval 实时、allow 后工具执行、文件生成、audit 记录、单 delta",
+      "ok": true,
+      "detail": "approvals=[{'run_id': 5, 'tool': 'fs_write', 'args': {'path': 'agent-mock.md', 'content': '# mock\\nhello', 'mode': 'overwrite'}, 'risk': '需要确认'}] file=True deltas=1 audit_tools=['fs_read', 'fs_write', 'list_tasks', 'create_tasks', 'update_plan']"
+    },
+    {
+      "name": "E8 false 审批等待中取消：cancelled 一次、无 delta、无 done",
+      "ok": true,
+      "detail": "events=['run', 'approval', 'cancelled']"
+    },
+    {
+      "name": "E8b false 流式过程中取消：delta<=1 且为已生成前缀、cancelled 一次、无 done",
+      "ok": true,
+      "detail": "events=['run', 'delta', 'cancelled'] delta=['慢速回答：第一段内容和第']"
+    },
+    {
+      "name": "E8c 取消后下一条消息正常",
+      "ok": true,
+      "detail": "events=['run', 'delta', 'done']"
+    },
+    {
+      "name": "E9 false 空回复：0 delta、done 一次、token 正常、无空助手消息",
+      "ok": true,
+      "detail": "events=['run', 'done'] done={'run_id': 9, 'message_id': None, 'tokens_in': 17, 'tokens_out': 0, 'cost': 0, 'steps': [], 'refs': [], 'plan': [], 'error': ''}"
+    },
+    {
+      "name": "E10 false 长回复：单条 delta >5000 字且与 Markdown/公式/代码块原文一致、落库一致",
+      "ok": true,
+      "detail": "chars=7967 deltas=1"
+    },
+    {
+      "name": "E10b true 长回复：多个 delta 拼接与 false 单条一致",
+      "ok": true,
+      "detail": "delta_count=100 chars=7967"
+    },
+    {
+      "name": "E11 运行中切换：本次仍单 delta，下一次多 delta（请求级快照）",
+      "ok": true,
+      "detail": "delta_count=1 events=['run', 'delta', 'done']"
+    },
+    {
+      "name": "E11b 切换后的下一条：按新值 true 逐段",
+      "ok": true,
+      "detail": "delta_count=9"
+    },
+    {
+      "name": "E12 模型不可达：error 事件可读、无 done、服务不崩",
+      "ok": true,
+      "detail": "events=['run', 'error'] error={'message': 'ClientException with SocketException: 远程计算机拒绝网络连接。 (OS Error: 远程计算机拒绝网络连接。, errno = 1225), address = 127.0.0.1, port = 52410, uri=http://127.0.0.1:9998/chat/completions'}"
+    },
+    {
+      "name": "E12b 恢复 base_url 后正常",
+      "ok": true,
+      "detail": "events=['run', 'delta', 'done']"
+    },
+    {
+      "name": "E13 布尔校验 + 侧栏开关不重置 stream_output",
+      "ok": true,
+      "detail": "after_string=True after_sidebar=True/True"
+    },
+    {
+      "name": "E14 自定义模式 + thinking=high：false 仍单 delta 完整",
+      "ok": true,
+      "detail": "events=['run', 'delta', 'done']"
+    },
+    {
+      "name": "E15 图片/截图附件：上传、false 单 delta、附件落库",
+      "ok": true,
+      "detail": "uploads=[{'kind': 'image', 'id': 'img_1', 'name': 't4-image.png'}, {'kind': 'image', 'id': 'img_2', 'name': '截图-t4.png'}] deltas=1 attachments=[{'id': 'img_1', 'name': 't4-image.png', 'is_image': True}, {'id': 'img_2', 'name': '截图-t4.png', 'is_image': True}]"
+    },
+    {
+      "name": "E16 历史重载：false/true 正文、token 一致",
+      "ok": true,
+      "detail": "false='直接回答：这是一条普通问答，不调用工具。' tokens=260/90"
+    },
+    {
+      "name": "E17 收尾设置为 false（供重启验证）",
+      "ok": true,
+      "detail": "stream_output=False"
+    }
+  ],
+  "summary": {
+    "false_normal": {
+      "events": [
+        "run",
+        "delta",
+        "done"
+      ],
+      "delta_count": 1,
+      "t0": 0.002,
+      "delta_t": [
+        0.062
+      ],
+      "done_t": 0.062
+    },
+    "true_normal": {
+      "events": [
+        "run",
+        "delta",
+        "delta",
+        "delta",
+        "delta",
+        "done"
+      ],
+      "delta_count": 4,
+      "first_delta_t": 0.006,
+      "done_t": 0.061
+    },
+    "false_plan": {
+      "events": [
+        "run",
+        "plan",
+        "step",
+        "step",
+        "step",
+        "plan",
+        "delta",
+        "done"
+      ],
+      "delta_count": 1,
+      "plan_t": [
+        0.082,
+        0.227
+      ],
+      "step_t": [
+        0.082,
+        0.139,
+        0.174
+      ],
+      "delta_t": 0.23
+    },
+    "false_approval": {
+      "events": [
+        "run",
+        "approval",
+        "step",
+        "step",
+        "delta",
+        "done"
+      ],
+      "delta_count": 1,
+      "approval_t": [
+        0.045
+      ],
+      "delta_t": 0.171
+    }
+  }
+}

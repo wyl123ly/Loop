@@ -115,6 +115,7 @@ class LoopApi {
     String? customModes,
     bool? autoCheckUpdates,
     bool? sidebarCollapsed,
+    bool? streamOutput,
   }) async {
     final payload = <String, dynamic>{};
     if (apiKey != null && apiKey.isNotEmpty) payload['api_key'] = apiKey;
@@ -124,6 +125,7 @@ class LoopApi {
     if (customModes != null) payload['custom_modes'] = customModes;
     if (autoCheckUpdates != null) payload['auto_check_updates'] = autoCheckUpdates;
     if (sidebarCollapsed != null) payload['sidebar_collapsed'] = sidebarCollapsed;
+    if (streamOutput != null) payload['stream_output'] = streamOutput;
     return SettingsData.fromJson(
       (await _request('PUT', '/api/settings', body: payload)) as Map<String, dynamic>,
     );

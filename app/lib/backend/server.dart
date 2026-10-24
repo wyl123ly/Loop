@@ -83,6 +83,7 @@ class Backend {
             'custom_modes': Db.setting('custom_modes', '[]'),
             'auto_check_updates': Db.setting('auto_check_updates', 'true') == 'true',
             'sidebar_collapsed': Db.setting('sidebar_collapsed', 'false') == 'true',
+            'stream_output': Db.setting('stream_output', 'true') == 'true',
           });
         }
         if (method == 'PUT') {
@@ -104,6 +105,9 @@ class Backend {
           }
           if (body['auto_check_updates'] is bool) {
             Db.setSetting('auto_check_updates', body['auto_check_updates'] == true ? 'true' : 'false');
+          }
+          if (body['stream_output'] is bool) {
+            Db.setSetting('stream_output', body['stream_output'] == true ? 'true' : 'false');
           }
           if (body['custom_modes'] is String) {
             Db.setSetting('custom_modes', body['custom_modes'].toString());
@@ -297,6 +301,8 @@ class Backend {
   static Future<void> _chat(HttpRequest request) async {
     final body = await _jsonBody(request);
     final text = (body['text'] ?? '').toString().trim();
+    // 请求级快照：本次 run 使用进入请求时的设置；运行中切换只影响下一条消息。
+    final streamOutput = Db.setting('stream_output', 'true') == 'true';
     final attachments = ((body['attachments'] as List?) ?? const [])
         .map((e) => e.toString())
         .where((e) => e.isNotEmpty)
@@ -379,6 +385,7 @@ class Backend {
       mode: (body['mode'] ?? 'answer').toString(),
       modePrompt: (body['mode_prompt'] ?? '').toString(),
       thinking: (body['thinking'] ?? 'medium').toString(),
+      streamOutput: streamOutput,
     );
     var status = 'done';
     try {

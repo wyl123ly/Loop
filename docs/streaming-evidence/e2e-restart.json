@@ -1,0 +1,17 @@
+{
+  "mode": "restart",
+  "pass": 2,
+  "fail": 0,
+  "results": [
+    {
+      "name": "R1 重启后 stream_output=false 仍持久化、后端健康",
+      "ok": true,
+      "detail": "stream_output=False health={'ok': True, 'version': '0.3.9', 'has_key': True}"
+    },
+    {
+      "name": "R2 重启后 base_url/api_key/auto_check_updates 保持",
+      "ok": true,
+      "detail": "base_url=http://127.0.0.1:9999 has_key=True auto_check_updates=False"
+    }
+  ]
+}

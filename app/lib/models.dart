@@ -336,6 +336,10 @@ class SettingsData {
   final bool autoCheckUpdates;
   final bool sidebarCollapsed;
 
+  /// 正文是否逐字显示。关闭后仍走同一条流式协议，只是等整段回答结束后
+  /// 一次性收到 `delta`；默认 true 保持既有体验。
+  final bool streamOutput;
+
   SettingsData({
     required this.apiKeyMasked,
     required this.hasKey,
@@ -346,6 +350,7 @@ class SettingsData {
     this.customModes = '[]',
     this.autoCheckUpdates = true,
     this.sidebarCollapsed = false,
+    this.streamOutput = true,
   });
 
   factory SettingsData.fromJson(Map<String, dynamic> json) => SettingsData(
@@ -358,6 +363,7 @@ class SettingsData {
         customModes: (json['custom_modes'] ?? '[]') as String,
         autoCheckUpdates: (json['auto_check_updates'] ?? true) as bool,
         sidebarCollapsed: (json['sidebar_collapsed'] ?? false) as bool,
+        streamOutput: (json['stream_output'] ?? true) as bool,
       );
 }
 

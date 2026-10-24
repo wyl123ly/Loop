@@ -18,6 +18,14 @@ class Db {
     _ready = true;
   }
 
+  /// 测试专用：内存库 + 与正式库相同的迁移/默认值，不触碰用户数据目录。
+  static void initInMemoryForTests() {
+    if (_ready) return;
+    db = sqlite3.openInMemory();
+    _migrate();
+    _ready = true;
+  }
+
   static void _migrate() {
     db.execute('''
       CREATE TABLE IF NOT EXISTS conversations(
@@ -177,6 +185,11 @@ class Db {
       } catch (_) {}
     }
 
+    seedDefaults();
+  }
+
+  /// 把缺失的默认设置补进老库（幂等；启动迁移与测试升级路径共用）。
+  static void seedDefaults() {
     for (final entry in _defaults.entries) {
       db.execute(
         'INSERT OR IGNORE INTO settings(key, value) VALUES(?, ?)',
@@ -193,6 +206,7 @@ class Db {
     'theme': 'system',
     'auto_check_updates': 'true',
     'sidebar_collapsed': 'false',
+    'stream_output': 'true',
     'custom_modes': '[]',
     'workspace_path': '',
     'agent_shell': 'true',

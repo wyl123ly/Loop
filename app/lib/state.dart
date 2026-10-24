@@ -17,7 +17,10 @@ final ValueNotifier<int?> openConversationSignal = ValueNotifier<int?>(null);
 final ValueNotifier<int?> deletedConversationSignal = ValueNotifier<int?>(null);
 
 class AppState extends ChangeNotifier {
-  final LoopApi api = LoopApi();
+  AppState({LoopApi? api}) : api = api ?? LoopApi();
+
+  /// 可注入假实现用于 widget/单元测试；生产环境使用默认 [LoopApi]。
+  final LoopApi api;
 
   List<Conversation> conversations = [];
   int? currentConversationId;
@@ -113,17 +116,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> setSidebarCollapsed(bool value) async {
     final current = settings;
-    settings = SettingsData(
-      apiKeyMasked: current?.apiKeyMasked ?? '',
-      hasKey: current?.hasKey ?? false,
-      baseUrl: current?.baseUrl ?? '',
-      model: current?.model ?? 'deepseek-flash',
-      reasonModel: current?.reasonModel ?? 'deepseek-v4-pro',
-      theme: current?.theme ?? 'dark',
-      customModes: current?.customModes ?? '[]',
-      autoCheckUpdates: current?.autoCheckUpdates ?? true,
-      sidebarCollapsed: value,
-    );
+    settings = _copySettings(current, sidebarCollapsed: value);
     notifyListeners();
     try {
       await api.saveSettings(sidebarCollapsed: value);
@@ -131,21 +124,54 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setAutoCheckUpdates(bool value) async {
-    settings = SettingsData(
-      apiKeyMasked: settings?.apiKeyMasked ?? '',
-      hasKey: settings?.hasKey ?? false,
-      baseUrl: settings?.baseUrl ?? '',
-      model: settings?.model ?? 'deepseek-flash',
-      reasonModel: settings?.reasonModel ?? 'deepseek-v4-pro',
-      theme: settings?.theme ?? 'dark',
-      customModes: settings?.customModes ?? '[]',
-      autoCheckUpdates: value,
-      sidebarCollapsed: settings?.sidebarCollapsed ?? false,
-    );
+    final current = settings;
+    settings = _copySettings(current, autoCheckUpdates: value);
     notifyListeners();
     try {
       await api.saveSettings(autoCheckUpdates: value);
     } catch (_) {}
+  }
+
+  /// 读全局“流式输出”开关；设置尚未加载时按默认 [true] 处理。
+  bool get streamOutput => settings?.streamOutput ?? true;
+
+  /// 立即切换开关并持久化；保存失败时回滚旧值并返回 false，由设置页提示。
+  Future<bool> setStreamOutput(bool value) async {
+    final current = settings;
+    if (current == null) return false;
+    if (current.streamOutput == value) return true;
+    settings = _copySettings(current, streamOutput: value);
+    notifyListeners();
+    try {
+      await api.saveSettings(streamOutput: value);
+      return true;
+    } catch (_) {
+      settings = current;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// 复制 [SettingsData] 的全部字段后再改指定项，避免侧栏/更新开关把
+  /// `streamOutput` 等新字段重置成默认值。
+  SettingsData _copySettings(
+    SettingsData? current, {
+    bool? autoCheckUpdates,
+    bool? sidebarCollapsed,
+    bool? streamOutput,
+  }) {
+    return SettingsData(
+      apiKeyMasked: current?.apiKeyMasked ?? '',
+      hasKey: current?.hasKey ?? false,
+      baseUrl: current?.baseUrl ?? '',
+      model: current?.model ?? 'deepseek-flash',
+      reasonModel: current?.reasonModel ?? 'deepseek-v4-pro',
+      theme: current?.theme ?? 'system',
+      customModes: current?.customModes ?? '[]',
+      autoCheckUpdates: autoCheckUpdates ?? current?.autoCheckUpdates ?? true,
+      sidebarCollapsed: sidebarCollapsed ?? current?.sidebarCollapsed ?? false,
+      streamOutput: streamOutput ?? current?.streamOutput ?? true,
+    );
   }
 
   Future<void> setTheme(ThemeMode mode) async {

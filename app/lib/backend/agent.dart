@@ -13,6 +13,22 @@ class AgentEvent {
   final Map<String, Object?> data;
 }
 
+/// 模型流的生产者。生产环境固定走 [streamChat]；测试可注入假流，避免真实网络。
+typedef ChatChunkStream = Stream<Map<String, dynamic>> Function(
+  LlmConfig config,
+  List<Map<String, dynamic>> messages,
+  List<Map<String, dynamic>>? tools,
+  String thinking,
+);
+
+Stream<Map<String, dynamic>> _defaultChatStream(
+  LlmConfig config,
+  List<Map<String, dynamic>> messages,
+  List<Map<String, dynamic>>? tools,
+  String thinking,
+) =>
+    streamChat(config: config, messages: messages, tools: tools, thinking: thinking);
+
 const _modeHints = {
   'answer': '模式：答疑。直接讲清楚，必要时补一个例子。',
   'socratic': '模式：苏格拉底。先反问一句确认他卡在哪，再给提示，最后给完整解答；答案放在最后。',
@@ -140,7 +156,10 @@ Stream<AgentEvent> runAgent({
   String modePrompt = '',
   String thinking = 'medium',
   bool background = false,
+  bool streamOutput = true,
+  ChatChunkStream? chatStream,
 }) async* {
+  final chat = chatStream ?? _defaultChatStream;
   final config = LlmConfig.fromDb(
     modelOverride: thinking == 'high' ? Db.setting('reason_model', 'deepseek-v4-pro') : null,
   );
@@ -201,12 +220,7 @@ Stream<AgentEvent> runAgent({
       if (run.toolCalls >= _maxToolCalls) break;
       final pending = <int, Map<String, dynamic>>{};
       var roundText = '';
-      await for (final chunk in streamChat(
-        config: config,
-        messages: messages,
-        tools: definitions,
-        thinking: thinking,
-      )) {
+      await for (final chunk in chat(config, messages, definitions, thinking)) {
         run.checkCancelled();
         final usage = chunk['usage'];
         if (usage is Map) {
@@ -221,7 +235,8 @@ Stream<AgentEvent> runAgent({
         if (text is String && text.isNotEmpty) {
           roundText += text;
           fullText += text;
-          yield AgentEvent('delta', {'text': text});
+          // 关闭流式输出时只累积正文，终态事件前一次性补发（见下方 flush）。
+          if (streamOutput) yield AgentEvent('delta', {'text': text});
         }
         for (final raw in (delta['tool_calls'] as List? ?? [])) {
           if (raw is! Map) continue;
@@ -391,11 +406,11 @@ Stream<AgentEvent> runAgent({
         : '本次执行达到工具调用上限，剩余步骤已停止。';
     if (fullText.trim().isEmpty) {
       fullText = '已完成：${detail.isEmpty ? '当前步骤' : detail}。$suffix';
-      yield AgentEvent('delta', {'text': fullText});
+      if (streamOutput) yield AgentEvent('delta', {'text': fullText});
     } else if (!fullText.contains(suffix)) {
       final addition = '\n\n（$suffix）';
       fullText += addition;
-      yield AgentEvent('delta', {'text': addition});
+      if (streamOutput) yield AgentEvent('delta', {'text': addition});
     }
   }
   if (forceFinish || run.toolCalls >= _maxToolCalls) {
@@ -439,6 +454,12 @@ Stream<AgentEvent> runAgent({
       'tokens_out': tokensOut,
       'cost': cost,
     });
+  }
+
+  // 关闭流式输出：整次 run（含多轮工具）的正文已落库，在终态事件之前一次性补发。
+  // 只在 cancelled/done 之前执行一次；error 分支要求正文为空，因此不会重复发送。
+  if (!streamOutput && fullText.isNotEmpty) {
+    yield AgentEvent('delta', {'text': fullText});
   }
 
   if (cancelled) {

@@ -16,9 +16,12 @@ import '../widgets/markdown_text.dart';
 import 'screenshot_overlay.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.active});
+  const ChatScreen({super.key, required this.active, this.state});
 
   final bool active;
+
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -38,6 +41,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final FocusNode _focus = FocusNode();
+
+  AppState get _appState => widget.state ?? appState;
 
   int? _conversationId;
   String _mode = 'answer';
@@ -81,9 +86,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _bootstrap() async {
     if (_bootstrapped) return;
     _bootstrapped = true;
-    await appState.refreshConversations();
+    await _appState.refreshConversations();
     if (!mounted) return;
-    final items = appState.conversations;
+    final items = _appState.conversations;
     if (items.isNotEmpty) {
       await _loadConversation(items.first.id);
     } else {
@@ -106,8 +111,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.clear();
       _attachments.clear();
     });
-    if (appState.conversations.isNotEmpty) {
-      _loadConversation(appState.conversations.first.id);
+    if (_appState.conversations.isNotEmpty) {
+      _loadConversation(_appState.conversations.first.id);
     }
   }
 
@@ -117,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
     try {
-      final id = await appState.api.createConversation();
+      final id = await _appState.api.createConversation();
       if (!mounted) return;
       setState(() {
         _conversationId = id;
@@ -125,8 +130,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _attachments.clear();
         _loadingMessages = false;
       });
-      appState.setCurrentConversation(id);
-      await appState.refreshConversations();
+      _appState.setCurrentConversation(id);
+      await _appState.refreshConversations();
       _focus.requestFocus();
     } catch (error) {
       _snack(error.toString(), isError: true);
@@ -145,9 +150,9 @@ class _ChatScreenState extends State<ChatScreen> {
       _attachments.clear();
       _loadingMessages = true;
     });
-    appState.setCurrentConversation(id);
+    _appState.setCurrentConversation(id);
     try {
-      final items = await appState.api.messages(id);
+      final items = await _appState.api.messages(id);
       if (!mounted || _conversationId != id) return;
       setState(() {
         _messages.addAll(items);
@@ -192,7 +197,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (file == null) return;
       final bytes = await file.readAsBytes();
       setState(() => _uploading = true);
-      final result = await appState.api.upload(bytes, file.name);
+      final result = await _appState.api.upload(bytes, file.name);
       if (!mounted) return;
       setState(() {
         _uploading = false;
@@ -238,7 +243,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await ScreenshotCapture.restore(session);
       session = null;
       if (cropped == null || cropped.isEmpty) return;
-      final result = await appState.api.upload(
+      final result = await _appState.api.upload(
         cropped,
         '截图-${DateTime.now().millisecondsSinceEpoch}.png',
       );
@@ -293,11 +298,11 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       var convId = _conversationId;
       if (convId == null) {
-        convId = await appState.api.createConversation();
+        convId = await _appState.api.createConversation();
         _conversationId = convId;
-        appState.setCurrentConversation(convId);
+        _appState.setCurrentConversation(convId);
       }
-      await for (final event in appState.api.chat(
+      await for (final event in _appState.api.chat(
         conversationId: convId,
         text: text,
         attachments: attachmentIds,
@@ -353,7 +358,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   .map((e) => RefItem.fromJson(Map<String, dynamic>.from(e)))
                   .toList();
             });
-            appState.refreshConversations();
+            _appState.refreshConversations();
           case 'error':
             setState(() => _messages.remove(assistant));
             _snack((event.data['message'] ?? '出错了') as String, isError: true);
@@ -378,7 +383,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _approval = null);
     if (runId == null) return;
     try {
-      await appState.api.approveRun(runId, allow);
+      await _appState.api.approveRun(runId, allow);
     } catch (error) {
       _snack(error.toString(), isError: true);
     }
@@ -388,7 +393,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final runId = _runId;
     if (runId == null) return;
     try {
-      await appState.api.cancelRun(runId);
+      await _appState.api.cancelRun(runId);
     } catch (error) {
       _snack(error.toString(), isError: true);
     }
@@ -440,7 +445,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (message.id == null || _generating) return;
     setState(() => _generating = true);
     try {
-      final result = await appState.api.generate(kind, message.id!);
+      final result = await _appState.api.generate(kind, message.id!);
       final text = kind == 'note' ? '已保存到笔记' : '已加入待办：${result['title'] ?? ''}';
       _snack(text);
     } catch (error) {
@@ -451,7 +456,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String get _title {
-    final conversation = appState.conversationById(_conversationId);
+    final conversation = _appState.conversationById(_conversationId);
     return conversation?.title ?? '新对话';
   }
 
@@ -471,14 +476,14 @@ class _ChatScreenState extends State<ChatScreen> {
         const CustomMode(id: 'answer', name: '答疑', prompt: ''),
         const CustomMode(id: 'socratic', name: '苏格拉底', prompt: ''),
         const CustomMode(id: 'read', name: '精读', prompt: ''),
-        ...appState.customModes,
+        ..._appState.customModes,
       ];
 
   String get _modeLabel =>
       _modes.firstWhere((mode) => mode.id == _mode, orElse: () => _modes.first).name;
 
   CustomMode? get _currentCustom {
-    for (final mode in appState.customModes) {
+    for (final mode in _appState.customModes) {
       if (mode.id == _mode) return mode;
     }
     return null;
@@ -509,7 +514,7 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (_) => const _ModeEditorDialog(),
     );
     if (mode == null) return;
-    await appState.saveCustomModes([...appState.customModes, mode]);
+    await _appState.saveCustomModes([..._appState.customModes, mode]);
     if (!mounted) return;
     setState(() {
       _mode = mode.id;
@@ -526,10 +531,10 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (_) => _ModeEditorDialog(initial: custom),
     );
     if (updated == null) return;
-    final list = appState.customModes
+    final list = _appState.customModes
         .map((mode) => mode.id == updated.id ? updated : mode)
         .toList();
-    await appState.saveCustomModes(list);
+    await _appState.saveCustomModes(list);
     if (!mounted) return;
     setState(() {
       _mode = updated.id;
@@ -553,8 +558,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
     if (ok != true) return;
-    await appState.saveCustomModes(
-      appState.customModes.where((mode) => mode.id != custom.id).toList(),
+    await _appState.saveCustomModes(
+      _appState.customModes.where((mode) => mode.id != custom.id).toList(),
     );
     if (!mounted) return;
     setState(() {
@@ -659,7 +664,7 @@ class _ChatScreenState extends State<ChatScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              appState.settings?.model ?? 'deepseek-flash',
+              _appState.settings?.model ?? 'deepseek-flash',
               style: TextStyle(fontSize: 11, color: pal.muted),
             ),
           ),
@@ -786,7 +791,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       );
     }
-    final url = appState.api.imageUrl(item.id);
+    final url = _appState.api.imageUrl(item.id);
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -849,13 +854,13 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: () => ImagePreview.show(
               context,
-              appState.api.imageUrl(item.id),
+              _appState.api.imageUrl(item.id),
               title: item.name,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                appState.api.imageUrl(item.id),
+                _appState.api.imageUrl(item.id),
                 width: 138,
                 height: 104,
                 fit: BoxFit.cover,

@@ -7,9 +7,12 @@ import '../update/update_ui.dart';
 import '../theme.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.active});
+  const SettingsScreen({super.key, required this.active, this.state});
 
   final bool active;
+
+  /// 可选注入，便于测试；生产环境使用全局 [appState]。
+  final AppState? state;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -25,6 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _testOk = false;
   bool _checkingUpdate = false;
 
+  AppState get _state => widget.state ?? appState;
+
   @override
   void initState() {
     super.initState();
@@ -35,14 +40,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void didUpdateWidget(covariant SettingsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) {
-      appState.refreshSettings().then((_) {
+      _state.refreshSettings().then((_) {
         if (mounted) _syncFromState();
       });
     }
   }
 
   void _syncFromState() {
-    final settings = appState.settings;
+    final settings = _state.settings;
     if (settings == null) return;
     _baseController.text = settings.baseUrl;
     _model = settings.model;
@@ -59,13 +64,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await appState.api.saveSettings(
+      await _state.api.saveSettings(
         apiKey: _keyController.text.trim(),
         baseUrl: _baseController.text.trim(),
         model: _model,
       );
       _keyController.clear();
-      await appState.refreshSettings();
+      await _state.refreshSettings();
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -88,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _testResult = null;
     });
     try {
-      final result = await appState.api.testSettings();
+      final result = await _state.api.testSettings();
       if (!mounted) return;
       setState(() {
         _testOk = result['ok'] == true;
@@ -107,7 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = appState.settings;
+    final settings = _state.settings;
     return Column(
       children: [
         Container(
@@ -147,11 +152,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ButtonSegment(value: ThemeMode.light, label: Text('浅色')),
                                   ButtonSegment(value: ThemeMode.dark, label: Text('深色')),
                                 ],
-                                selected: {appState.themeMode},
+                                selected: {_state.themeMode},
                                 showSelectedIcon: false,
-                                onSelectionChanged: (value) => appState.setTheme(value.first),
+                                onSelectionChanged: (value) => _state.setTheme(value.first),
                               ),
                             ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: panelDecoration(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('对话与模型',
+                              style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
+                          Material(
+                            type: MaterialType.transparency,
+                            child: SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: const Text('流式输出', style: TextStyle(fontSize: 13)),
+                              subtitle: Text(
+                                '开启后逐字显示；关闭后等待完整回复；对下一条消息生效。',
+                                style: TextStyle(fontSize: 11.5, height: 1.5, color: pal.muted),
+                              ),
+                              value: _state.settings?.streamOutput ?? true,
+                              onChanged: (value) async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final ok = await _state.setStreamOutput(value);
+                                if (!mounted) return;
+                                setState(() {});
+                                if (!ok) {
+                                  messenger.showSnackBar(SnackBar(
+                                    content: Text('流式设置保存失败，已恢复原状态'),
+                                    backgroundColor: pal.danger,
+                                  ));
+                                }
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -314,16 +356,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            title: const Text('启动时自动检查更新',
-                                style: TextStyle(fontSize: 12.5)),
-                            value: appState.settings?.autoCheckUpdates ?? true,
-                            onChanged: (value) async {
-                              await appState.setAutoCheckUpdates(value);
-                              if (mounted) setState(() {});
-                            },
+                          Material(
+                            type: MaterialType.transparency,
+                            child: SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: const Text('启动时自动检查更新',
+                                  style: TextStyle(fontSize: 12.5)),
+                              value: _state.settings?.autoCheckUpdates ?? true,
+                              onChanged: (value) async {
+                                await _state.setAutoCheckUpdates(value);
+                                if (mounted) setState(() {});
+                              },
+                            ),
                           ),
                           Align(
                             alignment: Alignment.centerLeft,
@@ -354,7 +399,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const Text('运行信息',
                               style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 12),
-                          _row('本地服务', appState.api.baseUrl),
+                          _row('本地服务', _state.api.baseUrl),
                           _row('数据位置', 'data/loop.db + data/files/'),
                           _row('版本', 'Loop ${AppVersion.current} · Dart 后端'),
                           const SizedBox(height: 10),
