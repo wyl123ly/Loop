@@ -1,0 +1,52 @@
+{"at": 1792835589.6890523, "path": "/", "user": "ping", "images": 0, "image_data_len": 0, "messages": 1, "stream": null}
+{"at": 1792836704.3899806, "path": "/chat/completions", "user": "slow", "images": 1, "image_data_len": 1302222, "messages": 2, "stream": true}
+{"at": 1792837237.6432998, "path": "/chat/completions", "user": "slow", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837318.8511465, "path": "/chat/completions", "user": "slow", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837359.6145556, "path": "/chat/completions", "user": "tool approval", "images": 0, "image_data_len": 0, "messages": 8, "stream": true}
+{"at": 1792837374.2064776, "path": "/chat/completions", "user": "tool approval", "images": 0, "image_data_len": 0, "messages": 10, "stream": true}
+{"at": 1792837374.2630508, "path": "/chat/completions", "user": "tool approval", "images": 0, "image_data_len": 0, "messages": 12, "stream": true}
+{"at": 1792837412.107467, "path": "/chat/completions", "user": "请看这张截图，解释一下公式", "images": 1, "image_data_len": 130, "messages": 2, "stream": true}
+{"at": 1792837412.3319793, "path": "/chat/completions", "user": "普通问答-开启流式", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837412.4371202, "path": "/chat/completions", "user": "普通问答-关闭流式", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837412.532833, "path": "/chat/completions", "user": "慢速回答-运行中切换", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837418.726288, "path": "/chat/completions", "user": "普通问答-切换后下一条", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837418.8461227, "path": "/chat/completions", "user": "慢速回答-停止", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837419.2997806, "path": "/chat/completions", "user": "停止后继续可用", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837419.4052224, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837419.4674113, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837419.5101345, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837419.599228, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837419.6579368, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837419.6958356, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837419.7834294, "path": "/chat/completions", "user": "empty reply", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837419.841051, "path": "/chat/completions", "user": "error500", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837419.8702643, "path": "/chat/completions", "user": "失败后恢复", "images": 0, "image_data_len": 0, "messages": 3, "stream": true}
+{"at": 1792837419.9354901, "path": "/chat/completions", "user": "long answer", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837420.3165498, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837420.394439, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837420.4534574, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837456.1274354, "path": "/chat/completions", "user": "请看这张截图，解释一下公式", "images": 1, "image_data_len": 130, "messages": 2, "stream": true}
+{"at": 1792837456.3123012, "path": "/chat/completions", "user": "普通问答-开启流式", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837456.4228888, "path": "/chat/completions", "user": "普通问答-关闭流式", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837456.5194652, "path": "/chat/completions", "user": "慢速回答-运行中切换", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837462.7140827, "path": "/chat/completions", "user": "普通问答-切换后下一条", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837462.830309, "path": "/chat/completions", "user": "慢速回答-停止", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837463.3013282, "path": "/chat/completions", "user": "停止后继续可用", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837463.3856187, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837463.447346, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837463.4891474, "path": "/chat/completions", "user": "tool approval allow", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837463.5774376, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837463.6371973, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837463.6737993, "path": "/chat/completions", "user": "tool approval reject", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837463.78779, "path": "/chat/completions", "user": "empty reply", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837463.83368, "path": "/chat/completions", "user": "error500", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837463.8603814, "path": "/chat/completions", "user": "恢复请求 normal", "images": 0, "image_data_len": 0, "messages": 3, "stream": true}
+{"at": 1792837464.0198143, "path": "/chat/completions", "user": "long answer", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837464.422945, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837464.5016625, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792837464.56117, "path": "/chat/completions", "user": "plan a review", "images": 0, "image_data_len": 0, "messages": 6, "stream": true}
+{"at": 1792837910.2471611, "path": "/chat/completions", "user": "error500", "images": 0, "image_data_len": 0, "messages": 2, "stream": true}
+{"at": 1792837925.7753913, "path": "/chat/completions", "user": "error500", "images": 0, "image_data_len": 0, "messages": 3, "stream": true}
+{"at": 1792837930.379127, "path": "/chat/completions", "user": "empty", "images": 0, "image_data_len": 0, "messages": 4, "stream": true}
+{"at": 1792838111.6095204, "path": "/chat/completions", "user": "slow", "images": 1, "image_data_len": 107894, "messages": 5, "stream": true}
+{"at": 1792838147.6237733, "path": "/chat/completions", "user": "slow", "images": 0, "image_data_len": 0, "messages": 7, "stream": true}

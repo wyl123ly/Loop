@@ -1,0 +1,46 @@
+{
+  "mode": "restart",
+  "base": "http://127.0.0.1:8765",
+  "pass": 4,
+  "fail": 0,
+  "results": [
+    {
+      "name": "R1 重启后健康",
+      "ok": true,
+      "detail": {
+        "health": {
+          "ok": true,
+          "version": "0.5.0",
+          "has_key": true
+        }
+      }
+    },
+    {
+      "name": "R2 重启后 stream_output 持久化",
+      "ok": true,
+      "detail": {
+        "stream_output": true
+      }
+    },
+    {
+      "name": "R3 重启后 mock/Key 设置保留",
+      "ok": true,
+      "detail": {
+        "base_url": "http://127.0.0.1:9999",
+        "has_key": true
+      }
+    },
+    {
+      "name": "R4 重启后会话历史仍在（截图问答）",
+      "ok": true,
+      "detail": {
+        "messages": 2,
+        "roles": [
+          "user",
+          "assistant"
+        ]
+      }
+    }
+  ],
+  "at": "2026-10-24T20:15:26"
+}

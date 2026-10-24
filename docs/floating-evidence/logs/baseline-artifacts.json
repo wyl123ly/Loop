@@ -1,0 +1,78 @@
+﻿{
+    "at":  "2026-10-24T17:53:29.5423638+08:00",
+    "gitHead":  "48508489f633ef34779ca1f429c469b5f86d8e73",
+    "artifacts":  {
+                      "data\\loop.db-wal":  {
+                                                "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+                                                "mtime":  "2026-10-24T17:05:29.2521473+08:00",
+                                                "bytes":  0
+                                            },
+                      "release\\Loop-Desktop\\version.json":  {
+                                                                  "sha256":  "9CCD6C17176229B2B611BE1794E6874477EA965BC0E75FCB624E911E65B7F863",
+                                                                  "mtime":  "2026-10-24T15:56:19.9392167+08:00",
+                                                                  "bytes":  19
+                                                              },
+                      "data\\loop.db":  {
+                                            "sha256":  "6C259E6E9B2CF11C0B81D010DFDB28AEABF5E64380CBF4383A6B4C3EBEB8A2C7",
+                                            "mtime":  "2026-10-24T16:32:15.5103227+08:00",
+                                            "bytes":  113467392
+                                        },
+                      "release\\Loop-Desktop\\Loop.exe":  {
+                                                              "sha256":  "8528C667F78E2112431888E1E6EB8E4D60265D111D9C0F4D51449723F287324F",
+                                                              "mtime":  "2026-10-24T15:56:18.9719743+08:00",
+                                                              "bytes":  71168
+                                                          },
+                      "release\\Loop-Desktop-win64.zip":  {
+                                                              "sha256":  "7D1BF2101CF53259BD6CBC82C464A898330A84BA7A39B19FD8D768CD752D09E0",
+                                                              "mtime":  "2026-10-24T15:56:23.2531434+08:00",
+                                                              "bytes":  20521998
+                                                          }
+                  },
+    "gitStatus":  [
+                      " M app/assets/screenshot.ps1",
+                      " M app/lib/desktop/screenshot_capture_io.dart",
+                      " M app/lib/desktop/screenshot_types.dart",
+                      " M app/lib/desktop/window_controls_io.dart",
+                      " M app/lib/desktop/window_controls_stub.dart",
+                      " M app/lib/main.dart",
+                      " M app/lib/screens/chat_screen.dart",
+                      " M app/lib/screens/screenshot_overlay.dart",
+                      " M app/lib/widgets/image_preview.dart",
+                      " M app/lib/widgets/markdown_text.dart",
+                      " M app/lib/widgets/title_bar.dart",
+                      " M app/test/screenshot_overlay_test.dart",
+                      " M app/windows/runner/flutter_window.cpp",
+                      " M app/windows/runner/flutter_window.h",
+                      "?? .agent-teams/",
+                      "?? app/lib/desktop/floating_signals.dart",
+                      "?? app/lib/desktop/floating_window.dart",
+                      "?? app/lib/desktop/hotkeys.dart",
+                      "?? app/lib/desktop/hotkeys_io.dart",
+                      "?? app/lib/desktop/hotkeys_stub.dart",
+                      "?? app/lib/desktop/hotkeys_types.dart",
+                      "?? app/lib/desktop/screenshot_plan.dart",
+                      "?? app/lib/desktop/screenshot_service.dart",
+                      "?? app/lib/desktop/win32_display.dart",
+                      "?? app/lib/desktop/window_mode.dart",
+                      "?? app/lib/widgets/floating_bar.dart",
+                      "?? app/lib/widgets/floating_qa_scaffold.dart",
+                      "?? app/test/display_geometry_test.dart",
+                      "?? app/test/floating_chat_test.dart",
+                      "?? app/test/floating_layout_test.dart",
+                      "?? app/test/floating_shell_test.dart",
+                      "?? app/test/floating_window_test.dart",
+                      "?? app/test/hotkey_status_test.dart",
+                      "?? app/test/screenshot_capture_test.dart",
+                      "?? app/test/screenshot_flow_test.dart",
+                      "?? app/test/support/",
+                      "?? app/test/win32_display_test.dart",
+                      "?? docs/floating-evidence/",
+                      "?? docs/floating-qa-spec.md"
+                  ],
+    "processes":  [
+
+                  ],
+    "port8765":  [
+
+                 ]
+}

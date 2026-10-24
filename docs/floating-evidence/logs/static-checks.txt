@@ -1,0 +1,11 @@
+﻿# static checks (t4)
+## setFullScreen in app/lib, app/test, windows/runner
+(empty - only the static-check test source references the literal)
+## runApp count
+app/lib/main.dart:48 runApp(const LoopApp());
+## FlutterEngine occurrences
+(empty)
+## Timer.periodic / WH_KEYBOARD_LL in app/lib/desktop
+(empty)
+## TODO/FIXME added in changed files
+(empty)

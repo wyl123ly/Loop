@@ -20,40 +20,48 @@ class ImagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    // 浮窗最小 360×420：预览框按窗口 90% 收敛（240..1100 / 200..820），
+    // 再留 12 的紧凑边距，保证小窗不溢出。
+    final compact = size.width < 420 || size.height < 520;
     return Dialog(
+      key: const Key('image-preview'),
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: EdgeInsets.all(compact ? 12 : 24),
       child: Container(
-        width: (size.width * 0.82).clamp(420.0, 1100.0),
-        height: (size.height * 0.82).clamp(320.0, 820.0),
-        decoration: panelDecoration(color: pal.cardSolid, radius: 18),
+        key: const Key('image-preview-box'),
+        width: (size.width * 0.9).clamp(240.0, 1100.0),
+        height: (size.height * 0.9).clamp(200.0, 820.0),
+        decoration: panelDecoration(color: pal.cardSolid, radius: compact ? 14 : 18),
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 8, 8),
+              padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 4 : 10, 4, compact ? 4 : 8),
               child: Row(
                 children: [
-                  Icon(Icons.image_outlined, size: 16, color: pal.muted),
+                  Icon(Icons.image_outlined, size: compact ? 14 : 16, color: pal.muted),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       title ?? '图片预览',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12.5, color: pal.ink),
+                      style: TextStyle(fontSize: compact ? 11.5 : 12.5, color: pal.ink),
                     ),
                   ),
                   IconButton(
                     tooltip: '关闭',
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded, size: 18, color: pal.muted),
+                    visualDensity: compact ? VisualDensity.compact : null,
+                    icon: Icon(Icons.close_rounded, size: compact ? 16 : 18, color: pal.muted),
                   ),
                 ],
               ),
             ),
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(compact ? 14 : 18),
+                ),
                 child: Container(
                   color: Colors.black,
                   child: InteractiveViewer(

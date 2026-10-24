@@ -1,6 +1,6 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.4.0**。
+Windows 桌面 AI 学习工作台，当前版本 **v0.5.0**。
 对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite，模型使用 DeepSeek。
 
 [下载最新版](https://github.com/wyl123ly/Loop/releases/latest)
@@ -13,11 +13,20 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.4.0**。
 |---|---|
 | ![agent](docs/screenshots/agent-page.png) | ![update](docs/screenshots/update-dialog-dark.png) |
 
-| 窄窗口 900×600 |
-|---|
-| ![compact](docs/screenshots/window-compact.png) |
+| 窄窗口 900×600 | 桌面答疑悬浮窗 |
+|---|---|
+| ![compact](docs/screenshots/window-compact.png) | ![floating](docs/screenshots/floating-460x600-dark.png) |
 
 ## 当前版本功能
+
+### 桌面答疑悬浮窗
+- 主窗口标题栏新增「浮窗答疑」按钮，一键把同一个 Loop 窗口切成约 **460×600** 的小窗；默认置顶、无原生标题栏、无侧栏，适合边看题边问。
+- 浮窗最小 **360×420**，可拖动、可缩放、可取消置顶；浮窗内提供截图、置顶、返回主窗口、关闭四个按钮。
+- 切换复用同一 Flutter 进程与同一 `ChatScreen`/会话/附件/SSE：流式回答不会中断，返回主窗口后仍是同一会话和同一段回答。
+- 浮窗截图默认隐藏 Loop 后截取**窗口当前所在显示器**（含多显示器/不同 DPI），框选完成自动上传为 `img_` 图片附件，可继续输入问题后发送。
+- 全局快捷键 `Alt+Q` 切换浮窗、`Alt+A` 截图；被其他程序占用时自动降级为按钮操作并在 tooltip 提示，不影响使用。
+- 亮/暗主题、900×600 主窗口、360×420 浮窗、长回答滚动、Markdown/公式/代码块、审批/停止均保持可用。
+- 修复最大化窗口进出浮窗后的“还原位置”丢失、最大化窗口截图恢复、浮窗 360×420 时隐藏页/过渡帧布局溢出等问题。
 
 ### 对话
 - 流式输出开关：默认开启逐字显示；关闭后等待完整回复再一次性显示，工具步骤/计划/审批仍实时。设置对下一条消息生效。
@@ -79,6 +88,17 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.4.0**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.5.0 · 2026-10-24
+- 新增「桌面答疑悬浮窗」：同一进程/同一 Flutter 窗口在普通与浮窗形态间切换，不创建第二引擎。
+- 浮窗默认 460×600、最小 360×420，自绘拖动栏，可拖动/缩放/置顶；提供截图、置顶、返回、关闭按钮；无原生标题栏。
+- 聊天会话复用同一 `ChatScreen` State、当前 conversation、附件与 SSE：流式中切换形态回答不中断，返回主窗口仍是同一会话。
+- 浮窗截图按窗口中心所在显示器工作区捕获，框选后上传为 `img_` 附件；取消/重截/完成均正确恢复原浮窗尺寸、位置与置顶状态。
+- 全局快捷键 `Alt+Q` 切换浮窗、`Alt+A` 截图；`RegisterHotKey` 冲突（1409）时降级为按钮可用，不阻塞启动、不反复抢焦点。
+- 修复最大化窗口进入浮窗再返回后，Windows「还原」丢失原普通窗口 bounds，以及最大化窗口截图覆盖/恢复不正确的问题。
+- 修复浮窗 360×420 时隐藏页与 normal→floating 过渡帧的 RenderFlex/RenderLine 溢出；隐藏页在浮窗形态按 900×600 基准布局，不参与窄宽排版。
+- 兼容流式输出 on/off、工具/计划/审批/停止、多模态附件、Markdown/公式/代码块、亮暗主题与 900×600 主窗口。
+- 新增浮窗/窗口状态机/显示器几何/截图/布局测试；全量 142 条测试通过，analyze 0 issue；真实双屏（125%/150%）与隔离后端 mock E2E 验证通过（详见 `docs/release-v0.5.0.md` 与 `docs/floating-qa-test-report.md`）。
 
 ### v0.4.0 · 2026-10-24
 - 新增「流式输出」开关（设置 → 对话与模型），默认开启，保持 v0.3.9 的逐字体验。
@@ -158,6 +178,9 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.4.0**。
 > 本仓库从 v0.3.0 开始记录版本改动。
 
 ## 相关文档
+- 完整 v0.5.0 说明：[docs/release-v0.5.0.md](docs/release-v0.5.0.md)
+- 悬浮窗规格与验收契约：[docs/floating-qa-spec.md](docs/floating-qa-spec.md)
+- 悬浮窗端到端验证报告：[docs/floating-qa-test-report.md](docs/floating-qa-test-report.md)
 - 完整 v0.4.0 说明：[docs/release-v0.4.0.md](docs/release-v0.4.0.md)
 - 完整 v0.3.1 说明：[docs/release-v0.3.1.md](docs/release-v0.3.1.md)
 - 自动更新发布规范：[docs/自动更新.md](docs/自动更新.md)

@@ -151,7 +151,27 @@ class _AgentScreenState extends State<AgentScreen> {
   }
 
   Widget _permissionsTab() {
-    final s = _settings!;
+    final s = _settings;
+    if (s == null) {
+      // 后端不可达/加载失败时的降级态：避免 `_settings!` 崩溃（也让真实六页
+      // 在无后端的 widget 测试中可被布局/溢出扫描）。正常加载后不会出现。
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: panelDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('代理设置暂不可用',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+            const SizedBox(height: 6),
+            Text('连不上本地服务或加载失败，请稍后重试。',
+                style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: _load, child: const Text('重试')),
+          ],
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

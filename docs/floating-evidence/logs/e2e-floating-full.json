@@ -1,0 +1,350 @@
+{
+  "mode": "full",
+  "base": "http://127.0.0.1:8765",
+  "pass": 27,
+  "fail": 0,
+  "results": [
+    {
+      "name": "E1 健康检查",
+      "ok": true,
+      "detail": {
+        "health": {
+          "ok": true,
+          "version": "0.5.0",
+          "has_key": false
+        },
+        "base": "http://127.0.0.1:8765"
+      }
+    },
+    {
+      "name": "E1b 初始流式默认",
+      "ok": true,
+      "detail": {
+        "stream_output": true,
+        "theme": "system"
+      }
+    },
+    {
+      "name": "E1c 配置 mock 模型",
+      "ok": true,
+      "detail": {
+        "base_url": "http://127.0.0.1:9999",
+        "workspace": "C:\\Users\\Wuyanlin\\AppData\\Local\\Temp\\loop-t6\\workspace"
+      }
+    },
+    {
+      "name": "E2a PNG 上传为 img_ 附件",
+      "ok": true,
+      "detail": {
+        "kind": "image",
+        "id": "img_1",
+        "name": "截图-t4.png"
+      }
+    },
+    {
+      "name": "E2b SSE run→delta→done",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "delta",
+          "done"
+        ],
+        "deltas": 14,
+        "t": [
+          0.004,
+          0.015,
+          0.026
+        ]
+      }
+    },
+    {
+      "name": "E2c mock 收到图片 data URI",
+      "ok": true,
+      "detail": {
+        "text": "已收到 1 张图片附件（data URI 长度 130）。这是悬浮窗截图问答的 mock 回答：$r(A)$ 与 $r(AB)\\le\\min(r(A),r(B))$。"
+      }
+    },
+    {
+      "name": "E2d 请求体 image_url 计数/长度",
+      "ok": true,
+      "detail": {
+        "at": 1792844108.3256965,
+        "path": "/chat/completions",
+        "user": "请看这张截图，解释一下公式",
+        "images": 1,
+        "image_data_len": 130,
+        "messages": 2,
+        "stream": true
+      }
+    },
+    {
+      "name": "E2e 落库附件元数据 is_image",
+      "ok": true,
+      "detail": {
+        "attachments": [
+          {
+            "id": "img_1",
+            "name": "截图-t4.png",
+            "is_image": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "E2f 落库助手正文一致",
+      "ok": true,
+      "detail": {
+        "stored_len": 83,
+        "delta_len": 83
+      }
+    },
+    {
+      "name": "E3a stream=true 多 delta",
+      "ok": true,
+      "detail": {
+        "deltas": 6
+      }
+    },
+    {
+      "name": "E3b stream=false 单 delta",
+      "ok": true,
+      "detail": {
+        "deltas": 1
+      }
+    },
+    {
+      "name": "E3c 两种模式正文一致",
+      "ok": true,
+      "detail": {
+        "len": 34
+      }
+    },
+    {
+      "name": "E4a 运行中切换不影响当前 run",
+      "ok": true,
+      "detail": {
+        "deltas": 28
+      }
+    },
+    {
+      "name": "E4b 下一条按关闭生效（单 delta）",
+      "ok": true,
+      "detail": {
+        "deltas": 1,
+        "setting": false
+      }
+    },
+    {
+      "name": "E5a 停止 → cancelled 且无 done",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "delta",
+          "delta",
+          "cancelled"
+        ],
+        "deltas": 2
+      }
+    },
+    {
+      "name": "E5b 部分正文保留",
+      "ok": true,
+      "detail": {
+        "stored": "慢速回答：第一段"
+      }
+    },
+    {
+      "name": "E5c 停止后下一条正常",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "delta",
+          "delta",
+          "delta"
+        ]
+      }
+    },
+    {
+      "name": "E6a 审批事件实时",
+      "ok": true,
+      "detail": {
+        "approval": {
+          "run_id": 8,
+          "tool": "fs_write",
+          "args": {
+            "path": "floating-approval.md",
+            "content": "# floating approval\nok",
+            "mode": "overwrite"
+          },
+          "risk": "需要确认"
+        }
+      }
+    },
+    {
+      "name": "E6b allow 后文件写入 + audit",
+      "ok": true,
+      "detail": {
+        "file": "C:\\Users\\Wuyanlin\\AppData\\Local\\Temp\\loop-t6\\workspace\\floating-approval.md",
+        "audit": [
+          {
+            "id": 2,
+            "run_id": 8,
+            "job_id": null,
+            "tool": "fs_read",
+            "args": "{\"path\":\"floating-approval.md\"}",
+            "result": "已读取 floating-approval.md",
+            "risk": "auto",
+            "approval": "auto",
+            "duration_ms": 0,
+            "created_at": "2026-10-24T20:15:15+08:00"
+          }
+        ]
+      }
+    },
+    {
+      "name": "E6c 审批后回答完成",
+      "ok": true,
+      "detail": {
+        "deltas": 6,
+        "events": [
+          "delta",
+          "delta",
+          "delta",
+          "done"
+        ]
+      }
+    },
+    {
+      "name": "E7 拒绝审批 → rejected + 回答收尾",
+      "ok": true,
+      "detail": {
+        "rejected": [
+          {
+            "id": 3,
+            "run_id": 9,
+            "job_id": null,
+            "tool": "fs_write",
+            "args": "{\"path\":\"floating-approval.md\",\"content\":\"# floating approval\\nok\",\"mode\":\"overwrite\"}",
+            "result": "用户拒绝",
+            "risk": "approval",
+            "approval": "rejected",
+            "duration_ms": 1,
+            "created_at": "2026-10-24T20:15:15+08:00"
+          }
+        ],
+        "events": [
+          "delta",
+          "delta",
+          "delta",
+          "done"
+        ]
+      }
+    },
+    {
+      "name": "E8 空回复 → 0 delta / done / 无空助手消息",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "done"
+        ],
+        "messages": [
+          [
+            "user",
+            11
+          ]
+        ]
+      }
+    },
+    {
+      "name": "E9 上游失败 → error 无 done，可读",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "error"
+        ],
+        "error": {
+          "event": "error",
+          "data": {
+            "message": "DeepSeek 服务暂时不可用（500），稍后重试。"
+          },
+          "t": 0.004
+        }
+      }
+    },
+    {
+      "name": "E9b 失败后服务仍可用",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "delta",
+          "delta",
+          "delta"
+        ]
+      }
+    },
+    {
+      "name": "E10 无 Key → error 可读",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "error"
+        ],
+        "error": {
+          "event": "error",
+          "data": {
+            "message": "还没有配置 DeepSeek API Key，点左下角「设置」填入。"
+          },
+          "t": 0.002
+        }
+      }
+    },
+    {
+      "name": "E11 长回复（>8000 字，公式/代码块/表格）",
+      "ok": true,
+      "detail": {
+        "len": 11191,
+        "deltas": 140,
+        "reload_equal": true
+      }
+    },
+    {
+      "name": "E12 计划/步骤实时 + 最终完成",
+      "ok": true,
+      "detail": {
+        "events": [
+          "run",
+          "plan",
+          "step",
+          "step",
+          "delta",
+          "delta",
+          "delta",
+          "plan",
+          "done"
+        ],
+        "plan": true
+      }
+    }
+  ],
+  "at": "2026-10-24T20:15:16"
+}

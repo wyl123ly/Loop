@@ -1,11 +1,14 @@
-﻿import 'dart:convert';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../desktop/screenshot_capture.dart';
-import '../desktop/screenshot_types.dart';
+import '../desktop/floating_signals.dart';
+import '../desktop/screenshot_service.dart';
+import '../desktop/window_mode.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -16,15 +19,35 @@ import '../widgets/markdown_text.dart';
 import 'screenshot_overlay.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.active, this.state});
+  const ChatScreen({
+    super.key,
+    required this.active,
+    this.state,
+    this.floating = false,
+    this.compact = false,
+    this.screenshots,
+    this.screenshotSignal,
+  });
 
   final bool active;
 
   /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
   final AppState? state;
 
+  /// 浮窗形态：隐藏页头、按紧凑断点收缩（规格 §6）。
+  final bool floating;
+
+  /// 浮窗紧凑模式（宽 <420 或高 <520）。
+  final bool compact;
+
+  /// 截图服务；测试注入 fake，生产使用平台实现。
+  final ScreenshotService? screenshots;
+
+  /// 截图请求信号（Alt+A / 浮窗截图按钮）；为空时监听全局信号。
+  final ValueListenable<ScreenshotRequest?>? screenshotSignal;
+
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatScreen> createState() => ChatScreenState();
 }
 
 class _Attachment {
@@ -35,7 +58,9 @@ class _Attachment {
   final bool isImage;
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+/// 对话页 State。类名公开仅为让 Shell 用 `GlobalKey<ChatScreenState>`
+/// 保活（规格 §5.3）；字段仍然私有，测试通过只读 getter 断言。
+class ChatScreenState extends State<ChatScreen> {
   final List<Message> _messages = [];
   final List<_Attachment> _attachments = [];
   final TextEditingController _controller = TextEditingController();
@@ -57,12 +82,53 @@ class _ChatScreenState extends State<ChatScreen> {
   int? _runId;
   Map<String, dynamic>? _approval;
 
+  /// 用户是否停在消息区底部；上滚后暂停自动跟随（规格 §6.3 / FR-7）。
+  bool _followTail = true;
+
+  /// 已消费的截图请求 nonce，避免同一次请求重复触发。
+  int _lastScreenshotNonce = 0;
+
+  // ---------------------------------------------------------------------------
+  // 测试可观测接口（只读；字段保持私有）。
+  // ---------------------------------------------------------------------------
+  @visibleForTesting
+  int? get conversationId => _conversationId;
+
+  @visibleForTesting
+  int get messageCount => _messages.length;
+
+  @visibleForTesting
+  int get attachmentCount => _attachments.length;
+
+  @visibleForTesting
+  bool get isSending => _sending;
+
+  @visibleForTesting
+  bool get isGenerating => _generating;
+
+  @visibleForTesting
+  int? get runId => _runId;
+
+  @visibleForTesting
+  bool get approvalVisible => _approval != null;
+
+  @visibleForTesting
+  bool get followTail => _followTail;
+
+  ValueListenable<ScreenshotRequest?> get _screenshotSignal =>
+      widget.screenshotSignal ?? screenshotRequestSignal;
+
+  ScreenshotService get _screenshotService =>
+      widget.screenshots ?? const PlatformScreenshotService();
+
   @override
   void initState() {
     super.initState();
     newChatSignal.addListener(_onNewChat);
     openConversationSignal.addListener(_onOpenConversation);
     deletedConversationSignal.addListener(_onConversationDeleted);
+    _screenshotSignal.addListener(_onScreenshotRequest);
+    _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
@@ -71,6 +137,8 @@ class _ChatScreenState extends State<ChatScreen> {
     newChatSignal.removeListener(_onNewChat);
     openConversationSignal.removeListener(_onOpenConversation);
     deletedConversationSignal.removeListener(_onConversationDeleted);
+    _screenshotSignal.removeListener(_onScreenshotRequest);
+    _scroll.removeListener(_onScroll);
     _controller.dispose();
     _scroll.dispose();
     _focus.dispose();
@@ -80,7 +148,28 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void didUpdateWidget(covariant ChatScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final oldSignal = oldWidget.screenshotSignal ?? screenshotRequestSignal;
+    final newSignal = widget.screenshotSignal ?? screenshotRequestSignal;
+    if (!identical(oldSignal, newSignal)) {
+      oldSignal.removeListener(_onScreenshotRequest);
+      newSignal.addListener(_onScreenshotRequest);
+    }
+    // 只有“从别的页签切到对话页”才聚焦一次；浮窗↔主窗口且一直在对话页
+    // 时 active 不变，不重复抢焦点（规格 §8.4 / FR-11）。
     if (widget.active && !oldWidget.active) _focus.requestFocus();
+  }
+
+  void _onScreenshotRequest() {
+    final request = _screenshotSignal.value;
+    if (request == null || request.nonce == _lastScreenshotNonce) return;
+    _lastScreenshotNonce = request.nonce;
+    if (!widget.active) return;
+    if (_sending || _uploading) {
+      _snack('等这条回答结束再截图');
+      return;
+    }
+    if (_screenshotting || captureInProgress.value) return;
+    unawaited(_takeScreenshot(hideLoop: request.hideLoop));
   }
 
   Future<void> _bootstrap() async {
@@ -157,6 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _messages.addAll(items);
         _loadingMessages = false;
+        _followTail = true;
       });
       _scrollToEnd();
       _focus.requestFocus();
@@ -176,14 +266,30 @@ class _ChatScreenState extends State<ChatScreen> {
     ));
   }
 
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final position = _scroll.position;
+    final atBottom = position.maxScrollExtent - position.pixels < 80;
+    if (atBottom != _followTail) {
+      setState(() => _followTail = atBottom);
+    }
+  }
+
+  /// 流式/发送后跟随到底部：用户上滚后不再强制拉回（规格 §6.3）。
+  /// 用 jumpTo 代替 180ms 动画，避免小窗每个 delta 都抖动。
   void _scrollToEnd() {
+    if (!_followTail) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scroll.hasClients) return;
-      _scroll.animateTo(
-        _scroll.position.maxScrollExtent + 120,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-      );
+      if (!mounted || !_scroll.hasClients || !_followTail) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
+    });
+  }
+
+  void _scrollToBottomNow() {
+    setState(() => _followTail = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.jumpTo(_scroll.position.maxScrollExtent);
     });
   }
 
@@ -217,54 +323,68 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _takeScreenshot({required bool hideLoop}) async {
     if (_screenshotting || _sending || _uploading) return;
+    if (captureInProgress.value) return;
+    final hadFocus = _focus.hasFocus;
+    var retakes = 0;
     setState(() => _screenshotting = true);
-    ScreenshotSession? session;
     try {
-      // 等 PopupMenu 收起，避免“直接截图”把菜单截进去。
-      await Future<void>.delayed(const Duration(milliseconds: 150));
-      session = await ScreenshotCapture.start(hideLoop: hideLoop);
-      if (session == null) {
-        _snack('截图仅支持 Windows 桌面版', isError: true);
+      while (true) {
+        // 等 PopupMenu / 按钮水波纹收起，避免“直接截图”把菜单截进去。
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        final session = await _screenshotService.start(hideLoop: hideLoop);
+        if (session == null) {
+          _snack('截图仅支持 Windows 桌面版', isError: true);
+          return;
+        }
+        if (!mounted) {
+          await _screenshotService.restore(session);
+          return;
+        }
+        ScreenshotOverlayResult? result;
+        try {
+          result = await Navigator.of(context).push<ScreenshotOverlayResult>(
+            PageRouteBuilder(
+              opaque: true,
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+              pageBuilder: (_, _, _) => ScreenshotOverlay(imageBytes: session.bytes),
+            ),
+          );
+        } finally {
+          // 每次 start 必须且只能 restore 一次（取消/重截/异常都恢复窗口）。
+          await _screenshotService.restore(session);
+        }
+        if (!mounted) return;
+        if (result == null) return;
+        if (result.retake) {
+          if (retakes >= maxRetakes) {
+            _snack('重截次数已用完（最多 3 次）', isError: true);
+            return;
+          }
+          retakes++;
+          continue;
+        }
+        final cropped = result.bytes;
+        if (cropped == null || cropped.isEmpty) return;
+        final uploaded = await _appState.api.upload(
+          cropped,
+          '截图-${DateTime.now().millisecondsSinceEpoch}.png',
+        );
+        if (!mounted) return;
+        setState(() {
+          _attachments.add(_Attachment(
+            id: uploaded['id'] as String,
+            name: (uploaded['name'] ?? '截图.png') as String,
+            isImage: true,
+          ));
+        });
+        if (hadFocus) _focus.requestFocus();
+        _snack('截图已加入附件');
         return;
       }
-      final imageBytes = session.bytes;
-      if (!mounted) {
-        await ScreenshotCapture.restore(session);
-        session = null;
-        return;
-      }
-      final cropped = await Navigator.of(context).push<Uint8List>(
-        PageRouteBuilder(
-          opaque: true,
-          transitionDuration: Duration.zero,
-          pageBuilder: (_, _, _) => ScreenshotOverlay(imageBytes: imageBytes),
-        ),
-      );
-      await ScreenshotCapture.restore(session);
-      session = null;
-      if (cropped == null || cropped.isEmpty) return;
-      final result = await _appState.api.upload(
-        cropped,
-        '截图-${DateTime.now().millisecondsSinceEpoch}.png',
-      );
-      if (!mounted) return;
-      setState(() {
-        _attachments.add(_Attachment(
-          id: result['id'] as String,
-          name: (result['name'] ?? '截图.png') as String,
-          isImage: true,
-        ));
-      });
-      _focus.requestFocus();
-      _snack('截图已加入附件');
     } catch (error) {
       if (mounted) _snack(error.toString(), isError: true);
     } finally {
-      if (session != null) {
-        try {
-          await ScreenshotCapture.restore(session);
-        } catch (_) {}
-      }
       if (mounted) setState(() => _screenshotting = false);
     }
   }
@@ -292,6 +412,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add(assistant);
       _controller.clear();
       _attachments.clear();
+      _followTail = true;
     });
     _scrollToEnd();
 
@@ -405,8 +526,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final args = const JsonEncoder.withIndent('  ').convert(data['args'] ?? {});
     final clipped = args.length > 900 ? '${args.substring(0, 900)}\n…' : args;
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 6, 24, 0),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      margin: EdgeInsets.fromLTRB(widget.compact ? 12 : 24, 6, widget.compact ? 12 : 24, 0),
+      padding: EdgeInsets.fromLTRB(widget.compact ? 12 : 16, 12, widget.compact ? 12 : 16, 10),
       decoration: panelDecoration(radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,8 +536,14 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Icon(Icons.shield_outlined, size: 16, color: pal.warm),
               const SizedBox(width: 6),
-              Text('需要你确认：$tool',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink)),
+              Expanded(
+                child: Text(
+                  '需要你确认：$tool',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -464,7 +591,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _header(context),
+        // 浮窗形态使用 FloatingBar，不再渲染主窗口页头（规格 §6.1）。
+        if (!widget.floating) _header(context),
         Expanded(child: _body()),
         if (_approval != null) _approvalCard(),
         _composer(context),
@@ -683,20 +811,150 @@ class _ChatScreenState extends State<ChatScreen> {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
     }
     if (_messages.isEmpty) return _welcome(context);
-    return ListView.builder(
-      controller: _scroll,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-      itemCount: _messages.length,
-      itemBuilder: (context, index) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 880),
-          child: _messageView(context, _messages[index]),
+    final padding = widget.compact
+        ? const EdgeInsets.fromLTRB(12, 12, 12, 8)
+        : const EdgeInsets.fromLTRB(24, 20, 24, 8);
+    return Stack(
+      children: [
+        ListView.builder(
+          key: const Key('chat-message-list'),
+          controller: _scroll,
+          padding: padding,
+          itemCount: _messages.length,
+          itemBuilder: (context, index) => Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 880),
+              child: _messageView(context, _messages[index]),
+            ),
+          ),
         ),
-      ),
+        if (!_followTail)
+          Positioned(
+            right: widget.compact ? 10 : 16,
+            bottom: 10,
+            child: Material(
+              color: pal.toastBg,
+              borderRadius: BorderRadius.circular(99),
+              elevation: 2,
+              child: InkWell(
+                key: const Key('chat-scroll-bottom'),
+                borderRadius: BorderRadius.circular(99),
+                onTap: _scrollToBottomNow,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_downward_rounded, size: 14, color: pal.toastFg),
+                      const SizedBox(width: 4),
+                      Text('回到底部',
+                          style: TextStyle(fontSize: 11.5, color: pal.toastFg)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _welcome(BuildContext context) {
+    if (widget.floating) return _floatingWelcome(context);
+    return _desktopWelcome(context);
+  }
+
+  /// 浮窗空态：紧凑时精简为可滚动的一屏（360×420 不溢出，规格 §6.3）。
+  Widget _floatingWelcome(BuildContext context) {
+    if (!widget.compact) {
+      final examples = [
+        '解释一下 Transformer 里的注意力机制，配一个小例子',
+        '用贝叶斯公式讲一个生活里的例子',
+      ];
+      return SingleChildScrollView(
+        key: const Key('floating-welcome'),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: accentGradient,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 23),
+                ),
+                const SizedBox(height: 12),
+                const Text('今天想学点什么？',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4)),
+                const SizedBox(height: 6),
+                Text(
+                  'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.5, color: pal.muted, height: 1.55),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (final example in examples)
+                      ActionChip(
+                        label: Text(example, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: pal.chip,
+                        side: BorderSide(color: pal.border),
+                        onPressed: () {
+                          _controller.text = example;
+                          _controller.selection =
+                              TextSelection.collapsed(offset: _controller.text.length);
+                          _focus.requestFocus();
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return SingleChildScrollView(
+      key: const Key('floating-welcome'),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              gradient: accentGradient,
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 19),
+          ),
+          const SizedBox(height: 10),
+          const Text('今天想学点什么？',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
+          const SizedBox(height: 6),
+          Text(
+            '发文字、贴截图或传 PDF，都可以问。',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: pal.muted, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 主窗口空态：保持 v0.4.0 的视觉不变（规格 AC-5.4）。
+  Widget _desktopWelcome(BuildContext context) {
     final examples = [
       '解释一下 Transformer 里的注意力机制，配一个小例子',
       '用贝叶斯公式讲一个生活里的例子',
@@ -731,7 +989,7 @@ class _ChatScreenState extends State<ChatScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: pal.muted, height: 1.6),
             ),
-            SizedBox(height: 22),
+            const SizedBox(height: 22),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -792,6 +1050,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     }
     final url = _appState.api.imageUrl(item.id);
+    final tile = widget.compact ? 54.0 : 66.0;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -800,8 +1059,8 @@ class _ChatScreenState extends State<ChatScreen> {
           child: GestureDetector(
             onTap: () => ImagePreview.show(context, url, title: item.name),
             child: Container(
-              width: 66,
-              height: 66,
+              width: tile,
+              height: tile,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: pal.border),
@@ -917,7 +1176,7 @@ class _ChatScreenState extends State<ChatScreen> {
         alignment: Alignment.centerRight,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 620),
-          margin: const EdgeInsets.only(bottom: 14, left: 48),
+          margin: EdgeInsets.only(bottom: 14, left: widget.compact ? 20 : 48),
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
           decoration: BoxDecoration(
             gradient: accentGradient,
@@ -961,7 +1220,12 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+      padding: EdgeInsets.fromLTRB(
+        widget.compact ? 12 : 18,
+        widget.compact ? 12 : 16,
+        widget.compact ? 12 : 18,
+        widget.compact ? 10 : 12,
+      ),
       decoration: panelDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1101,12 +1365,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _composer(BuildContext context) {
+    final pad = widget.compact
+        ? const EdgeInsets.fromLTRB(12, 8, 12, 10)
+        : const EdgeInsets.fromLTRB(24, 12, 24, 16);
+    final hint = widget.compact
+        ? '问点什么，或贴截图…'
+        : '问点什么，或者把题目截图、PDF 附上来…';
     return Container(
+      key: const Key('chat-composer'),
       decoration: BoxDecoration(
         color: pal.glassFill,
         border: Border(top: BorderSide(color: pal.glassBorder)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      padding: pad,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 880),
@@ -1139,34 +1410,36 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    PopupMenuButton<String>(
-                      tooltip: '截图',
-                      enabled: !_sending && !_uploading && !_screenshotting,
-                      onSelected: (value) => _takeScreenshot(hideLoop: value == 'hide'),
-                      icon: Icon(Icons.crop_free_rounded, size: 20, color: pal.muted),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
-                          value: 'direct',
-                          child: Row(
-                            children: [
-                              Icon(Icons.fullscreen_rounded, size: 17),
-                              SizedBox(width: 8),
-                              Text('直接截图'),
-                            ],
+                    // 浮窗把截图入口收进 FloatingBar，输入区只保留附件（规格 §6.4）。
+                    if (!widget.floating)
+                      PopupMenuButton<String>(
+                        tooltip: '截图',
+                        enabled: !_sending && !_uploading && !_screenshotting,
+                        onSelected: (value) => _takeScreenshot(hideLoop: value == 'hide'),
+                        icon: Icon(Icons.crop_free_rounded, size: 20, color: pal.muted),
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'direct',
+                            child: Row(
+                              children: [
+                                Icon(Icons.fullscreen_rounded, size: 17),
+                                SizedBox(width: 8),
+                                Text('直接截图'),
+                              ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: 'hide',
-                          child: Row(
-                            children: [
-                              Icon(Icons.visibility_off_outlined, size: 17),
-                              SizedBox(width: 8),
-                              Text('隐藏 Loop 后截图'),
-                            ],
+                          PopupMenuItem(
+                            value: 'hide',
+                            child: Row(
+                              children: [
+                                Icon(Icons.visibility_off_outlined, size: 17),
+                                SizedBox(width: 8),
+                                Text('隐藏 Loop 后截图'),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     IconButton(
                       tooltip: '上传资料 / 图片',
                       onPressed: _uploading ? null : _pickFile,
@@ -1185,20 +1458,21 @@ class _ChatScreenState extends State<ChatScreen> {
                           return KeyEventResult.ignored;
                         },
                         child: TextField(
+                          key: const Key('chat-input'),
                           controller: _controller,
                           focusNode: _focus,
                           minLines: 1,
-                          maxLines: 6,
+                          maxLines: widget.compact ? 4 : 6,
                           textInputAction: TextInputAction.newline,
                           style: const TextStyle(fontSize: 14.5, height: 1.55),
-                          decoration: const InputDecoration(
-                            hintText: '问点什么，或者把题目截图、PDF 附上来…',
+                          decoration: InputDecoration(
+                            hintText: hint,
                             filled: false,
                             isDense: true,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
                           ),
                         ),
                       ),
@@ -1207,27 +1481,33 @@ class _ChatScreenState extends State<ChatScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: IconButton.filled(
+                        key: const Key('chat-send-stop'),
                         tooltip: _sending ? '停止' : '发送',
                         onPressed: _sending ? _stop : _send,
-                        icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward_rounded, size: 18),
+                        icon: Icon(
+                          _sending ? Icons.stop_rounded : Icons.arrow_upward_rounded,
+                          size: 18,
+                        ),
                         style: IconButton.styleFrom(
                           backgroundColor: _sending ? pal.danger : pal.accent,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(38, 38),
+                          minimumSize: Size.square(widget.compact ? 34 : 38),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: EdgeInsets.only(left: 4),
-                child: Text(
-                  'Enter 发送 · Shift + Enter 换行 · 每个对话独立上下文',
-                  style: TextStyle(fontSize: 11, color: pal.faint),
+              if (!widget.compact) ...[
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    'Enter 发送 · Shift + Enter 换行 · 每个对话独立上下文',
+                    style: TextStyle(fontSize: 11, color: pal.faint),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

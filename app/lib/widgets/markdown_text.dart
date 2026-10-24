@@ -191,40 +191,56 @@ class MarkdownText extends StatelessWidget {
     final columns = header.length.clamp(1, 6);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Table(
-          border: TableBorder.all(color: pal.border, width: 1),
-          defaultColumnWidth: const FlexColumnWidth(),
-          children: [
-            TableRow(
-              decoration: BoxDecoration(color: pal.chip),
-              children: List.generate(columns, (index) {
-                final text = index < header.length ? header[index] : '';
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  child: Text.rich(TextSpan(
-                    children: _inline(context, text, style),
-                    style: style.copyWith(fontWeight: FontWeight.w600, fontSize: 13),
-                  )),
-                );
-              }),
-            ),
-            for (final row in rows)
-              TableRow(
-                children: List.generate(columns, (index) {
-                  final text = index < row.length ? row[index] : '';
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    child: Text.rich(TextSpan(
-                      children: _inline(context, text, style),
-                      style: style.copyWith(fontSize: 13),
-                    )),
-                  );
-                }),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 窄窗（360 浮窗）下给表格最小可读宽度并允许横向滚动，
+          // 宽窗下宽度与可用宽度一致（保持 v0.4.0 的观感）。
+          final available =
+              constraints.maxWidth.isFinite ? constraints.maxWidth : 640.0;
+          final minimum = columns * 96.0;
+          final tableWidth = available > minimum ? available : minimum;
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Table(
+                  border: TableBorder.all(color: pal.border, width: 1),
+                  defaultColumnWidth: const FlexColumnWidth(),
+                  children: [
+                    TableRow(
+                      decoration: BoxDecoration(color: pal.chip),
+                      children: List.generate(columns, (index) {
+                        final text = index < header.length ? header[index] : '';
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          child: Text.rich(TextSpan(
+                            children: _inline(context, text, style),
+                            style: style.copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                          )),
+                        );
+                      }),
+                    ),
+                    for (final row in rows)
+                      TableRow(
+                        children: List.generate(columns, (index) {
+                          final text = index < row.length ? row[index] : '';
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            child: Text.rich(TextSpan(
+                              children: _inline(context, text, style),
+                              style: style.copyWith(fontSize: 13),
+                            )),
+                          );
+                        }),
+                      ),
+                  ],
+                ),
               ),
-          ],
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -278,13 +294,17 @@ class MarkdownText extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Math.tex(
-        tex.trim(),
-        mathStyle: MathStyle.display,
-        textStyle: style.copyWith(fontSize: 17),
-        onErrorFallback: (error) => Text(
-          '\$\$${tex.trim()}\$\$',
-          style: style.copyWith(fontFamily: 'monospace', color: pal.muted),
+      // 宽公式在 360 浮窗里允许横向滚动，避免撑破气泡。
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Math.tex(
+          tex.trim(),
+          mathStyle: MathStyle.display,
+          textStyle: style.copyWith(fontSize: 17),
+          onErrorFallback: (error) => Text(
+            '\$\$${tex.trim()}\$\$',
+            style: style.copyWith(fontFamily: 'monospace', color: pal.muted),
+          ),
         ),
       ),
     );

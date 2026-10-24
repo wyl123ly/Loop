@@ -1,0 +1,31 @@
+﻿{
+    "artifacts":  {
+                      "data\\loop.db-wal":  {
+                                                "sha256":  "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+                                                "mtime":  "2026-10-24T17:05:29.2521473+08:00",
+                                                "bytes":  0
+                                            },
+                      "release\\Loop-Desktop\\version.json":  {
+                                                                  "sha256":  "9CCD6C17176229B2B611BE1794E6874477EA965BC0E75FCB624E911E65B7F863",
+                                                                  "mtime":  "2026-10-24T15:56:19.9392167+08:00",
+                                                                  "bytes":  19
+                                                              },
+                      "data\\loop.db":  {
+                                            "sha256":  "6C259E6E9B2CF11C0B81D010DFDB28AEABF5E64380CBF4383A6B4C3EBEB8A2C7",
+                                            "mtime":  "2026-10-24T16:32:15.5103227+08:00",
+                                            "bytes":  113467392
+                                        },
+                      "release\\Loop-Desktop\\Loop.exe":  {
+                                                              "sha256":  "8528C667F78E2112431888E1E6EB8E4D60265D111D9C0F4D51449723F287324F",
+                                                              "mtime":  "2026-10-24T15:56:18.9719743+08:00",
+                                                              "bytes":  71168
+                                                          },
+                      "release\\Loop-Desktop-win64.zip":  {
+                                                              "sha256":  "7D1BF2101CF53259BD6CBC82C464A898330A84BA7A39B19FD8D768CD752D09E0",
+                                                              "mtime":  "2026-10-24T15:56:23.2531434+08:00",
+                                                              "bytes":  20521998
+                                                          }
+                  },
+    "gitHead":  "48508489f633ef34779ca1f429c469b5f86d8e73",
+    "at":  "2026-10-24T20:10:19.7367931+08:00"
+}

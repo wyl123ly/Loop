@@ -1,0 +1,6 @@
+﻿name: vm_tool
+environment:
+  sdk: ^3.5.0
+dependencies:
+  vm_service:
+    path: C:/Users/Wuyanlin/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-15.4.0

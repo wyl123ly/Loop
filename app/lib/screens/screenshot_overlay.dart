@@ -3,11 +3,35 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// 截图覆盖层的结果。
+///
+/// - `done(bytes)`：用户完成框选，返回裁切后的 PNG；
+/// - `retake()`：用户要求重新取景（调用方先恢复窗口再重新捕获）；
+/// - `null`（`Navigator.pop` 不携带结果）：取消/Esc，不上传。
+class ScreenshotOverlayResult {
+  const ScreenshotOverlayResult.done(Uint8List this.bytes) : retake = false;
+  const ScreenshotOverlayResult.retake()
+      : bytes = null,
+        retake = true;
+
+  final Uint8List? bytes;
+  final bool retake;
+}
+
 /// 全屏截图选框：显示刚截的桌面图，拖拽选择区域，裁切后返回 PNG。
+///
+/// 浮窗与主窗口共用；`allowRetake=false` 时（重截次数用尽）隐藏重截按钮。
 class ScreenshotOverlay extends StatefulWidget {
-  const ScreenshotOverlay({super.key, required this.imageBytes});
+  const ScreenshotOverlay({
+    super.key,
+    required this.imageBytes,
+    this.allowRetake = true,
+  });
 
   final Uint8List imageBytes;
+
+  /// 是否显示“重截”按钮（ChatScreen 限制最多 3 次）。
+  final bool allowRetake;
 
   @override
   State<ScreenshotOverlay> createState() => _ScreenshotOverlayState();
@@ -58,10 +82,21 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
     });
   }
 
+  /// 截图宽高比与窗口视口偏差超过 1% 时判为失败，防止裁错图。
+  bool _ratioMismatch(Size viewport) {
+    final image = _image;
+    if (image == null || viewport.isEmpty) return false;
+    final viewportRatio = viewport.width / viewport.height;
+    final imageRatio = image.width / image.height;
+    return (imageRatio - viewportRatio).abs() / viewportRatio > 0.01;
+  }
+
   Future<void> _confirm() async {
     final image = _image;
     final rect = _selection;
-    if (image == null || rect == null || _cropping) return;
+    if (image == null || rect == null || _cropping || _ratioMismatch(_viewport)) {
+      return;
+    }
     setState(() => _cropping = true);
     try {
       final scaleX = image.width / _viewport.width;
@@ -87,8 +122,8 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
       final cropped = await picture.toImage(width, height);
       final data = await cropped.toByteData(format: ui.ImageByteFormat.png);
       cropped.dispose();
-      if (!mounted) return;
-      Navigator.of(context).pop(data?.buffer.asUint8List());
+      if (!mounted || data == null) return;
+      Navigator.of(context).pop(ScreenshotOverlayResult.done(data.buffer.asUint8List()));
     } catch (error) {
       if (mounted) {
         setState(() {
@@ -99,9 +134,13 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
     }
   }
 
+  void _cancel() => Navigator.of(context).pop();
+
+  void _retake() => Navigator.of(context).pop(const ScreenshotOverlayResult.retake());
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
-      Navigator.of(context).pop();
+      _cancel();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -114,10 +153,20 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
       autofocus: true,
       onKeyEvent: _onKey,
       child: Scaffold(
+        key: const Key('screenshot-overlay'),
         backgroundColor: Colors.black,
         body: LayoutBuilder(
           builder: (context, constraints) {
-            _viewport = constraints.biggest;
+            final viewport = constraints.biggest;
+            _viewport = viewport;
+            final ratioMismatch = _ratioMismatch(viewport);
+            final compact = viewport.width < 420;
+            final canDone =
+                selection != null && !_cropping && !ratioMismatch;
+            final hint = _error ??
+                (ratioMismatch
+                    ? '截图尺寸与窗口不匹配，请重截'
+                    : '拖拽选择截图区域 · Esc 取消');
             return Stack(
               fit: StackFit.expand,
               children: [
@@ -153,20 +202,29 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                   ),
                 ),
                 Positioned(
-                  top: 20,
-                  left: 0,
-                  right: 0,
+                  top: compact ? 12 : 20,
+                  left: 8,
+                  right: 8,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 10 : 14,
+                        vertical: compact ? 6 : 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.62),
                         borderRadius: BorderRadius.circular(99),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Text(
-                        _error ?? '拖拽选择截图区域 · Esc 取消',
-                        style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                        hint,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: ratioMismatch ? const Color(0xFFFFB4AB) : Colors.white,
+                          fontSize: compact ? 11.5 : 12.5,
+                        ),
                       ),
                     ),
                   ),
@@ -174,10 +232,13 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: 24,
+                  bottom: compact ? 12 : 24,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 4 : 8,
+                        vertical: compact ? 4 : 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.72),
                         borderRadius: BorderRadius.circular(16),
@@ -187,19 +248,35 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            key: const Key('screenshot-cancel'),
+                            onPressed: _cancel,
+                            style: _textStyle(compact),
                             child: const Text('取消', style: TextStyle(color: Colors.white70)),
                           ),
                           TextButton(
+                            key: const Key('screenshot-select-all'),
                             onPressed: _selectAll,
+                            style: _textStyle(compact),
                             child: const Text('全屏', style: TextStyle(color: Colors.white70)),
                           ),
+                          if (widget.allowRetake)
+                            TextButton(
+                              key: const Key('screenshot-retake'),
+                              onPressed: _cropping ? null : _retake,
+                              style: _textStyle(compact),
+                              child: const Text('重截', style: TextStyle(color: Colors.white70)),
+                            ),
                           const SizedBox(width: 4),
                           FilledButton(
-                            onPressed: selection == null || _cropping ? null : _confirm,
+                            key: const Key('screenshot-done'),
+                            onPressed: canDone ? _confirm : null,
                             style: FilledButton.styleFrom(
                               backgroundColor: const Color(0xFF8E9BFF),
                               foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: compact ? 16 : 20,
+                                vertical: compact ? 10 : 14,
+                              ),
                             ),
                             child: Text(_cropping ? '处理中…' : '完成'),
                           ),
@@ -220,6 +297,14 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
           },
         ),
       ),
+    );
+  }
+
+  ButtonStyle _textStyle(bool compact) {
+    return TextButton.styleFrom(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 8 : 10),
+      minimumSize: Size(compact ? 44 : 52, compact ? 34 : 38),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }
@@ -261,7 +346,7 @@ class _SelectionPainter extends CustomPainter {
     canvas.drawLine(rect.bottomLeft, rect.bottomLeft + const Offset(len, 0), corner);
     canvas.drawLine(rect.bottomLeft, rect.bottomLeft - const Offset(0, len), corner);
     canvas.drawLine(rect.bottomRight, rect.bottomRight - const Offset(len, 0), corner);
-    canvas.drawLine(rect.bottomRight, rect.bottomRight - const Offset(0, len), corner);
+    canvas.drawLine(rect.bottomRight, rect.bottomRight + const Offset(0, len), corner);
 
     if (busy) return;
     final label = '${rect.width.round()} × ${rect.height.round()}';
