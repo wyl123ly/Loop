@@ -60,6 +60,18 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
 // AnswerPanel. Without this, pixels outside the panel's ClipRRect are painted
 // with the engine's black surface, producing dark wedges at the corners.
 void ApplyRoundedWindowRegion(HWND window) {
+  // SetWindowRgn can synchronously deliver WM_SIZE/WM_WINDOWPOSCHANGED.
+  // Guard against re-entrancy and skip no-op updates; otherwise the region
+  // handler can drive an endless message loop and freeze the whole process.
+  static bool applying = false;
+  static HWND last_window = nullptr;
+  static int last_width = 0;
+  static int last_height = 0;
+  static int last_ellipse = 0;
+  if (applying) {
+    return;
+  }
+
   RECT rect;
   if (!GetWindowRect(window, &rect)) {
     return;
@@ -86,14 +98,26 @@ void ApplyRoundedWindowRegion(HWND window) {
 
   // Keep in sync with answerRadius in lib/desktop/window_mode.dart.
   const int ellipse = MulDiv(14, static_cast<int>(dpi), 96) * 2;
+  if (window == last_window && width == last_width &&
+      height == last_height && ellipse == last_ellipse) {
+    return;
+  }
+
   HRGN region =
       CreateRoundRectRgn(0, 0, width + 1, height + 1, ellipse, ellipse);
   if (region == nullptr) {
     return;
   }
-  if (SetWindowRgn(window, region, TRUE) == 0) {
+  applying = true;
+  if (SetWindowRgn(window, region, TRUE) != 0) {
+    last_window = window;
+    last_width = width;
+    last_height = height;
+    last_ellipse = ellipse;
+  } else {
     DeleteObject(region);
   }
+  applying = false;
 }
 
 }  // namespace
