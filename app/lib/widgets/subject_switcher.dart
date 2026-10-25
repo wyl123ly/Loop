@@ -9,6 +9,30 @@ import '../theme.dart';
 /// 递增计数：每次点击都会通知（`ValueNotifier` 同值不通知，这里始终 +1）。
 final ValueNotifier<int> subjectPageSignal = ValueNotifier<int>(0);
 
+/// 请求学科页打开一个「管理目标」。
+///
+/// 归档学科不能被设为当前学科（后端会 409），但用户仍需要进入它的管理页
+/// 执行恢复/删除。这里用一次性的管理请求让学科页以只读方式预览归档学科：
+/// `subject == null` 表示回到当前学科。
+class SubjectManagementRequest {
+  const SubjectManagementRequest({required this.subject, required this.nonce});
+
+  final Subject? subject;
+  final int nonce;
+}
+
+final ValueNotifier<SubjectManagementRequest?> subjectManagementRequest =
+    ValueNotifier<SubjectManagementRequest?>(null);
+
+int _subjectManagementNonce = 0;
+
+void requestSubjectManagement({Subject? subject}) {
+  subjectManagementRequest.value = SubjectManagementRequest(
+    subject: subject,
+    nonce: ++_subjectManagementNonce,
+  );
+}
+
 /// 对话正在流式回答（`ChatScreen._sending`）时为 true。
 ///
 /// §10.2「阻塞」：回答进行中不允许切换学科，切换器变灰并提示
@@ -358,6 +382,20 @@ Future<void> showSubjectMenu(BuildContext anchorContext, {AppState? state}) asyn
     switch (choice.kind) {
       case 'switch':
         if (choice.key == st.activeKey) return;
+        Subject? target;
+        for (final item in st.subjects) {
+          if (item.key == choice.key) {
+            target = item;
+            break;
+          }
+        }
+        // 归档学科不能设为当前学科（后端规则），但用户需要进入它的管理页
+        // 执行恢复/删除。改为打开只读管理预览，不改变当前学科。
+        if (target?.archived == true) {
+          requestSubjectManagement(subject: target);
+          subjectPageSignal.value = subjectPageSignal.value + 1;
+          return;
+        }
         final ok = await st.switchSubject(choice.key);
         if (!ok) {
           if (!anchorContext.mounted) return;
@@ -378,6 +416,7 @@ Future<void> showSubjectMenu(BuildContext anchorContext, {AppState? state}) asyn
         await showNewSubjectDialog(anchorContext, state: st);
         return;
       case 'manage':
+        requestSubjectManagement();
         subjectPageSignal.value = subjectPageSignal.value + 1;
         return;
       default:
@@ -587,6 +626,8 @@ Future<_MenuChoice?> _openMenu(
     position: position,
     items: items,
     color: pal.cardSolid,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    clipBehavior: Clip.antiAlias,
   );
 }
 

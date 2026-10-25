@@ -702,6 +702,7 @@ void main() {
   setUp(() {
     subjectChangedSignal.value = null;
     subjectPageSignal.value = 0;
+    subjectManagementRequest.value = null;
     chatBusySignal.value = false;
     chatDraftSignal.value = null;
     chatBusySignal.value = false;
@@ -774,6 +775,44 @@ void main() {
     await tester.tap(find.byKey(const Key('subject-menu-archived-toggle')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('subject-menu-s_old')), findsOneWidget);
+  });
+
+  testWidgets('UI-03b 归档学科可从菜单进入只读管理页并删除（不再死锁）', (tester) async {
+    final h = await _boot();
+    h.api.subjectList.add(_subject(
+      id: 3,
+      key: 's_old',
+      name: '归档学科',
+      status: 'archived',
+      archivedAt: '2026-10-25T10:00:00+08:00',
+    ));
+    await h.state.loadSubjects();
+    await _pump(tester, _page(Sidebar(index: 0, onSelect: (_) {}, state: h.state)));
+
+    await tester.tap(find.byKey(const Key('subject-switcher')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('subject-menu-archived-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('subject-menu-s_old')));
+    await tester.pumpAndSettle();
+
+    // 归档学科没有变成 active，但请求了只读管理预览。
+    expect(h.state.activeKey, isNot('s_old'));
+    expect(subjectManagementRequest.value?.subject?.key, 's_old');
+    expect(subjectPageSignal.value, greaterThan(0));
+
+    await _pump(tester, _page(SubjectScreen(active: true, state: h.state)));
+    await tester.pumpAndSettle();
+    expect(_allText(tester).join('\n'), contains('学科已归档（只读）'));
+
+    await tester.tap(find.byKey(const Key('subject-manage-menu')));
+    await tester.pumpAndSettle();
+    final deleteItem =
+        tester.widget<PopupMenuItem<String>>(find.byKey(const Key('subject-manage-delete')));
+    expect(deleteItem.enabled, isTrue, reason: '归档学科的管理页必须能删除');
+    await tester.tap(find.byKey(const Key('subject-manage-delete')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('subject-delete-field')), findsOneWidget);
   });
 
   testWidgets('UI-04 当前学科在对话/今日/笔记/资料/学科页都清晰可见', (tester) async {

@@ -32,6 +32,12 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   int _tab = 0;
   Subject? _subject;
+
+  /// 归档学科的管理预览目标；null 表示跟随当前学科。
+  ///
+  /// 归档学科不能被设为当前学科（后端 409），但删除前必须先归档，因此
+  /// 管理页需要能在不切换 active subject 的情况下只读打开归档学科。
+  Subject? _managementTarget;
   SubjectProgress? _progress;
   bool _loading = true;
   bool _busy = false;
@@ -41,6 +47,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
   void initState() {
     super.initState();
     subjectChangedSignal.addListener(_onSubjectChanged);
+    subjectManagementRequest.addListener(_onManagementRequested);
+    _managementTarget = subjectManagementRequest.value?.subject;
     _load();
   }
 
@@ -53,11 +61,27 @@ class _SubjectScreenState extends State<SubjectScreen> {
   @override
   void dispose() {
     subjectChangedSignal.removeListener(_onSubjectChanged);
+    subjectManagementRequest.removeListener(_onManagementRequested);
     super.dispose();
   }
 
   void _onSubjectChanged() {
     if (!mounted) return;
+    _managementTarget = null;
+    _progress = null;
+    _load();
+  }
+
+  void _onManagementRequested() {
+    if (!mounted) return;
+    final request = subjectManagementRequest.value;
+    if (request == null) return;
+    setState(() {
+      _managementTarget = request.subject;
+      _progress = null;
+      _loading = true;
+      _error = null;
+    });
     _load();
   }
 
@@ -67,7 +91,27 @@ class _SubjectScreenState extends State<SubjectScreen> {
       await st.loadSubjects();
     } catch (_) {}
     if (!mounted) return;
-    final subject = st.activeSubject;
+
+    var target = _managementTarget;
+    if (target != null) {
+      Subject? refreshed;
+      for (final item in st.subjects) {
+        if (item.id == target.id) {
+          refreshed = item;
+          break;
+        }
+      }
+      if (refreshed == null) {
+        // 目标已被删除/移除：回到当前学科，避免继续请求已消失的学科。
+        _managementTarget = null;
+        target = null;
+      } else {
+        _managementTarget = refreshed;
+        target = refreshed;
+      }
+    }
+
+    final subject = target ?? st.activeSubject;
     if (subject == null) {
       setState(() {
         _loading = false;
@@ -781,6 +825,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       key: const Key('subject-manage-menu'),
       tooltip: '学科管理',
       color: pal.cardSolid,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       onSelected: (value) => _handleManage(value, subject),
       itemBuilder: (context) => [
         PopupMenuItem(
@@ -889,6 +934,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
         try {
           await _state.api.deleteSubject(subject.id, confirm: subject.key);
           _snack('已删除「${subject.name}」（数据移入回收站）');
+          _managementTarget = null;
+          _progress = null;
           await _state.loadSubjects();
           await _load();
         } catch (error) {
@@ -903,6 +950,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
         if (!ok) return;
         try {
           await _state.api.removeSubjectRegistryRow(subject.id);
+          _managementTarget = null;
+          _progress = null;
           await _state.loadSubjects();
           await _load();
           _snack('已移除注册记录');
