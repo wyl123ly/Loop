@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../widgets/subject_switcher.dart';
 
 class TodayScreen extends StatefulWidget {
-  const TodayScreen({super.key, required this.active});
+  const TodayScreen({super.key, required this.active, this.state});
 
   final bool active;
+
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
@@ -19,9 +25,12 @@ class _TodayScreenState extends State<TodayScreen> {
   String? _error;
   final TextEditingController _taskInput = TextEditingController();
 
+  AppState get _state => widget.state ?? appState;
+
   @override
   void initState() {
     super.initState();
+    subjectChangedSignal.addListener(_onSubjectChanged);
     _load();
   }
 
@@ -33,15 +42,22 @@ class _TodayScreenState extends State<TodayScreen> {
 
   @override
   void dispose() {
+    subjectChangedSignal.removeListener(_onSubjectChanged);
     _taskInput.dispose();
     super.dispose();
+  }
+
+  /// 学科切换：待办属于当前学科（§10.4），必须按新学科重新取数。
+  void _onSubjectChanged() {
+    if (!mounted) return;
+    unawaited(_load());
   }
 
   Future<void> _load() async {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      final data = await appState.api.today();
+      final data = await _state.api.today();
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -56,7 +72,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Future<void> _toggleTask(TaskItem task) async {
     try {
-      await appState.api.patchTask(task.id, {'status': task.done ? 'todo' : 'done'});
+      await _state.api.patchTask(task.id, {'status': task.done ? 'todo' : 'done'});
       await _load();
     } catch (error) {
       _snack(error.toString(), isError: true);
@@ -67,7 +83,7 @@ class _TodayScreenState extends State<TodayScreen> {
     final title = _taskInput.text.trim();
     if (title.isEmpty) return;
     try {
-      await appState.api.createTask(title: title, due: _data?.date ?? '');
+      await _state.api.createTask(title: title, due: _data?.date ?? '');
       _taskInput.clear();
       await _load();
     } catch (error) {
@@ -77,7 +93,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Future<void> _deleteTask(TaskItem task) async {
     try {
-      await appState.api.deleteTask(task.id);
+      await _state.api.deleteTask(task.id);
       await _load();
     } catch (error) {
       _snack(error.toString(), isError: true);
@@ -116,6 +132,9 @@ class _TodayScreenState extends State<TodayScreen> {
               Text('今日', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
               Text(_dateLabel, style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              const SizedBox(width: 10),
+              // §10.4：今日是当前学科的作用域，页头必须显示学科名。
+              SubjectChip(state: _state),
               Spacer(),
               IconButton(
                 tooltip: '刷新',

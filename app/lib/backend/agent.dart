@@ -5,6 +5,7 @@ import 'db.dart';
 import 'llm.dart';
 import 'agent_run.dart';
 import 'agent_tools.dart';
+import 'subject_progress.dart';
 import 'sub_agent.dart';
 
 class AgentEvent {
@@ -44,6 +45,7 @@ const _mutatingTools = {
   'create_tasks',
   'update_task',
   'reschedule_tasks',
+  'update_subject_progress',
   'fs_write',
   'fs_move',
   'fs_delete',
@@ -52,11 +54,15 @@ const _mutatingTools = {
 
 String _systemPrompt(String mode, String modePrompt, String thinking) {
   final today = Db.today();
+  // 学科上下文（§7.5）：学科名/目标/技能在前、进度摘要在后，前缀稳定；
+  // 进度读不出来时降级为空串，绝不因为进度问题中断一次对话。
+  final subjectSection = ProgressModel.promptSection();
   return '''你是「回路」的学习与工作代理，服务一名中国大学生。你覆盖 AI/计算机、数学、英语及任何在学科目，也能操作应用内的资料、待办、笔记与受控工作区。
 
 今天：$today
 工作区：$workspacePath
 
+${subjectSection.isEmpty ? '' : '$subjectSection\n'}
 工作方式：
 1. 简单问答直接回答，不要建计划、不要调用无关工具。
 2. 需要两步以上操作（查资料+写笔记、建多个任务、整理文件等）时，先调用 update_plan 建立 2-6 步计划；每完成一步立即把对应步骤标记为 done，不要停在 in_progress。
@@ -105,6 +111,9 @@ void _audit(int runId, String tool, Map<String, dynamic> args, String result, St
       'risk': requiresApproval(tool) ? 'approval' : 'auto',
       'approval': approval,
       'duration_ms': ms,
+      // 审计行落在全局库，但必须带学科作用域（§2.4：agent_audit 增列 subject_key），
+      // 否则事后无法判断某次工具调用读写了哪个学科。
+      'subject_key': Db.scopedSubjectKey,
       'created_at': Db.nowIso(),
     });
   } catch (_) {}
@@ -427,7 +436,8 @@ Stream<AgentEvent> runAgent({
   final seen = <String>{};
   final refsOut = <Map<String, Object?>>[];
   for (final ref in refs) {
-    final key = '${ref['material_id']}#${ref['page']}';
+    // 去重键含学科：跨学科兜底命中的同页资料不得与本学科命中互相吞掉（§7.3）。
+    final key = '${ref['subject_key'] ?? ''}#${ref['material_id']}#${ref['page']}';
     if (seen.add(key)) refsOut.add(ref);
   }
 
@@ -453,6 +463,8 @@ Stream<AgentEvent> runAgent({
       'tokens_in': tokensIn,
       'tokens_out': tokensOut,
       'cost': cost,
+      // F-14：用量按学科归集（全局表 + subject_key 列，见 db.dart 的补列）。
+      'subject_key': Db.scopedSubjectKey,
     });
   }
 

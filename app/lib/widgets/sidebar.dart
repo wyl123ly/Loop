@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import 'glass.dart';
+import 'subject_switcher.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({
@@ -13,6 +14,7 @@ class Sidebar extends StatelessWidget {
     this.compact = false,
     this.canToggle = false,
     this.onToggleCollapse,
+    this.state,
   });
 
   final int index;
@@ -21,10 +23,30 @@ class Sidebar extends StatelessWidget {
   final bool canToggle;
   final VoidCallback? onToggleCollapse;
 
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
+
+  AppState get _state => state ?? appState;
+
+  /// 学科相关的 5 个页签（§10.1：对话/今日/笔记/资料/学科）。
+  static const List<(int, IconData, String)> _subjectNav = [
+    (0, Icons.chat_bubble_outline_rounded, '对话'),
+    (1, Icons.checklist_rounded, '今日'),
+    (2, Icons.menu_book_outlined, '笔记'),
+    (3, Icons.folder_outlined, '资料'),
+    (subjectPageIndex, Icons.school_outlined, '学科'),
+  ];
+
+  /// 全局页签（代理/设置）：不显示学科，也不随学科切换变化（§10.4）。
+  static const List<(int, IconData, String)> _globalNav = [
+    (5, Icons.smart_toy_outlined, '代理'),
+    (settingsPageIndex, Icons.settings_outlined, '设置'),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: appState,
+      animation: _state,
       builder: (context, _) {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -41,33 +63,66 @@ class Sidebar extends StatelessWidget {
               children: [
                 _brand(),
                 _newChatButton(),
-                SizedBox(height: compact ? 10 : 16),
-                _navItem(0, Icons.chat_bubble_outline_rounded, '对话'),
-                _navItem(1, Icons.checklist_rounded, '今日'),
-                _navItem(2, Icons.menu_book_outlined, '笔记'),
-                _navItem(3, Icons.folder_outlined, '资料'),
-                _navItem(4, Icons.smart_toy_outlined, '代理'),
-                if (!compact) ...[
-                  const SizedBox(height: 18),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
-                    child: Text('最近对话',
-                        style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.2,
-                            color: pal.faint,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                  Expanded(child: _history()),
-                ] else
+                SizedBox(height: compact ? 8 : 12),
+                // §10.2：常驻一行学科切换器；切换后各页按新学科重新取数。
+                SubjectSwitcher(state: _state, compact: compact),
+                SizedBox(height: compact ? 6 : 12),
+                if (compact) ...[
+                  for (final item in _subjectNav)
+                    _navItem(item.$1, item.$2, item.$3),
                   const Spacer(),
-                const SizedBox(height: 6),
-                _navItem(5, Icons.settings_outlined, '设置'),
+                  for (final item in _globalNav) ...[
+                    if (item.$1 == settingsPageIndex) const SizedBox(height: 6),
+                    _navItem(item.$1, item.$2, item.$3),
+                  ],
+                ] else ...[
+                  Expanded(child: _expandedList(context)),
+                  const SizedBox(height: 6),
+                  for (final item in _globalNav)
+                    _navItem(item.$1, item.$2, item.$3),
+                ],
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  /// 展开态：学科页签 + 最近对话**同一个滚动区**，窗口再矮也不会 overflow。
+  Widget _expandedList(BuildContext context) {
+    final items = _state.conversations;
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        for (final item in _subjectNav) _navItem(item.$1, item.$2, item.$3),
+        const SizedBox(height: 18),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
+          child: Text('最近对话',
+              style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 1.2,
+                  color: pal.faint,
+                  fontWeight: FontWeight.w600)),
+        ),
+        if (items.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+            child: Text('这个学科还没有对话', style: TextStyle(fontSize: 11.5, color: pal.muted)),
+          )
+        else
+          for (final conversation in items)
+            _HistoryTile(
+              conversation: conversation,
+              selected: conversation.id == _state.currentConversationId,
+              onTap: () {
+                onSelect(chatPageIndex);
+                _state.openConversation(conversation.id);
+              },
+              onDelete: () => _confirmDelete(context, conversation),
+            ),
+      ],
     );
   }
 
@@ -83,7 +138,7 @@ class Sidebar extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true) await appState.deleteConversation(conversation.id);
+    if (ok == true) await _state.deleteConversation(conversation.id);
   }
 
   Widget _brand() {
@@ -174,13 +229,14 @@ class Sidebar extends StatelessWidget {
       child: Tooltip(
         message: compact ? '新对话' : '',
         child: Material(
+          key: const Key('sidebar-new-chat'),
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              onSelect(0);
-              appState.newChat();
+              onSelect(chatPageIndex);
+              _state.newChat();
             },
             child: Ink(
               height: compact ? 44 : 46,
@@ -213,8 +269,10 @@ class Sidebar extends StatelessWidget {
   Widget _navItem(int target, IconData icon, String label) {
     final selected = index == target;
     if (compact) {
+      // 紧凑态 7 个页签 + 学科切换器必须在 900×600 的侧栏高度内放下
+      // （§10.5 不得 overflow）：纵向留白收到 1，单项 40。
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: 1),
         child: Tooltip(
           message: label,
           child: Material(
@@ -296,29 +354,7 @@ class Sidebar extends StatelessWidget {
     );
   }
 
-  Widget _history() {
-    final items = appState.conversations;
-    if (items.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.fromLTRB(14, 8, 8, 8),
-        child: Text('还没有历史对话', style: TextStyle(fontSize: 11.5, color: pal.muted)),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      itemCount: items.length,
-      itemBuilder: (context, index) => _HistoryTile(
-        conversation: items[index],
-        selected: items[index].id == appState.currentConversationId,
-        onTap: () {
-          onSelect(0);
-          appState.openConversation(items[index].id);
-        },
-        onDelete: () => _confirmDelete(context, items[index]),
-      ),
-    );
   }
-}
 
 class _HistoryTile extends StatefulWidget {
   const _HistoryTile({

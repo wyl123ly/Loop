@@ -17,6 +17,7 @@ import '../widgets/glass.dart';
 import '../widgets/image_preview.dart';
 import '../widgets/markdown_text.dart';
 import '../widgets/minimal_bar.dart';
+import '../widgets/subject_switcher.dart';
 import 'screenshot_overlay.dart';
 
 /// 主窗口提交问题时的载荷（t3 侧；Shell 转成 t2 `AnswerSubmission`）。
@@ -118,6 +119,19 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => ChatScreenState();
 }
 
+// F-15：一个学科的输入草稿（文本 + 光标 + 待发附件）。
+class _ChatDraft {
+  const _ChatDraft({
+    required this.text,
+    required this.selection,
+    required this.attachments,
+  });
+
+  final String text;
+  final TextSelection selection;
+  final List<_Attachment> attachments;
+}
+
 class _Attachment {
   _Attachment({required this.id, required this.name, required this.isImage});
 
@@ -155,6 +169,9 @@ class ChatScreenState extends State<ChatScreen> {
 
   /// 已消费的截图请求 nonce，避免同一次请求重复触发。
   int _lastScreenshotNonce = 0;
+
+  /// 已消费的「带入输入框」请求 nonce（学科页的待复习/去对话）。
+  int _lastDraftNonce = 0;
 
   /// 输入条（常规 composer / 极简条）在窗口内的逻辑矩形，用于回答窗定位；
   /// 物理像素与窗口原点换算由主窗口 host 完成（规格 §4.5）。
@@ -214,9 +231,12 @@ class ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    _lastSubjectKey = _appState.activeKey;
     newChatSignal.addListener(_onNewChat);
     openConversationSignal.addListener(_onOpenConversation);
     deletedConversationSignal.addListener(_onConversationDeleted);
+    subjectChangedSignal.addListener(_onSubjectChanged);
+    chatDraftSignal.addListener(_onChatDraft);
     _screenshotSignal.addListener(_onScreenshotRequest);
     _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
@@ -227,6 +247,8 @@ class ChatScreenState extends State<ChatScreen> {
     newChatSignal.removeListener(_onNewChat);
     openConversationSignal.removeListener(_onOpenConversation);
     deletedConversationSignal.removeListener(_onConversationDeleted);
+    subjectChangedSignal.removeListener(_onSubjectChanged);
+    chatDraftSignal.removeListener(_onChatDraft);
     _screenshotSignal.removeListener(_onScreenshotRequest);
     _scroll.removeListener(_onScroll);
     _controller.dispose();
@@ -307,6 +329,98 @@ class ChatScreenState extends State<ChatScreen> {
     if (_appState.conversations.isNotEmpty) {
       _loadConversation(_appState.conversations.first.id);
     }
+  }
+
+  /// §6.2：切换学科 = 换一整套会话。旧会话一律清空（绝不串会话），
+  /// 新学科有会话就载入最近一条，没有就建一条新的；回答进行中不打断。
+  ///
+  /// F-15：**草稿与附件按学科分别保留**——切走时暂存当前草稿+附件，切回时恢复，
+  /// 避免用户写了一半的内容在切学科时被清掉（同一学科内换会话仍会清空）。
+  Future<void> _onSubjectChanged() async {
+    if (!mounted) return;
+    if (_sending) {
+      _snack('回答中，停止后再切换学科');
+      return;
+    }
+    // 目标学科以信号为准（信号可能先于 state.activeKey 更新到达）。
+    final nextKey = (subjectChangedSignal.value ?? '').trim().isNotEmpty
+        ? subjectChangedSignal.value!.trim()
+        : _appState.activeKey;
+    _stashDraft(_draftKey);
+    setState(() {
+      _conversationId = null;
+      _messages.clear();
+      _attachments.clear();
+      _followTail = true;
+    });
+    await _appState.refreshConversations();
+    if (!mounted) return;
+    final items = _appState.conversations;
+    if (items.isNotEmpty) {
+      await _loadConversation(items.first.id);
+    } else {
+      await _createConversation();
+    }
+    // F-15：草稿恢复必须放在会话载入**之后**（载入会话会重置输入框）。
+    if (mounted) {
+      setState(() {
+        _lastSubjectKey = nextKey;
+        _restoreDraft(nextKey);
+      });
+    }
+  }
+
+  /// 当前学科的草稿槽（key = 学科 key；无学科时用空串）。
+  final Map<String, _ChatDraft> _drafts = {};
+
+  /// 上一次渲染时所属的学科 key（切换时用它来暂存旧草稿）。
+  String _lastSubjectKey = '';
+
+  String get _draftKey => _lastSubjectKey.isEmpty ? _appState.activeKey : _lastSubjectKey;
+
+  /// 把输入框文本与附件暂存到 [key] 学科的槽（F-15）。
+  void _stashDraft(String key) {
+    final text = _controller.text;
+    if (text.trim().isEmpty && _attachments.isEmpty) {
+      _drafts.remove(key);
+      return;
+    }
+    _drafts[key] = _ChatDraft(
+      text: text,
+      selection: _controller.selection,
+      attachments: List<_Attachment>.from(_attachments),
+    );
+  }
+
+  /// 恢复 [key] 学科的草稿（没有则清空输入框）——在载入新学科会话**之后**调用（F-15）。
+  void _restoreDraft(String key) {
+    final draft = _drafts[key];
+    _controller.text = draft?.text ?? '';
+    _controller.selection = draft?.selection ??
+        TextSelection.collapsed(offset: _controller.text.length);
+    _attachments
+      ..clear()
+      ..addAll(draft?.attachments ?? const []);
+  }
+
+  @visibleForTesting
+  String get draftForActiveSubject => _drafts[_draftKey]?.text ?? '';
+
+  @visibleForTesting
+  int get stashedDraftCount => _drafts.length;
+
+  /// 学科页「去对话 / 去复习」：把文本带进输入框（不自动发送）。
+  void _onChatDraft() {
+    final request = chatDraftSignal.value;
+    if (request == null || request.nonce == _lastDraftNonce) return;
+    _lastDraftNonce = request.nonce;
+    if (!mounted) return;
+    final text = request.text;
+    if (text.isNotEmpty) {
+      _controller.text = text;
+      _controller.selection = TextSelection.collapsed(offset: text.length);
+    }
+    if (widget.active) _focus.requestFocus();
   }
 
   Future<void> _createConversation() async {
@@ -523,6 +637,8 @@ class ChatScreenState extends State<ChatScreen> {
       _attachments.clear();
       _followTail = true;
     });
+    // §10.2：回答进行中禁用学科切换（侧栏切换器据此变灰 + tooltip）。
+    chatBusySignal.value = true;
     _scrollToEnd();
 
     var submitted = false;
@@ -583,6 +699,7 @@ class ChatScreenState extends State<ChatScreen> {
               _approval = null;
               _runId = null;
             });
+            chatBusySignal.value = false;
             if (submitted) widget.answerSink?.stop();
             _snack('已停止本次执行');
           case 'step':
@@ -634,6 +751,7 @@ class ChatScreenState extends State<ChatScreen> {
       _snack(error.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _sending = false);
+      chatBusySignal.value = false;
     }
   }
 
@@ -954,35 +1072,48 @@ class ChatScreenState extends State<ChatScreen> {
     return Container(
       height: 78,
       padding: const EdgeInsets.fromLTRB(24, 18, 20, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              _title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3),
-            ),
-          ),
-          _modePicker(),
-          SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: pal.chip,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              _appState.settings?.model ?? 'deepseek-flash',
-              style: TextStyle(fontSize: 11, color: pal.muted),
-            ),
-          ),
-          IconButton(
-            tooltip: '新对话',
-            onPressed: _createConversation,
-            icon: Icon(Icons.add_comment_outlined, size: 19, color: pal.muted),
-          ),
-        ],
+      // AC-07 断言 3：浮窗 360×420 下页头不得溢出——窄宽时省掉模型名徽标
+      // （学科 chip 已按同一阈值退化为色点，见 SubjectChip）。
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 520;
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                ),
+              ),
+              // §10.4：对话页是当前学科的作用域，页头必须显示学科名（窄宽退化为色点）。
+              SubjectChip(state: _appState),
+              const SizedBox(width: 10),
+              _modePicker(),
+              if (!narrow) ...[
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: pal.chip,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _appState.settings?.model ?? 'deepseek-flash',
+                    style: TextStyle(fontSize: 11, color: pal.muted),
+                  ),
+                ),
+              ],
+              IconButton(
+                tooltip: '新对话',
+                onPressed: _createConversation,
+                icon: Icon(Icons.add_comment_outlined, size: 19, color: pal.muted),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1142,55 +1273,74 @@ class ChatScreenState extends State<ChatScreen> {
       '这段英文改得更地道：…',
       '帮我把这周要做的事排成待办',
     ];
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4F7CFF), Color(0xFF8B5CF6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.loop_rounded, color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 16),
-            const Text('今天想学点什么？',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8)),
-            const SizedBox(height: 6),
-            Text(
-              'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: pal.muted, height: 1.6),
-            ),
-            const SizedBox(height: 22),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final example in examples)
-                  ActionChip(
-                    label: Text(example, style: const TextStyle(fontSize: 12.5)),
-                    backgroundColor: pal.chip,
-                    side: BorderSide(color: pal.border),
-                    onPressed: () {
-                      _controller.text = example;
-                      _controller.selection =
-                          TextSelection.collapsed(offset: _controller.text.length);
-                      _focus.requestFocus();
-                    },
+    // 窄窗（460×600 等）下空态内容会超过可用高度：改成"可滚动 + 有空间时居中"，
+    // 与浮窗空态（`floating-welcome`）同一策略，避免 RenderFlex overflow。
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 36),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4F7CFF), Color(0xFF8B5CF6)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(Icons.loop_rounded, color: Colors.white, size: 28),
                   ),
-              ],
+                  const SizedBox(height: 16),
+                  const Text('今天想学点什么？',
+                      style: TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: pal.muted, height: 1.6),
+                  ),
+                  if (_appState.conversations.isEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '这个学科还没有对话。问一个问题就开始。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: pal.faint),
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final example in examples)
+                        ActionChip(
+                          label: Text(example, style: const TextStyle(fontSize: 12.5)),
+                          backgroundColor: pal.chip,
+                          side: BorderSide(color: pal.border),
+                          onPressed: () {
+                            _controller.text = example;
+                            _controller.selection =
+                                TextSelection.collapsed(offset: _controller.text.length);
+                            _focus.requestFocus();
+                          },
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );

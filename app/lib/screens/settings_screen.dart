@@ -1,9 +1,10 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../backend/llm.dart';
+import '../models.dart';
 import '../state.dart';
 import '../update/app_version.dart';
 import '../update/update_ui.dart';
@@ -43,6 +44,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _testOk = false;
   bool _checkingUpdate = false;
 
+  // F-11：数据与迁移
+  MigrationOverview? _migration;
+  bool _migrationBusy = false;
+  String? _migrationNote;
+
   AppState get _state => widget.state ?? appState;
 
   ProviderProfile? get _selected {
@@ -56,6 +62,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _syncFromState();
+    _loadMigration();
+  }
+
+  // ------------------------------------------------------------ 数据与迁移（F-11）
+
+  /// 读迁移状态（applied/pending/running/last_error/report + 一次性提示标记）。
+  Future<void> _loadMigration() async {
+    try {
+      final overview = await _state.api.migrationOverview();
+      if (!mounted) return;
+      setState(() {
+        _migration = overview;
+        _migrationNote = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationNote = '读取迁移状态失败：$error');
+    }
+  }
+
+  /// 失败重试：`POST /api/migrations/run`（幂等；已应用则 skipped）。
+  Future<void> _rerunMigration() async {
+    setState(() {
+      _migrationBusy = true;
+      _migrationNote = null;
+    });
+    try {
+      final result = await _state.api.runMigration();
+      await _loadMigration();
+      if (!mounted) return;
+      setState(() {
+        _migrationBusy = false;
+        _migrationNote = result['skipped'] == true
+            ? '迁移已应用过（skipped: ${result['reason'] ?? ''}）'
+            : (result['ok'] == true ? '迁移完成' : '迁移失败：${result['error'] ?? ''}');
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _migrationBusy = false;
+        _migrationNote = '重试失败：$error';
+      });
+    }
+  }
+
+  /// 一次性提示：把"已看过"写进设置（下次不再显示）。
+  Future<void> _dismissMigrationNotice() async {
+    try {
+      await _state.api.saveSettings(subjectMigrationNoticeSeen: true);
+      await _state.refreshSettings();
+    } catch (_) {}
+    await _loadMigration();
+  }
+
+  Future<void> _setCrossSubjectSearch(bool value) async {
+    try {
+      await _state.api.saveSettings(crossSubjectSearch: value);
+      await _state.refreshSettings();
+      await _loadMigration();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _migrationNote = '保存失败：$error');
+    }
   }
 
   @override
@@ -284,6 +353,173 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _modelController.dispose();
     _reasonController.dispose();
     super.dispose();
+  }
+
+  // ------------------------------------------------------------ 数据与迁移（F-11）
+
+  /// 「数据与迁移」卡片：迁移状态/进度、失败重试、一次性提示、跨学科检索开关，
+  /// 以及只读的技能来源（F-18）。
+  Widget _dataAndMigrationCard() {
+    final overview = _migration;
+    final settings = _state.settings;
+    return Container(
+      key: const Key('settings-data-migration'),
+      padding: const EdgeInsets.all(22),
+      decoration: panelDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('数据与迁移',
+                  style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              TextButton(
+                key: const Key('migration-refresh'),
+                onPressed: _migrationBusy ? null : _loadMigration,
+                child: const Text('刷新'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (overview == null)
+            Text('读取中…', style: TextStyle(fontSize: 12, color: pal.muted))
+          else ...[
+            Text(
+              overview.pending.isEmpty
+                  ? '结构版本：已是最新${overview.appliedAt.isEmpty ? '' : '（迁移于 ${overview.appliedAt}）'}'
+                  : '结构版本：待迁移 ${overview.pending.join(', ')}',
+              key: const Key('migration-status-line'),
+              style: TextStyle(fontSize: 12.5, color: pal.ink),
+            ),
+            if (overview.running)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('迁移进行中…', style: TextStyle(fontSize: 12, color: pal.warm)),
+              ),
+            if (overview.countsLabel.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('迁入记录：${overview.countsLabel}',
+                    style: TextStyle(fontSize: 11.5, color: pal.muted)),
+              ),
+            if (overview.filesLabel.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(overview.filesLabel,
+                    key: const Key('migration-files-line'),
+                    style: TextStyle(fontSize: 11.5, color: pal.muted)),
+              ),
+            if (overview.fileErrors.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final item in overview.fileErrors.take(5))
+                      Text(
+                        '· ${item['table']}#${item['id']} ${item['reason']}',
+                        style: TextStyle(fontSize: 11, color: pal.warm, height: 1.5),
+                      ),
+                  ],
+                ),
+              ),
+            if (overview.failed)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '上次迁移未完成：${overview.lastError.isEmpty ? (overview.report['error'] ?? '未知原因') : overview.lastError}',
+                  key: const Key('migration-error-line'),
+                  style: TextStyle(fontSize: 12, color: pal.danger),
+                ),
+              ),
+            if (!overview.noticeSeen && overview.appliedAt.isNotEmpty)
+              Container(
+                key: const Key('migration-notice'),
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                decoration: softDecoration(radius: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 15, color: pal.accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '旧数据已迁入默认学科：会话/资料/进度都在学科库里，原库保留为只读副本。',
+                        style: TextStyle(fontSize: 11.5, color: pal.ink, height: 1.5),
+                      ),
+                    ),
+                    TextButton(
+                      key: const Key('migration-notice-dismiss'),
+                      onPressed: _dismissMigrationNotice,
+                      child: const Text('知道了'),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('migration-retry'),
+                  onPressed: (_migrationBusy || overview.pending.isEmpty) ? null : _rerunMigration,
+                  icon: _migrationBusy
+                      ? const SizedBox(
+                          width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.play_arrow_rounded, size: 17),
+                  label: Text(_migrationBusy ? '处理中…' : '重试迁移'),
+                ),
+                const SizedBox(width: 10),
+                if (_migrationNote != null)
+                  Expanded(
+                    child: Text(_migrationNote!,
+                        key: const Key('migration-note'),
+                        style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('跨学科兜底检索', style: TextStyle(fontSize: 13, color: pal.ink)),
+                      const SizedBox(height: 2),
+                      Text(
+                        '默认关闭：只在本学科资料里检索。开启后，仅当本学科零命中时才兜底到其它学科，'
+                        '并在回答里标注来源学科。',
+                        style: TextStyle(fontSize: 11, color: pal.muted, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  key: const Key('cross-subject-search-switch'),
+                  value: settings?.crossSubjectSearch ?? false,
+                  onChanged: (value) => _setCrossSubjectSearch(value),
+                ),
+              ],
+            ),
+            const Divider(height: 22),
+            Row(
+              children: [
+                Icon(Icons.hub_outlined, size: 14, color: pal.muted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '教学技能来源：${settings?.skillHubUrl ?? ''}（只读，由后端白名单固定）',
+                    key: const Key('skill-hub-readonly'),
+                    style: TextStyle(fontSize: 11, color: pal.muted),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -610,6 +846,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    _dataAndMigrationCard(),
                     const SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(22),

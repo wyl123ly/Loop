@@ -1,0 +1,46 @@
+# TREE_DIGEST（v0.8.0 发版字节，t23 复算）
+
+TREE_DIGEST=a4bd71afed1eafb767e7c13f5c23bb1f545cc0b9be54e5801801f74ebc9a40c3
+files=162   （app/lib + app/test 全部 .dart + docs/evidence/subject-v0.8.0 全部文件，**不含本文件自身**，避免自指）
+
+## 历史值（保留以便对比）
+- v0.8.0 发版前（t18/t19 冻结字节，本次发版前的 pre-fix 状态）：
+  `3faaa26e5d0b67232c45c7e977c11600f0beeb8e6a52958bdb24b28bb5b80d44`（162 文件）
+- t15 交付时（未含 t18 截图/文档改动）：
+  `039c23017dedf2298b3b7addd31f214aaa28770da3529742f6b9deafb142411a`（162 文件）
+
+## 本次（t23）为何与 3faaa26e… 不同 —— 三处、全部可归因
+1. **`app/lib/update/app_version.dart`**：`AppVersion.current` 由 `0.7.1` 升为 `0.8.0`（v0.8.0 发版硬要求）；
+   同时 `app/pubspec.yaml` 由 `0.7.1+21` 升为 `0.8.0+22`（pubspec 不在本摘要集合内）。
+2. **`app/test/subject_screenshots_test.dart`**：t23 按授权回滚了 t20 在被取消前落下的半截 R3-1/R3-2 delta
+   （`_setPalette` 全局调色板 + 平均亮度断言 + fixture 的 `summary['coverage']`/`topics.lastStudiedAt`/`evidenceCount`）。
+   回滚后的源码**字节**与 t18 原版无法逐字节相同（t18 原版无备份，且原版措辞不可知），
+   但**渲染结果可对拍**：见下。
+3. **`docs/evidence/subject-v0.8.0/screens/12-migration-progress.png`**：页面里的版本文本由 `v0.7.1` 变为 `v0.8.0`
+   （右上「v0.8.0」、「版本 Loop 0.8.0 · Dart 后端」）→ 该图重放，`F1E3113D1AA6 → 4E7FBBC77F00`，其余像素相同。
+
+## 对拍证据（t23 回滚验证，EXIT=0）
+- `flutter test test/subject_screenshots_test.dart`：16 张 PNG 中 **15 张与 pre-fix 记录值逐字节一致**
+  （04=DB31A2B0154FB750、05=98A392354B53C35E、07=0F9BF3FE3A8FACC9、real-13..16 全同）；
+  **仅 12 号图**因上述版本文本变化而不同（两图 `read_image` 逐像素目视：画面其余部分完全一致）。
+- 16 张 PNG sha256 **两两互异**；`screens/OVERFLOW.txt` = `no rendering overflow`。
+- `flutter analyze` → **No issues found（0 issues）**；`flutter test` 全量 → **473 passed / 1 skipped**（EXIT=0）。
+
+## R3-1 / R3-2 状态（不得写成已修复）
+本次发版前的字节即已包含两条证据类缺陷，**t23 未修复它们**（用户决定 B：接受现状发版）：
+- R3-1（medium）：截图 harness 未设置全局 `LoopTheme.palette` → 12 张 dark 主图取 light 调色板值；
+  07 技能详情抽屉值列文字 `light.ink #1F1D24` 在 dark 背景上对比度约 **1.03:1**、1× 下不可见；
+  AC-07/AC-14 的「截图」半边证据不完整。**产品 dark 模式本身经复审确认无缺陷**。
+- R3-2（low）：04 概览 fixture 存在「有知识点但无学习记录」同屏矛盾（证据内部不一致，非产品缺陷）。
+
+## 算法（与 docs/evidence/subject-v0.8.0/README.md §1.1 脚本一致；本文件自身排除在外）
+1) 取 `app/lib`、`app/test` 下全部 `*.dart` 与 `docs/evidence/subject-v0.8.0` 下全部文件（排除 `TREE_DIGEST.txt`）；
+2) 按绝对路径升序排序；
+3) 每行：相对仓库根的路径 + 两个空格 + 该文件 SHA-256（大写十六进制）+ `\n`；
+4) 整串按 UTF-8 编码后再做一次 SHA-256，输出小写十六进制。
+
+## 相关指纹（t23 发版时）
+- 正式库 `data/loop.db`：size=113467392、sha256=`1CB939B44BEBE7EF53709A09BE48705F9E0BD017B0270BBEB1241F69B600D645`
+  （t23 全量测试 + release 构建 + 真实进程探活前后一致）；`data/files` 恒 540 个文件。
+- 产物：`release/Loop-Desktop-win64.zip` 与 `release/Loop-Desktop/version.json`
+  （字节数与 SHA-256 见 `docs/release-v0.8.0.md` §10）。

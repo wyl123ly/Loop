@@ -38,6 +38,10 @@ class _FakeLoopApi extends LoopApi {
   Future<SettingsData> settings() async => _settings();
 
   @override
+  Future<Map<String, dynamic>> migrationStatus() async =>
+      {'applied': [], 'pending': [], 'running': false, 'report': {}};
+
+  @override
   Future<SettingsData> saveSettings({
     String? apiKey,
     String? baseUrl,
@@ -50,6 +54,9 @@ class _FakeLoopApi extends LoopApi {
     bool? autoCheckUpdates,
     bool? sidebarCollapsed,
     bool? streamOutput,
+    String? activeSubject,
+    bool? crossSubjectSearch,
+    bool? subjectMigrationNoticeSeen,
   }) async {
     if (failSaves) throw ApiException('连不上本地服务');
     final payload = <String, dynamic>{};

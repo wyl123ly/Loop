@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,6 +16,9 @@ final ValueNotifier<int?> openConversationSignal = ValueNotifier<int?>(null);
 /// 最近对话被删除时写入会话 id，聊天页监听后清空/切换。
 final ValueNotifier<int?> deletedConversationSignal = ValueNotifier<int?>(null);
 
+/// 当前学科切换时写入新 key，各页监听后按新学科重新取数（§12）。
+final ValueNotifier<String?> subjectChangedSignal = ValueNotifier<String?>(null);
+
 class AppState extends ChangeNotifier {
   AppState({LoopApi? api}) : api = api ?? LoopApi();
 
@@ -29,6 +32,15 @@ class AppState extends ChangeNotifier {
   String? bootstrapError;
   ThemeMode themeMode = ThemeMode.system;
   List<CustomMode> customModes = [];
+
+  /// 学科列表（含归档与否由后端决定；默认只含未归档）。
+  List<Subject> subjects = [];
+
+  /// 当前学科；未加载时回退到 [settings.activeSubject] 或默认学科 key。
+  Subject? activeSubject;
+
+  /// 当前学科 key（无学科信息时回退 `default`）。
+  String get activeKey => activeSubject?.key ?? settings?.activeSubject ?? 'default';
 
   Future<void> bootstrap() async {
     for (var attempt = 0; attempt < 40; attempt++) {
@@ -61,8 +73,72 @@ class AppState extends ChangeNotifier {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       }
     }
+    // 先学科（决定各页作用域），再按当前学科取会话（§12 bootstrap 顺序）。
+    await loadSubjects();
+    await refreshConversations();
     ready = true;
     notifyListeners();
+  }
+
+  /// 拉取学科列表与当前学科；失败时保留旧值（不阻塞启动）。
+  Future<void> loadSubjects() async {
+    try {
+      subjects = await api.subjects(includeArchived: true);
+      activeSubject = await api.activeSubject();
+      // 后续请求显式带 `subject=`，避免切换期间的取数落在旧学科。
+      api.subjectScope = activeSubject?.key;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  /// 切换学科：写后端 + 通知 + 触发 [subjectChangedSignal]，并刷新会话列表。
+  Future<bool> switchSubject(String key) async {
+    if (key.isEmpty || key == activeKey) return true;
+    try {
+      activeSubject = await api.setActiveSubject(key);
+      api.subjectScope = activeSubject?.key ?? key;
+      subjectChangedSignal.value = activeSubject?.key ?? key;
+      currentConversationId = null;
+      conversations = [];
+      notifyListeners();
+      await refreshConversations();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 新建学科并切换过去（默认学科之外的用户学科）。
+  Future<Subject?> createSubject({
+    required String name,
+    String goal = '',
+    String examDate = '',
+    int dailyMinutes = 0,
+    String icon = '',
+    String color = '',
+    String level = '',
+  }) async {
+    try {
+      final created = await api.createSubject(
+        name: name,
+        goal: goal,
+        examDate: examDate,
+        dailyMinutes: dailyMinutes,
+        icon: icon,
+        color: color,
+        level: level,
+      );
+      await loadSubjects();
+      await switchSubject(created.key);
+      return created;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 学科内数据变化后按当前学科重新取数（会话/资料/待办片各自刷新）。
+  Future<void> refreshSubjectScoped() async {
+    await refreshConversations();
   }
 
   Future<void> refreshConversations() async {
@@ -173,6 +249,8 @@ class AppState extends ChangeNotifier {
       autoCheckUpdates: autoCheckUpdates ?? current?.autoCheckUpdates ?? true,
       sidebarCollapsed: sidebarCollapsed ?? current?.sidebarCollapsed ?? false,
       streamOutput: streamOutput ?? current?.streamOutput ?? true,
+      activeSubject: current?.activeSubject ?? 'default',
+      crossSubjectSearch: current?.crossSubjectSearch ?? false,
     );
   }
 

@@ -1,15 +1,21 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets/markdown_text.dart';
+import '../widgets/subject_switcher.dart';
 
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key, required this.active});
+  const NotesScreen({super.key, required this.active, this.state});
 
   final bool active;
+
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -21,9 +27,12 @@ class _NotesScreenState extends State<NotesScreen> {
   bool _loading = true;
   String? _error;
 
+  AppState get _state => widget.state ?? appState;
+
   @override
   void initState() {
     super.initState();
+    subjectChangedSignal.addListener(_onSubjectChanged);
     _load();
   }
 
@@ -33,9 +42,21 @@ class _NotesScreenState extends State<NotesScreen> {
     if (widget.active && !oldWidget.active) _load();
   }
 
+  @override
+  void dispose() {
+    subjectChangedSignal.removeListener(_onSubjectChanged);
+    super.dispose();
+  }
+
+  /// 学科切换：笔记属于当前学科（§10.4）。
+  void _onSubjectChanged() {
+    if (!mounted) return;
+    unawaited(_load());
+  }
+
   Future<void> _load() async {
     try {
-      final items = await appState.api.notes();
+      final items = await _state.api.notes();
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -88,7 +109,7 @@ class _NotesScreenState extends State<NotesScreen> {
     );
     if (ok != true) return;
     try {
-      await appState.api.deleteNote(note.id);
+      await _state.api.deleteNote(note.id);
       if (!mounted) return;
       setState(() => _selectedId = null);
       await _load();
@@ -110,6 +131,9 @@ class _NotesScreenState extends State<NotesScreen> {
               Text('笔记', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
               Text('${_items.length} 篇', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              const SizedBox(width: 10),
+              // §10.4：笔记属于当前学科，页头必须显示学科名。
+              SubjectChip(state: _state),
               Spacer(),
               IconButton(
                 tooltip: '刷新',

@@ -26,6 +26,7 @@ import 'screens/chat_screen.dart';
 import 'screens/materials_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/subject_screen.dart';
 import 'screens/today_screen.dart';
 import 'state.dart';
 import 'theme.dart';
@@ -35,6 +36,7 @@ import 'update/update_ui.dart';
 import 'widgets/floating_bar.dart';
 import 'widgets/floating_qa_scaffold.dart';
 import 'widgets/sidebar.dart';
+import 'widgets/subject_switcher.dart';
 import 'widgets/title_bar.dart';
 import 'widgets/window_resize_handles.dart';
 
@@ -211,7 +213,13 @@ class _BootError extends StatelessWidget {
   }
 }
 
-const _pageTitles = ['对话', '今日', '笔记', '资料', '代理', '设置'];
+/// 页签标题（§10.1）：对话 / 今日 / 笔记 / 资料 / 学科 / 代理 / 设置。
+/// 与 `widgets/subject_switcher.dart` 的 `chatPageIndex`/`subjectPageIndex`/
+/// `settingsPageIndex` 必须一致。
+const _pageTitles = ['对话', '今日', '笔记', '资料', '学科', '代理', '设置'];
+
+/// 页签索引上界（`LOOP_TAB` / `?tab=` 允许范围 0..6，AC-11）。
+const int _lastPageIndex = 6;
 
 /// 主窗口壳：normal（标题栏 + 侧栏 + 六页）与 floating（拖动栏 + 仅对话）
 /// 共用同一 widget 树与槽位，保证 ChatScreen 的 State / SSE 不因切换被重建。
@@ -255,21 +263,23 @@ class Shell extends StatefulWidget {
 }
 
 class _ResponsiveSidebar extends StatelessWidget {
-  const _ResponsiveSidebar({required this.index, required this.onSelect});
+  const _ResponsiveSidebar({required this.index, required this.onSelect, required this.state});
 
   final int index;
   final ValueChanged<int> onSelect;
+  final AppState state;
 
   @override
   Widget build(BuildContext context) {
     final autoCompact = MediaQuery.sizeOf(context).width < 1080;
-    final manualCollapsed = appState.settings?.sidebarCollapsed ?? false;
+    final manualCollapsed = state.settings?.sidebarCollapsed ?? false;
     return Sidebar(
       index: index,
       onSelect: onSelect,
       compact: autoCompact || manualCollapsed,
       canToggle: !autoCompact,
-      onToggleCollapse: () => appState.setSidebarCollapsed(!manualCollapsed),
+      state: state,
+      onToggleCollapse: () => state.setSidebarCollapsed(!manualCollapsed),
     );
   }
 }
@@ -314,6 +324,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     newChatSignal.addListener(_onConversationSwitched);
     openConversationSignal.addListener(_onConversationSwitched);
     deletedConversationSignal.addListener(_onConversationSwitched);
+    subjectPageSignal.addListener(_onSubjectPageRequested);
+    chatDraftSignal.addListener(_onChatDraftRequested);
     WindowController.instance.geometryEpoch.addListener(_onMainGeometryEpoch);
     _answerAnchorTimer = Timer.periodic(
       const Duration(milliseconds: 500),
@@ -350,6 +362,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     newChatSignal.removeListener(_onConversationSwitched);
     openConversationSignal.removeListener(_onConversationSwitched);
     deletedConversationSignal.removeListener(_onConversationSwitched);
+    subjectPageSignal.removeListener(_onSubjectPageRequested);
+    chatDraftSignal.removeListener(_onChatDraftRequested);
     WindowController.instance.geometryEpoch
         .removeListener(_onMainGeometryEpoch);
     _answerAnchorTimer?.cancel();
@@ -445,6 +459,18 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     unawaited(_closeAnswerWindow());
   }
 
+  /// 侧栏/切换器菜单里的「管理学科…」→ 切到学科页（§10.2）。
+  void _onSubjectPageRequested() {
+    if (!mounted || _host.isFloating) return;
+    setState(() => _index = subjectPageIndex);
+  }
+
+  /// 学科页「去对话 / 去复习」→ 切到对话页；输入框预填由 ChatScreen 处理。
+  void _onChatDraftRequested() {
+    if (!mounted || _host.isFloating) return;
+    setState(() => _index = chatPageIndex);
+  }
+
   /// 生产环境解析回答窗 host（测试未初始化 WindowController 时为 null）。
   void _resolveAnswerHost() {
     if (_answerHostResolved) return;
@@ -515,10 +541,10 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   static int _initialTab() {
     if (kIsWeb) {
       final value = int.tryParse(Uri.base.queryParameters['tab'] ?? '');
-      if (value != null && value >= 0 && value <= 5) return value;
+      if (value != null && value >= 0 && value <= _lastPageIndex) return value;
     } else {
       final value = initialTabOverride();
-      if (value >= 0 && value <= 5) return value;
+      if (value >= 0 && value <= _lastPageIndex) return value;
     }
     return 0;
   }
@@ -570,11 +596,13 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       ),
       TodayScreen(
         active: !floating && _index == 1,
+        state: _state,
       ),
-      NotesScreen(active: !floating && _index == 2),
-      MaterialsScreen(active: !floating && _index == 3),
-      AgentScreen(active: !floating && _index == 4),
-      SettingsScreen(active: !floating && _index == 5),
+      NotesScreen(active: !floating && _index == 2, state: _state),
+      MaterialsScreen(active: !floating && _index == 3, state: _state),
+      SubjectScreen(active: !floating && _index == subjectPageIndex, state: _state),
+      AgentScreen(active: !floating && _index == 5),
+      SettingsScreen(active: !floating && _index == settingsPageIndex),
     ];
     final builder = widget.pageBuilder;
     if (builder != null) {
@@ -583,7 +611,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
       }
     }
     if (!floating) return pages;
-    // 浮窗只显示对话页，但其余五页仍需“常驻”以保留状态（规格 §5.2）。
+    // 浮窗只显示对话页，但其余六页仍需“常驻”以保留状态（规格 §5.2）。
     // 它们在 360×420 的窄约束下会 overflow（t5 T5-04：Settings/Materials 等），
     // 因此让隐藏页按普通窗口最小尺寸 900×600 完成布局，再由 IndexedStack 裁剪；
     // 返回普通窗口时恢复真实约束（内容与 v0.4.0 一致）。
@@ -678,7 +706,11 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
                   ),
                   sidebar: floating
                       ? const SizedBox.shrink()
-                      : _ResponsiveSidebar(index: _index, onSelect: _select),
+                      : _ResponsiveSidebar(
+                          index: _index,
+                          onSelect: _select,
+                          state: _state,
+                        ),
                   content: IndexedStack(
                     key: _contentKey,
                     index: contentIndex,

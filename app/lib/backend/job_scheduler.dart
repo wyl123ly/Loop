@@ -3,6 +3,8 @@ import 'dart:async';
 import 'agent.dart';
 import 'agent_run.dart';
 import 'db.dart';
+import 'paths.dart';
+import 'subject_store.dart';
 
 /// 应用内后台任务调度器：每 30 秒检查一次到期任务，串行执行。
 class JobScheduler {
@@ -11,6 +13,13 @@ class JobScheduler {
 
   static void start() {
     _timer ??= Timer.periodic(const Duration(seconds: 30), (_) => _tick());
+  }
+
+  /// 停止调度（测试/退出用），可重复调用。
+  static void stop() {
+    _timer?.cancel();
+    _timer = null;
+    _running = false;
   }
 
   static Future<int> runDueNow() async {
@@ -56,6 +65,20 @@ class JobScheduler {
   }
 
   static Future<void> runJob(Map<String, Object?> job) async {
+    // 后台任务产生的会话/消息属于**当前学科**（§2.4：学习产物归学科库）。
+    // 数据目录尚未初始化（纯内存测试）时回退旧行为，避免测试触碰真实目录。
+    if (!AppPaths.ready) return _runJob(job);
+    final record = SubjectStore.activeSubject();
+    final handle = SubjectStore.open(record.key);
+    return Db.runScoped(
+      handle.database,
+      () => _runJob(job),
+      subjectKey: record.key,
+      filesDir: record.filesPath,
+    );
+  }
+
+  static Future<void> _runJob(Map<String, Object?> job) async {
     final id = (job['id'] as num).toInt();
     final title = (job['title'] ?? '后台任务').toString();
     final prompt = (job['prompt'] ?? '').toString().trim();

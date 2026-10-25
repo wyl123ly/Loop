@@ -1,7 +1,8 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.7.1**。
-对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite，模型使用 DeepSeek。
+Windows 桌面 AI 学习工作台，当前版本 **v0.8.0**。
+学科、对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite（**每学科一个独立数据库**），
+模型使用 DeepSeek 等 OpenAI 兼容供应商。
 
 [下载最新版](https://github.com/wyl123ly/Loop/releases/latest)
 
@@ -18,6 +19,22 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.7.1**。
 | ![compact](docs/screenshots/window-compact.png) | ![floating](docs/screenshots/floating-460x600-dark.png) |
 
 ## 当前版本功能
+
+### 学科（v0.8.0）
+- **用户自定义学科**：侧栏顶部常驻学科切换器；新建/改名/归档/恢复，默认学科「通用」受保护（不可删除/归档）。
+- **学科内独立对话**：每个学科有自己的会话、消息与上下文；切学科后旧接口自动落当前学科库，学科之间互不可见。
+- **学科专属资料库与优先检索**：资料副本与索引都在本学科目录，检索默认只在本学科库（FTS5 + BM25）内取满预算；
+  跨学科检索默认关闭，开启后仅作兜底且标注来源学科。
+- **学习进度**：AI 通过 `get_subject_progress` / `update_subject_progress` 工具读写学科画像、知识点掌握度
+  （status/mastery/confidence/下次复习）与学习事件（带消息证据）；用户可在学科页手动纠正、重新计算。
+- **学科间数据库独立**：`data/subjects/<key>/loop.db` 存该学科全部学习数据，`data/subjects/<key>/files/` 存资料副本，
+  `data/subjects/<key>/skills/` 存已安装教学技能；全局 `data/loop.db` 退化为应用级注册表与全局设置（会话/消息/资料等
+  学习表不再写入全局库，跨库 JOIN 直接报错）。
+- **教学 skill 按用户选择从 EduHub 下载**：搜索/详情/安装/停用/启用/检查更新/回退/移除；只接受 `SKILL.md` 文档型制品，
+  **不执行包内任何脚本**，安装为原子落盘，失败不留半成品；AI 只能推荐、不能安装。
+- **旧数据迁移**：首次启动把 v0.7.1 的会话/消息/资料/分块/笔记/待办全部迁入默认学科并改名 `legacy_*` 留档，
+  计数校验 + 备份 + 失败回滚 + 幂等；设置页有「数据与迁移」卡片可查看进度与重试。
+- **UI**：侧栏新增「学科」页（概览 / 进度 / 技能三个 tab），900×600、360×420 浮窗、76px 紧凑侧栏下均无溢出。
 
 ### 桌面答疑悬浮窗
 - 主窗口标题栏新增「浮窗答疑」按钮，一键把同一个 Loop 窗口切成约 **460×600** 的小窗；默认置顶、无原生标题栏、无侧栏，适合边看题边问。
@@ -103,6 +120,28 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.7.1**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.8.0 · 2026-10-25 · 学科
+- 新增「学科」：用户自定义学科（新建/改名/归档/恢复，默认学科「通用」受保护），侧栏顶部常驻学科切换器。
+- **学科间数据库独立**：`data/subjects/<key>/loop.db`（该学科全部学习数据）+ `files/`（资料副本）+ `skills/`（教学技能）；
+  全局 `data/loop.db` 退化为应用级注册表与全局设置，会话/消息/资料等学习表不再写入全局库，跨库 JOIN 直接报错。
+- 学科内独立对话：会话、消息、上下文按学科隔离；切学科后旧接口落当前学科库，互不可见。
+- 学科专属资料库与优先检索：检索默认只在本学科库做 FTS5/BM25 并取满预算；跨学科检索默认关闭，开启后仅作兜底并标注来源学科。
+- 学习进度：AI 用 `get_subject_progress` / `update_subject_progress` 读写学科画像、知识点掌握（status/mastery/confidence/下次复习）
+  与学习事件（带消息证据）；用户可手动纠正与「重新计算进度」。
+- 教学 skill：从 EduHub 按用户选择搜索/详情/安装/停用/启用/检查更新/锁定/回退/移除；只接受 `SKILL.md` 文档型制品，
+  **不执行包内任何脚本**，安装原子落盘、失败不留半成品；AI 只能推荐、不能安装。
+- 旧数据迁移：首次启动把 v0.7.1 的 conversations/messages/materials/chunks/notes/tasks 等迁入默认学科，
+  计数校验 + 备份 + 失败回滚 + 幂等（原表改名 `legacy_*` 留档），设置页新增「数据与迁移」卡片。
+- 侧栏导航新增「学科」页（概览 / 进度 / 技能三个 tab）；900×600、360×420 浮窗、76px 紧凑侧栏均无溢出。
+- `flutter analyze` → 0 issues；全量 `flutter test` → **473 passed / 1 skipped**（EXIT=0）；release 构建成功：
+  `release/Loop-Desktop-win64.zip`（21,143,715 字节，SHA-256 `84863F481782C5C472766BF6BE6A68D8C26E7E70B9FA6C8911F7E09F00EC1AD3`），
+  `version.json` = `0.8.0`，构建后 `/api/health` 返回 `0.8.0`（隔离数据目录实测）。
+- **已知限制（如实记录）**：AC-07 / AC-14 的「**截图**」半边证据不完整 —— 12 张 dark 主截图受截图 harness
+  调色板失配影响（07 技能详情抽屉值列文字在深色背景上对比度约 1.03:1，1× 下看不清），04 概览 fixture 存在
+  「有知识点但无学习记录」同屏矛盾；**产品 dark 模式本身经复审确认无缺陷**。这两条（R3-1 / R3-2）
+  经用户决定按现状发版、**本版未修复**；第 3 轮质量复审 verdict 为 `needs_revision`（仅证据类 findings）。
+  完整说明、复现命令与其它已知限制见 [docs/release-v0.8.0.md](docs/release-v0.8.0.md)。
 
 ### v0.7.1 · 2026-10-25
 - AI 供应商新增「刷新模型列表」：从供应商 `/models` 自动拉取模型 ID，合并进当前供应商列表，保留已有能力标记和标签。
@@ -238,6 +277,10 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.7.1**。
 > 本仓库从 v0.3.0 开始记录版本改动。
 
 ## 相关文档
+- 完整 v0.8.0 说明（含验收与已知限制）：[docs/release-v0.8.0.md](docs/release-v0.8.0.md)
+- 学科功能需求与架构规格：[docs/subject-feature-spec.md](docs/subject-feature-spec.md)
+- 学科功能验证报告（r2 / r3 / r4）：[r2](docs/subject-feature-verification-r2.md) · [r3](docs/subject-feature-verification-r3.md) · [r4](docs/subject-feature-verification-r4.md)
+- AC-07 截图与证据清单：[docs/evidence/subject-v0.8.0/README.md](docs/evidence/subject-v0.8.0/README.md)
 - 完整 v0.5.0 说明：[docs/release-v0.5.0.md](docs/release-v0.5.0.md)
 - 悬浮窗规格与验收契约：[docs/floating-qa-spec.md](docs/floating-qa-spec.md)
 - 悬浮窗端到端验证报告：[docs/floating-qa-test-report.md](docs/floating-qa-test-report.md)

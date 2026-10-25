@@ -6,6 +6,8 @@ import 'db.dart';
 import 'parsing.dart';
 import 'paths.dart';
 import 'retrieval.dart';
+import 'subject_migration.dart';
+import 'subject_store.dart';
 
 const supportedExtensions = {'.pdf', '.docx', '.pptx', '.txt', '.md'};
 const maxFileBytes = 30 * 1024 * 1024;
@@ -126,10 +128,25 @@ int ensureFolder(String root, String name) {
   });
 }
 
+/// 资料副本落盘目录：学科作用域内 → 该学科 `files/`（v0.8.0 起唯一合法去处）。
+///
+/// 数据目录已初始化却拿不到学科作用域时**直接报错**，而不是悄悄写进 v0.7.1 的
+/// 全局 `data/files`（双库收敛：旧目录迁移后只读）。
+/// 只有数据层尚未初始化的纯单元场景才回退旧路径。
+String _targetFilesDir() {
+  final scoped = Db.scopedFilesDir;
+  if (scoped.isNotEmpty) return scoped;
+  if (AppPaths.ready && SubjectStore.ready) {
+    throw StateError('资料写入缺少学科作用域（必须经 Db.runScoped / SubjectContext.scoped）');
+  }
+  return AppPaths.files.path;
+}
+
 String _uniquePath(String original) {
   final ext = p.extension(original).toLowerCase();
   final stamp = DateTime.now().microsecondsSinceEpoch;
-  return p.join(AppPaths.files.path, '${stamp}_folder$ext');
+  final dir = Directory(_targetFilesDir())..createSync(recursive: true);
+  return p.join(dir.path, '${stamp}_folder$ext');
 }
 
 Future<Map<String, Object?>> importFolderFile(FolderFile file, int folderId, String duplicate) async {
@@ -215,19 +232,21 @@ Future<void> _deleteMaterialsWhere(String column, int id) async {
 }
 
 Future<void> _deleteFile(String rawPath) async {
-  final root = p.normalize(AppPaths.files.path);
   final target = p.normalize(rawPath);
-  if (!target.startsWith(root)) return;
+  final roots = <String>{p.normalize(AppPaths.files.path)};
+  final scoped = Db.scopedFilesDir;
+  if (scoped.isNotEmpty) roots.add(p.normalize(scoped));
+  if (!roots.any((root) => p.isWithin(root, target))) return;
   final file = File(target);
   if (!file.existsSync()) return;
   try {
     await file.delete();
   } catch (_) {
-    if (Platform.isWindows) {
-      try {
-        await Process.run('attrib', ['-R', target]);
-        await file.delete();
-      } catch (_) {}
-    }
+    // Windows 只读属性会让删除失败（errno=5）：先清属性再重试
+    // （与迁移搬迁共用同一实现，见 subject_migration.dart）。
+    try {
+      SubjectMigration.clearWindowsReadOnly(target, force: true);
+      await file.delete();
+    } catch (_) {}
   }
 }

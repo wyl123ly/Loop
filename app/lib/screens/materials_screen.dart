@@ -1,14 +1,32 @@
+import 'dart:async';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../widgets/subject_switcher.dart';
 
 class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({super.key, required this.active});
+  const MaterialsScreen({
+    super.key,
+    required this.active,
+    this.state,
+    this.pickFile,
+    this.pickDirectory,
+  });
 
   final bool active;
+
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
+
+  /// 测试注入：单文件选择（生产为 file_selector 的 `openFile`）。
+  final Future<XFile?> Function()? pickFile;
+
+  /// 测试注入：目录选择（生产为 file_selector 的 `getDirectoryPath`）。
+  final Future<String?> Function()? pickDirectory;
 
   @override
   State<MaterialsScreen> createState() => _MaterialsScreenState();
@@ -30,9 +48,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   String _importCurrent = '';
   String? _importToken;
 
+  AppState get _state => widget.state ?? appState;
+
   @override
   void initState() {
     super.initState();
+    subjectChangedSignal.addListener(_onSubjectChanged);
     _load();
   }
 
@@ -42,10 +63,26 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     if (widget.active && !oldWidget.active) _load();
   }
 
+  @override
+  void dispose() {
+    subjectChangedSignal.removeListener(_onSubjectChanged);
+    super.dispose();
+  }
+
+  /// 学科切换：资料库属于当前学科（§10.4）；上传/导入/删除都落在新学科。
+  void _onSubjectChanged() {
+    if (!mounted) return;
+    setState(() {
+      _expandedFolders.clear();
+      _expandedDirs.clear();
+    });
+    unawaited(_load());
+  }
+
   Future<void> _load() async {
     try {
-      final items = await appState.api.materials();
-      final folders = await appState.api.materialFolders();
+      final items = await _state.api.materials();
+      final folders = await _state.api.materialFolders();
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -68,11 +105,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       extensions: ['pdf', 'docx', 'pptx', 'txt', 'md'],
     );
     try {
-      final file = await openFile(acceptedTypeGroups: [group]);
+      final pick = widget.pickFile;
+      final file = pick != null
+          ? await pick()
+          : await openFile(acceptedTypeGroups: [group]);
       if (file == null) return;
       final bytes = await file.readAsBytes();
       setState(() => _uploading = true);
-      final result = await appState.api.upload(bytes, file.name);
+      final result = await _state.api.upload(bytes, file.name);
       if (!mounted) return;
       setState(() => _uploading = false);
       await _load();
@@ -85,11 +125,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   }
 
   Future<void> _importFolder() async {
-    final path = await getDirectoryPath();
+    final pick = widget.pickDirectory;
+    final path = pick != null ? await pick() : await getDirectoryPath();
     if (path == null || path.isEmpty) return;
     Map<String, dynamic> scan;
     try {
-      scan = await appState.api.scanFolder(path);
+      scan = await _state.api.scanFolder(path);
     } catch (error) {
       _snack(error.toString(), isError: true);
       return;
@@ -120,7 +161,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     var skipped = 0;
     var failed = 0;
     try {
-      await for (final event in appState.api.importFolder(
+      await for (final event in _state.api.importFolder(
         path: path,
         recursive: recursive,
         duplicate: duplicate,
@@ -169,7 +210,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     final token = _importToken;
     if (token == null) return;
     try {
-      await appState.api.cancelFolderImport(token);
+      await _state.api.cancelFolderImport(token);
     } catch (_) {}
   }
 
@@ -193,6 +234,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Text('资料', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
               Text('${_items.length} 份', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              const SizedBox(width: 10),
+              // §10.4：资料库属于当前学科，页头必须显示学科名（含上传/导入入口）。
+              SubjectChip(state: _state),
               const Spacer(),
               OutlinedButton.icon(
                 onPressed: (_uploading || _importing) ? null : _importFolder,
@@ -285,7 +329,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             const SizedBox(height: 12),
             const Text('还没有资料', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
-            Text('上传文件，或直接导入电脑上已有的整个文件夹。',
+            Text('上传 PDF / Word / Markdown，或导入一个文件夹。',
                 style: TextStyle(fontSize: 12.5, color: pal.muted)),
             const SizedBox(height: 16),
             Row(
@@ -599,7 +643,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     if (ok != true) return;
     setState(() => _deletingFolderId = folder.id);
     try {
-      await appState.api.deleteMaterialFolder(folder.id);
+      await _state.api.deleteMaterialFolder(folder.id);
       await _load();
       _expandedFolders.remove(folder.id);
       _expandedDirs.removeWhere((key) => key.startsWith('${folder.id}/'));
@@ -642,7 +686,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           width: 720,
           height: 460,
           child: FutureBuilder<Map<String, dynamic>>(
-            future: appState.api.materialPreview(item.id),
+            future: _state.api.materialPreview(item.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const Center(child: CircularProgressIndicator(strokeWidth: 2.2));
@@ -686,7 +730,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     );
     if (ok != true) return;
     try {
-      await appState.api.deleteMaterial(item.id);
+      await _state.api.deleteMaterial(item.id);
       await _load();
     } catch (error) {
       _snack(error.toString(), isError: true);
