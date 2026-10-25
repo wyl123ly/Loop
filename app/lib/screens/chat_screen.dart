@@ -1704,8 +1704,10 @@ class ChatScreenState extends State<ChatScreen> {
         : '问点什么，或者把题目截图、PDF 附上来…';
     return Container(
       key: const Key('chat-composer'),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: pal.glassFill,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
         border: Border(top: BorderSide(color: pal.glassBorder)),
       ),
       padding: pad,

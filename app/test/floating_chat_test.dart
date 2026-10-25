@@ -237,6 +237,14 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('chat-input')), findsOneWidget);
     expect(find.byKey(const Key('chat-composer')), findsOneWidget);
+    final composer = tester.widget<Container>(find.byKey(const Key('chat-composer')));
+    final composerDecoration = composer.decoration! as BoxDecoration;
+    expect(
+      composerDecoration.borderRadius,
+      const BorderRadius.vertical(top: Radius.circular(18)),
+      reason: '输入框后面的横向背景必须与整体 UI 一样有顶部圆角',
+    );
+    expect(composer.clipBehavior, Clip.antiAlias);
     expect(find.byKey(const Key('chat-message-list')), findsOneWidget);
     await _finishStream(tester, fake);
     expect(tester.takeException(), isNull);
