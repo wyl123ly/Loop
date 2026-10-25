@@ -51,7 +51,7 @@ class Sidebar extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: compact ? 76 : 250,
-          margin: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, 0, 14),
+          margin: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, compact ? 8 : 12, 14),
           child: GlassPanel(
             radius: compact ? 24 : 30,
             blur: 26,
