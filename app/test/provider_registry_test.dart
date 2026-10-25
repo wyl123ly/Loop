@@ -67,6 +67,23 @@ void main() {
     expect(ProviderRegistry.active().apiKey, 'sk-changed');
   });
 
+  test('P8 mergeFetchedModels 保留已有能力/标签，只追加新模型', () {
+    const existing = [
+      ModelInfo(id: 'glm-5.3', label: '旗舰', reasoning: true),
+      ModelInfo(id: 'glm-4v-plus', label: '视觉', vision: true),
+    ];
+    final merged = mergeFetchedModels(existing, const [
+      ModelInfo(id: 'glm-5.3'),
+      ModelInfo(id: 'glm-new'),
+      ModelInfo(id: 'glm-4v-plus'),
+    ]);
+    expect(merged.map((item) => item.id).toList(),
+        ['glm-5.3', 'glm-4v-plus', 'glm-new']);
+    expect(merged.first.reasoning, isTrue);
+    expect(merged.first.label, '旗舰');
+    expect(merged[1].vision, isTrue);
+  });
+
   test('P7 旧自定义 Base URL 迁移成自定义供应商，不误发 DeepSeek 专有字段', () {
     Db.setSetting('api_key', 'sk-proxy');
     Db.setSetting('base_url', 'https://my-proxy.local/v1');

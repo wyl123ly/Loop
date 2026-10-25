@@ -12,6 +12,7 @@ class _FakeLoopApi extends LoopApi {
   String providersJson = '[]';
   final List<Map<String, dynamic>> saved = [];
   final List<String?> testedProviders = [];
+  List<String> fetchedModels = const ['kimi-k3.1-pro', 'new-model-x'];
 
   SettingsData _settings() => SettingsData(
         apiKeyMasked: 'sk-••••abcd',
@@ -48,6 +49,15 @@ class _FakeLoopApi extends LoopApi {
     };
     saved.add(payload);
     return _settings();
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchModels({String? providerId}) async {
+    return {
+      'ok': true,
+      'models': fetchedModels,
+      'message': '拉取到 ${fetchedModels.length} 个模型',
+    };
   }
 
   @override
@@ -124,6 +134,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(fake.testedProviders, ['deepseek']);
     expect(find.textContaining('连接正常'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('S4 刷新模型列表：新模型进入 chips 并保存到 providers', (tester) async {
+    final fake = _FakeLoopApi();
+    final state = AppState(api: fake)..settings = await fake.settings();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: SettingsScreen(active: true, state: state)),
+    ));
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('刷新模型列表'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('刷新模型列表'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('new-model-x'), findsOneWidget);
+    expect(fake.saved, isNotEmpty);
+    expect(fake.saved.last['providers'], contains('new-model-x'));
+    expect(find.textContaining('新增 2 个'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

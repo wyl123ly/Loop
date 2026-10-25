@@ -188,6 +188,65 @@ void main() {
     expect(captured.body['reasoning_effort'], 'high');
   });
 
+  test('R8 fetchModels 拉取 /v1/models 并去重、带 Bearer 鉴权', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    String? auth;
+    String? path;
+    final done = Completer<void>();
+    server.listen((request) async {
+      auth = request.headers.value('authorization');
+      path = request.uri.path;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode({
+        'data': [
+          {'id': 'm1'},
+          {'id': 'm2'},
+          {'id': 'm1'},
+          'm3',
+        ],
+      }));
+      await request.response.close();
+      if (!done.isCompleted) done.complete();
+    });
+
+    final models = await fetchModels(LlmConfig(
+      apiKey: 'sk-test',
+      baseUrl: 'http://127.0.0.1:${server.port}/v1',
+      model: 'any',
+    ));
+    await done.future.timeout(const Duration(seconds: 5));
+    await server.close(force: true);
+
+    expect(path, '/v1/models');
+    expect(auth, 'Bearer sk-test');
+    expect(models.map((item) => item.id).toList(), ['m1', 'm2', 'm3']);
+  });
+
+  test('R9 fetchModels 401 抛出 LlmException，带供应商名', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final done = Completer<void>();
+    server.listen((request) async {
+      request.response.statusCode = 401;
+      request.response.write('{"error":"bad key"}');
+      await request.response.close();
+      if (!done.isCompleted) done.complete();
+    });
+
+    await expectLater(
+      fetchModels(LlmConfig(
+        apiKey: 'sk-bad',
+        baseUrl: 'http://127.0.0.1:${server.port}/v1',
+        model: 'any',
+        providerName: 'Moonshot / Kimi',
+      )),
+      throwsA(isA<LlmException>()
+          .having((error) => error.status, 'status', 401)
+          .having((error) => error.message, 'message', contains('Moonshot'))),
+    );
+    await done.future.timeout(const Duration(seconds: 5));
+    await server.close(force: true);
+  });
+
   test('R6 complete() 非流式请求不带 stream_options', () async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     Map<String, Object?> body = const {};

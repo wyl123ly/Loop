@@ -38,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _saving = false;
   bool _testing = false;
+  bool _fetchingModels = false;
   String? _testResult;
   bool _testOk = false;
   bool _checkingUpdate = false;
@@ -181,6 +182,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     } finally {
       if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  Future<void> _refreshModels() async {
+    setState(() => _fetchingModels = true);
+    final saved = await _persist(silent: true);
+    if (!saved) {
+      if (mounted) setState(() => _fetchingModels = false);
+      _snack('请先填写并保存供应商配置', error: true);
+      return;
+    }
+    try {
+      final result = await _state.api.fetchModels(providerId: _selectedProvider);
+      if (!mounted) return;
+      if (result['ok'] != true) {
+        _snack((result['message'] ?? '拉取失败').toString(), error: true);
+        return;
+      }
+      final ids = ((result['models'] as List?) ?? const [])
+          .map((item) => item.toString().trim())
+          .where((id) => id.isNotEmpty)
+          .toList();
+      final selected = _selected;
+      if (selected == null) return;
+      if (ids.isEmpty) {
+        _snack('${selected.name} 端点没有返回模型', error: true);
+        return;
+      }
+      final merged = mergeFetchedModels(
+        selected.models,
+        [for (final id in ids) ModelInfo(id: id)],
+      );
+      final added = merged.length - selected.models.length;
+      final index = _providers.indexWhere((item) => item.id == selected.id);
+      if (index >= 0) {
+        _providers[index] = selected.copyWith(models: merged);
+      }
+      setState(() {});
+      await _persist(silent: true);
+      _snack(added > 0
+          ? '已拉取 ${ids.length} 个模型，新增 $added 个'
+          : '已拉取 ${ids.length} 个模型，无新增');
+    } catch (error) {
+      _snack('拉取失败：$error', error: true);
+    } finally {
+      if (mounted) setState(() => _fetchingModels = false);
     }
   }
 
@@ -518,6 +565,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       )
                                     : const Icon(Icons.wifi_tethering_rounded, size: 16),
                                 label: Text(_testing ? '测试中…' : '测试连接'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _fetchingModels ? null : _refreshModels,
+                                icon: _fetchingModels
+                                    ? const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.refresh_rounded, size: 16),
+                                label: Text(_fetchingModels ? '拉取中…' : '刷新模型列表'),
                               ),
                               OutlinedButton(
                                 onPressed: _selected?.id == _activeProvider

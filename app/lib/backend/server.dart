@@ -72,6 +72,9 @@ class Backend {
         if (segments.length >= 3 && segments[2] == 'test' && method == 'POST') {
           return _testSettings(request);
         }
+        if (segments.length >= 3 && segments[2] == 'models' && method == 'POST') {
+          return _fetchProviderModels(request);
+        }
         if (method == 'GET') {
           ProviderRegistry.ensureMigrated();
           final active = ProviderRegistry.active();
@@ -961,6 +964,30 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
   }
 
   // ------------------------------------------------------------ helpers
+
+  static Future<void> _fetchProviderModels(HttpRequest request) async {
+    final body = await _jsonBody(request);
+    ProviderRegistry.ensureMigrated();
+    final providerId = body['provider_id']?.toString();
+    final config = ProviderRegistry.config(
+      providerId: (providerId == null || providerId.isEmpty) ? null : providerId,
+    );
+    try {
+      final models = await fetchModels(config);
+      return await _json(request, 200, {
+        'ok': true,
+        'provider_id': config.providerId,
+        'models': [for (final item in models) item.id],
+        'message': models.isEmpty
+            ? '${config.providerName} 端点没有返回模型'
+            : '拉取到 ${models.length} 个模型',
+      });
+    } on LlmException catch (error) {
+      return _json(request, 200, {'ok': false, 'message': error.message});
+    } catch (error) {
+      return _json(request, 200, {'ok': false, 'message': '拉取失败：$error'});
+    }
+  }
 
   static Future<void> _testSettings(HttpRequest request) async {
     final body = await _jsonBody(request);

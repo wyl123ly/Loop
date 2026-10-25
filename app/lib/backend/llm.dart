@@ -769,6 +769,74 @@ Future<(String, Map<String, dynamic>)> complete({
   return (content, (data['usage'] as Map?)?.cast<String, dynamic>() ?? {});
 }
 
+/// 供设置页/测试连接复用的请求头（默认 JSON，不含 SSE）。
+Map<String, String> providerHeaders(LlmConfig config) =>
+    _headers(config, stream: false);
+
+Uri _modelsUri(LlmConfig config) {
+  final base = config.baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+  const chatSuffix = '/chat/completions';
+  if (base.endsWith(chatSuffix)) {
+    return Uri.parse('${base.substring(0, base.length - chatSuffix.length)}/models');
+  }
+  if (base.endsWith('/models')) return Uri.parse(base);
+  return Uri.parse('$base/models');
+}
+
+/// 拉取供应商 `/models` 列表。解析 OpenAI 风格 `{data:[{id}]}`，也兼容
+/// `{models:[...]}` 和纯字符串数组。
+Future<List<ModelInfo>> fetchModels(LlmConfig config) async {
+  if (!config.ready) {
+    throw LlmException(
+      '还没有配置 ${config.providerName} API Key，点左下角「设置」填入。',
+      status: 401,
+    );
+  }
+  final response = await http
+      .get(_modelsUri(config), headers: providerHeaders(config))
+      .timeout(const Duration(seconds: 20));
+  if (response.statusCode != 200) {
+    throw LlmException(
+      _explain(response.statusCode, response.body, config.providerName),
+      status: response.statusCode,
+    );
+  }
+  final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+  final raw = decoded is Map
+      ? (decoded['data'] ?? decoded['models'] ?? const [])
+      : (decoded is List ? decoded : const []);
+  final models = <ModelInfo>[];
+  final seen = <String>{};
+  if (raw is List) {
+    for (final item in raw) {
+      final id = switch (item) {
+        String value => value.trim(),
+        Map value => (value['id'] ?? value['name'] ?? '').toString().trim(),
+        _ => '',
+      };
+      if (id.isEmpty || !seen.add(id)) continue;
+      models.add(ModelInfo(id: id));
+    }
+  }
+  return models;
+}
+
+/// 把远端拉取的模型合并到现有列表：保留已有模型的能力/标签和顺序，
+/// 只追加远端新增的模型 ID。
+List<ModelInfo> mergeFetchedModels(
+  List<ModelInfo> existing,
+  List<ModelInfo> fetched,
+) {
+  final byId = {for (final item in existing) item.id: item};
+  final merged = <ModelInfo>[...existing];
+  for (final item in fetched) {
+    if (byId.containsKey(item.id)) continue;
+    byId[item.id] = item;
+    merged.add(item);
+  }
+  return merged;
+}
+
 Object? extractJson(String text) {
   var source = text.trim();
   if (source.startsWith('```')) {

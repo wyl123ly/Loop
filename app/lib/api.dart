@@ -253,6 +253,11 @@ class LoopApi {
     await _request('POST', '/api/agent/cancel', body: {'run_id': runId});
   }
 
+  Future<Map<String, dynamic>> fetchModels({String? providerId}) async =>
+      (await _request('POST', '/api/settings/models', body: {
+        'provider_id': ?providerId,
+      })) as Map<String, dynamic>;
+
   Future<Map<String, dynamic>> testSettings({String? providerId, String? model}) async =>
       (await _request('POST', '/api/settings/test', body: {
         'provider_id': ?providerId,
