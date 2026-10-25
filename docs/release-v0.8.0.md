@@ -13,7 +13,8 @@
 第 2 轮的 7 条 findings（R2-1…R2-7）已全部修复并独立验证，第 3 轮新发现的是**两条证据类（非产品代码）缺陷**
 （R3-1 medium / R3-2 low）。用户明确选择**不发修这两条、按现状发版**，因此：
 
-- **12 张 dark 主截图（`docs/evidence/subject-v0.8.0/screens/02·03·04·05·06·07·08·10·11·12`）不是真实 dark 主题的忠实画面**
+- **12 张主截图里有 10 张是 dark**（`docs/evidence/subject-v0.8.0/screens/02·03·04·05·06·07·08·10·11·12`），
+  **它们不是真实 dark 主题的忠实画面**（另 2 张 light 图 01/09 恰好不受影响，因为 harness 缺省调色板本就是 light）
   —— **R3-1**：截图 harness（`app/test/subject_screenshots_test.dart`）当时只把调色板传给 `loopTheme(...)`，
   **从未设置全局 `LoopTheme.palette`**（产品在 `app/lib/main.dart:64/130` 设置；默认值是
   `app/lib/theme/palette.dart:165` 的 `LoopPalette.light`）。后果是这些「dark」图里所有显式 `pal.*` 取的
@@ -187,7 +188,9 @@
 - 升级：从 v0.7.1 启动后首次运行会把旧数据迁入默认学科「通用」（见 §3），`legacy_*` 留档；用户 `data` 保留。
   降级到 v0.7.1 看不到新数据，属既定非目标（规格 §16 #9）。
 - **本版不自动创建 GitHub Release**：需要人工把 `release/Loop-Desktop-win64.zip` 上传到 Releases。
-- 推送结果（如实）：{{PUSH_RESULT}}
+- 推送结果（如实）：**主分支已成功推送**（2026-10-25）。`git push origin main` 输出
+  `206daf6..97f2742  main -> main`；`v0.8.0` tag 指向本提交并随发布单独推送。
+  `release/` 与 `*.zip` 被 `.gitignore` 排除，压缩包仍走 Release 附件。
 
 ## 11. 验收命令与证据链
 
