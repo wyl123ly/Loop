@@ -42,6 +42,9 @@ class _FakeLoopApi extends LoopApi {
     String? apiKey,
     String? baseUrl,
     String? model,
+    String? reasonModel,
+    String? activeProvider,
+    String? providersJson,
     String? theme,
     String? customModes,
     bool? autoCheckUpdates,
@@ -53,6 +56,9 @@ class _FakeLoopApi extends LoopApi {
     if (apiKey != null) payload['api_key'] = apiKey;
     if (baseUrl != null) payload['base_url'] = baseUrl;
     if (model != null) payload['model'] = model;
+    if (reasonModel != null) payload['reason_model'] = reasonModel;
+    if (activeProvider != null) payload['active_provider'] = activeProvider;
+    if (providersJson != null) payload['providers'] = providersJson;
     if (theme != null) payload['theme'] = theme;
     if (customModes != null) payload['custom_modes'] = customModes;
     if (autoCheckUpdates != null) payload['auto_check_updates'] = autoCheckUpdates;

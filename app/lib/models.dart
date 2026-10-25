@@ -331,6 +331,8 @@ class SettingsData {
   final String baseUrl;
   final String model;
   final String reasonModel;
+  final String activeProvider;
+  final String providersJson;
   final String theme;
   final String customModes;
   final bool autoCheckUpdates;
@@ -346,6 +348,8 @@ class SettingsData {
     required this.baseUrl,
     required this.model,
     required this.reasonModel,
+    this.activeProvider = 'deepseek',
+    this.providersJson = '[]',
     this.theme = 'system',
     this.customModes = '[]',
     this.autoCheckUpdates = true,
@@ -359,6 +363,8 @@ class SettingsData {
         baseUrl: (json['base_url'] ?? '') as String,
         model: (json['model'] ?? 'deepseek-flash') as String,
         reasonModel: (json['reason_model'] ?? 'deepseek-v4-pro') as String,
+        activeProvider: (json['active_provider'] ?? 'deepseek') as String,
+        providersJson: (json['providers'] ?? '[]') as String,
         theme: (json['theme'] ?? 'system') as String,
         customModes: (json['custom_modes'] ?? '[]') as String,
         autoCheckUpdates: (json['auto_check_updates'] ?? true) as bool,

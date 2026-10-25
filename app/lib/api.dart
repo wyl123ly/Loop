@@ -111,6 +111,9 @@ class LoopApi {
     String? apiKey,
     String? baseUrl,
     String? model,
+    String? reasonModel,
+    String? activeProvider,
+    String? providersJson,
     String? theme,
     String? customModes,
     bool? autoCheckUpdates,
@@ -121,6 +124,13 @@ class LoopApi {
     if (apiKey != null && apiKey.isNotEmpty) payload['api_key'] = apiKey;
     if (baseUrl != null && baseUrl.isNotEmpty) payload['base_url'] = baseUrl;
     if (model != null && model.isNotEmpty) payload['model'] = model;
+    if (reasonModel != null && reasonModel.isNotEmpty) payload['reason_model'] = reasonModel;
+    if (activeProvider != null && activeProvider.isNotEmpty) {
+      payload['active_provider'] = activeProvider;
+    }
+    if (providersJson != null && providersJson.isNotEmpty) {
+      payload['providers'] = providersJson;
+    }
     if (theme != null && theme.isNotEmpty) payload['theme'] = theme;
     if (customModes != null) payload['custom_modes'] = customModes;
     if (autoCheckUpdates != null) payload['auto_check_updates'] = autoCheckUpdates;
@@ -243,8 +253,11 @@ class LoopApi {
     await _request('POST', '/api/agent/cancel', body: {'run_id': runId});
   }
 
-  Future<Map<String, dynamic>> testSettings() async =>
-      (await _request('POST', '/api/settings/test', body: {})) as Map<String, dynamic>;
+  Future<Map<String, dynamic>> testSettings({String? providerId, String? model}) async =>
+      (await _request('POST', '/api/settings/test', body: {
+        'provider_id': ?providerId,
+        'model': ?model,
+      })) as Map<String, dynamic>;
 
   Future<List<Conversation>> conversations() async {
     final data = (await _request('GET', '/api/conversations') as List)

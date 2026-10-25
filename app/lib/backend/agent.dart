@@ -160,9 +160,7 @@ Stream<AgentEvent> runAgent({
   ChatChunkStream? chatStream,
 }) async* {
   final chat = chatStream ?? _defaultChatStream;
-  final config = LlmConfig.fromDb(
-    modelOverride: thinking == 'high' ? Db.setting('reason_model', 'deepseek-v4-pro') : null,
-  );
+  final config = ProviderRegistry.config(thinkingHigh: thinking == 'high');
   final plan = PlanState();
   final refs = <Map<String, Object?>>[];
   final context = ToolContext(
@@ -197,7 +195,9 @@ Stream<AgentEvent> runAgent({
     final content = (item['content'] ?? '').toString();
     if (content.isNotEmpty) messages.add({'role': item['role'].toString(), 'content': content});
   }
-  final (images, metas) = _loadImages(attachments);
+  final (loadedImages, metas) = _loadImages(attachments);
+  // 当前模型不支持图片时，不把 base64 图片塞进请求，避免供应商 400。
+  final images = config.capabilities.vision ? loadedImages : const <String>[];
   final excerpts = _loadExcerpts(attachments);
   messages.add({'role': 'user', 'content': _userContent(userText, excerpts, images, metas)});
 

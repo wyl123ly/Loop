@@ -47,7 +47,7 @@ Future<Map<String, Object?>> runSubAgent({
     for (var round = 0; round < 3; round++) {
       final pending = <int, Map<String, dynamic>>{};
       await for (final chunk in streamChat(
-        config: LlmConfig.fromDb(),
+        config: ProviderRegistry.config(),
         messages: messages,
         tools: schemas,
         temperature: 0.4,

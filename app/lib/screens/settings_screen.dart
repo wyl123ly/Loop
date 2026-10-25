@@ -1,6 +1,9 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../backend/llm.dart';
 import '../state.dart';
 import '../update/app_version.dart';
 import '../update/update_ui.dart';
@@ -21,7 +24,18 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _keyController = TextEditingController();
   final TextEditingController _baseController = TextEditingController();
-  String _model = 'deepseek-flash';
+  final TextEditingController _modelController = TextEditingController();
+  final TextEditingController _reasonController = TextEditingController();
+
+  List<ProviderProfile> _providers = const [];
+  String _activeProvider = 'deepseek';
+  String _selectedProvider = 'deepseek';
+  bool _vision = false;
+  bool _tools = true;
+  bool _streamUsage = false;
+  bool _reasoning = false;
+  ThinkingStyle _thinkingStyle = ThinkingStyle.none;
+
   bool _saving = false;
   bool _testing = false;
   String? _testResult;
@@ -29,6 +43,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _checkingUpdate = false;
 
   AppState get _state => widget.state ?? appState;
+
+  ProviderProfile? get _selected {
+    for (final item in _providers) {
+      if (item.id == _selectedProvider) return item;
+    }
+    return _providers.isEmpty ? null : _providers.first;
+  }
 
   @override
   void initState() {
@@ -49,42 +70,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _syncFromState() {
     final settings = _state.settings;
     if (settings == null) return;
-    _baseController.text = settings.baseUrl;
-    _model = settings.model;
-    setState(() {});
+    final byId = <String, ProviderProfile>{
+      for (final item in ProviderRegistry.builtIns()) item.id: item,
+    };
+    for (final item in ProviderRegistry.decodeStored(settings.providersJson)) {
+      byId[item.id] = item;
+    }
+    _providers = byId.values.toList();
+    _activeProvider = byId.containsKey(settings.activeProvider)
+        ? settings.activeProvider
+        : ProviderRegistry.defaultProviderId;
+    if (!byId.containsKey(_selectedProvider)) {
+      _selectedProvider = _activeProvider;
+    }
+    _loadSelected();
+    if (mounted) setState(() {});
   }
 
-  @override
-  void dispose() {
-    _keyController.dispose();
-    _baseController.dispose();
-    super.dispose();
+  void _loadSelected() {
+    final profile = _selected;
+    if (profile == null) return;
+    _keyController.clear();
+    _baseController.text = profile.baseUrl;
+    _modelController.text = profile.defaultModel;
+    _reasonController.text = profile.reasonModel;
+    _vision = profile.capabilities.vision;
+    _tools = profile.capabilities.tools;
+    _streamUsage = profile.capabilities.streamUsage;
+    _reasoning = profile.capabilities.reasoning;
+    _thinkingStyle = profile.thinkingStyle;
+  }
+
+  String _providersJson() =>
+      jsonEncode([for (final item in _providers) item.toJson()]);
+
+  void _snack(String message, {bool error = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message,
+          style: TextStyle(color: error ? Colors.white : pal.toastFg)),
+      backgroundColor: error ? pal.danger : pal.toastBg,
+    ));
+  }
+
+  Future<bool> _persist({bool silent = false}) async {
+    final profile = _selected;
+    if (profile == null) return false;
+    final typedKey = _keyController.text.trim();
+    final modelText = _modelController.text.trim();
+    final updated = profile.copyWith(
+      baseUrl: _baseController.text.trim(),
+      apiKey: typedKey.isEmpty ? profile.apiKey : typedKey,
+      defaultModel: modelText.isEmpty ? profile.defaultModel : modelText,
+      reasonModel: _reasonController.text.trim(),
+      capabilities: ProviderCapabilities(
+        vision: _vision,
+        tools: _tools,
+        streamUsage: _streamUsage,
+        reasoning: _reasoning,
+      ),
+      thinkingStyle: _thinkingStyle,
+    );
+    final index = _providers.indexWhere((item) => item.id == updated.id);
+    if (index >= 0) _providers[index] = updated;
+    try {
+      await _state.api.saveSettings(
+        activeProvider: _activeProvider,
+        providersJson: _providersJson(),
+      );
+      _keyController.clear();
+      await _state.refreshSettings();
+      if (mounted) setState(() {});
+      if (!silent) _snack('供应商配置已保存');
+      return true;
+    } catch (error) {
+      if (!silent) _snack(error.toString(), error: true);
+      return false;
+    }
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    try {
-      await _state.api.saveSettings(
-        apiKey: _keyController.text.trim(),
-        baseUrl: _baseController.text.trim(),
-        model: _model,
-      );
-      _keyController.clear();
-      await _state.refreshSettings();
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('设置已保存', style: TextStyle(color: pal.toastFg)),
-        backgroundColor: pal.toastBg,
-      ));
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(error.toString()),
-        backgroundColor: pal.danger,
-      ));
-    }
+    await _persist();
+    if (mounted) setState(() => _saving = false);
   }
 
   Future<void> _test() async {
@@ -92,8 +160,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _testing = true;
       _testResult = null;
     });
+    final saved = await _persist(silent: true);
+    if (!saved) {
+      if (mounted) setState(() => _testing = false);
+      _snack('请先填写并保存供应商配置', error: true);
+      return;
+    }
     try {
-      final result = await _state.api.testSettings();
+      final result = await _state.api.testSettings(providerId: _selectedProvider);
       if (!mounted) return;
       setState(() {
         _testOk = result['ok'] == true;
@@ -110,9 +184,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _setActive() async {
+    setState(() => _activeProvider = _selectedProvider);
+    await _persist(silent: true);
+    _snack('已切换为当前供应商');
+  }
+
+  Future<void> _addProvider() async {
+    final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+    final profile = ProviderProfile(
+      id: id,
+      name: '自定义供应商',
+      baseUrl: 'https://api.openai.com/v1',
+      defaultModel: 'gpt-4o-mini',
+      capabilities: const ProviderCapabilities(
+        vision: true,
+        tools: true,
+        streamUsage: true,
+      ),
+      models: const [ModelInfo(id: 'gpt-4o-mini', label: '示例模型')],
+    );
+    setState(() {
+      _providers = [..._providers, profile];
+      _selectedProvider = id;
+      _loadSelected();
+    });
+    await _persist(silent: true);
+  }
+
+  Future<void> _removeProvider() async {
+    final profile = _selected;
+    if (profile == null || profile.builtIn) return;
+    setState(() {
+      _providers = [
+        for (final item in _providers)
+          if (item.id != profile.id) item,
+      ];
+      if (_activeProvider == profile.id) {
+        _activeProvider = ProviderRegistry.defaultProviderId;
+      }
+      _selectedProvider = _activeProvider;
+      _loadSelected();
+    });
+    await _persist(silent: true);
+    _snack('已删除自定义供应商');
+  }
+
+  @override
+  void dispose() {
+    _keyController.dispose();
+    _baseController.dispose();
+    _modelController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final settings = _state.settings;
     return Column(
       children: [
         Container(
@@ -207,7 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Row(
                             children: [
-                              const Text('DeepSeek 接入',
+                              const Text('AI 供应商',
                                   style:
                                       TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
                               const SizedBox(width: 8),
@@ -215,34 +343,123 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: (settings?.hasKey ?? false)
-                                      ? pal.chip
-                                      : pal.chip,
+                                  color: pal.chip,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  (settings?.hasKey ?? false) ? '已配置' : '未配置',
+                                  _selected?.id == _activeProvider ? '当前使用' : '未使用',
                                   style: TextStyle(
                                     fontSize: 10.5,
-                                    color: (settings?.hasKey ?? false)
+                                    color: _selected?.id == _activeProvider
                                         ? pal.accent
-                                        : pal.danger,
+                                        : pal.muted,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text('Key 只存在本机 SQLite，不会上传到任何第三方。',
+                          Text('每个供应商独立保存 Key；Key 只存在本机 SQLite，不会上传。',
                               style: TextStyle(fontSize: 11.5, color: pal.muted)),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  initialValue: _selected?.id,
+                                  decoration: const InputDecoration(labelText: '供应商'),
+                                  items: [
+                                    for (final item in _providers)
+                                      DropdownMenuItem(
+                                        value: item.id,
+                                        child: Text(
+                                          '${item.name}${item.id == _activeProvider ? ' · 当前' : ''}',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() {
+                                      _selectedProvider = value;
+                                      _loadSelected();
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              OutlinedButton.icon(
+                                onPressed: _addProvider,
+                                icon: const Icon(Icons.add_rounded, size: 16),
+                                label: const Text('自定义'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilterChip(
+                                label: const Text('图片'),
+                                selected: _vision,
+                                onSelected: (value) => setState(() => _vision = value),
+                              ),
+                              FilterChip(
+                                label: const Text('工具'),
+                                selected: _tools,
+                                onSelected: (value) => setState(() => _tools = value),
+                              ),
+                              FilterChip(
+                                label: const Text('思考'),
+                                selected: _reasoning,
+                                onSelected: (value) => setState(() => _reasoning = value),
+                              ),
+                              FilterChip(
+                                label: const Text('流式用量'),
+                                selected: _streamUsage,
+                                onSelected: (value) => setState(() => _streamUsage = value),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          DropdownButtonFormField<ThinkingStyle>(
+                            initialValue: _thinkingStyle,
+                            decoration: const InputDecoration(labelText: '思考参数形态'),
+                            items: const [
+                              DropdownMenuItem(
+                                value: ThinkingStyle.none,
+                                child: Text('不发送思考参数'),
+                              ),
+                              DropdownMenuItem(
+                                value: ThinkingStyle.deepseek,
+                                child: Text('DeepSeek 形态'),
+                              ),
+                              DropdownMenuItem(
+                                value: ThinkingStyle.zhipu,
+                                child: Text('智谱 GLM 形态'),
+                              ),
+                              DropdownMenuItem(
+                                value: ThinkingStyle.openaiEffort,
+                                child: Text('reasoning_effort'),
+                              ),
+                              DropdownMenuItem(
+                                value: ThinkingStyle.custom,
+                                child: Text('自定义 extra body'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) setState(() => _thinkingStyle = value);
+                            },
+                          ),
+                          const SizedBox(height: 12),
                           TextField(
                             controller: _keyController,
                             obscureText: true,
                             decoration: InputDecoration(
                               labelText: 'API Key',
-                              hintText: settings?.apiKeyMasked.isNotEmpty == true
-                                  ? '已保存：${settings!.apiKeyMasked}（留空则不修改）'
+                              hintText: (_selected?.apiKey.isNotEmpty ?? false)
+                                  ? '已保存：${_selected!.maskedKey}（留空则不修改）'
                                   : 'sk-...',
                             ),
                           ),
@@ -255,31 +472,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            initialValue: _model,
-                            decoration: const InputDecoration(labelText: '对话模型'),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'deepseek-flash',
-                                child: Text('deepseek-flash · 快、便宜、支持图片'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'deepseek-v4-pro',
-                                child: Text('deepseek-v4-pro · 强推理，不支持图片'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) setState(() => _model = value);
-                            },
+                          TextField(
+                            controller: _modelController,
+                            decoration: const InputDecoration(labelText: '对话模型 ID'),
+                          ),
+                          if (_selected?.models.isNotEmpty ?? false) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                for (final info in _selected!.models.take(8))
+                                  ActionChip(
+                                    label: Text(info.id,
+                                        style: const TextStyle(fontSize: 11)),
+                                    onPressed: () => setState(
+                                        () => _modelController.text = info.id),
+                                  ),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _reasonController,
+                            decoration: const InputDecoration(
+                              labelText: '推理模型 ID（可留空）',
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
                             children: [
                               FilledButton(
                                 onPressed: _saving ? null : _save,
                                 child: Text(_saving ? '保存中…' : '保存'),
                               ),
-                              const SizedBox(width: 10),
                               OutlinedButton.icon(
                                 onPressed: _testing ? null : _test,
                                 icon: _testing
@@ -291,6 +519,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     : const Icon(Icons.wifi_tethering_rounded, size: 16),
                                 label: Text(_testing ? '测试中…' : '测试连接'),
                               ),
+                              OutlinedButton(
+                                onPressed: _selected?.id == _activeProvider
+                                    ? null
+                                    : _setActive,
+                                child: const Text('设为当前'),
+                              ),
+                              if (!(_selected?.builtIn ?? true))
+                                TextButton(
+                                  onPressed: _removeProvider,
+                                  child: const Text('删除'),
+                                ),
                             ],
                           ),
                           if (_testResult != null) ...[
@@ -298,18 +537,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: _testOk
-                                    ? pal.chip
-                                    : pal.chip,
+                                color: pal.chip,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 _testResult!,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: _testOk
-                                      ? pal.accent
-                                      : pal.danger,
+                                  color: _testOk ? pal.accent : pal.danger,
                                 ),
                               ),
                             ),

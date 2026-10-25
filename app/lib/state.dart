@@ -166,6 +166,8 @@ class AppState extends ChangeNotifier {
       baseUrl: current?.baseUrl ?? '',
       model: current?.model ?? 'deepseek-flash',
       reasonModel: current?.reasonModel ?? 'deepseek-v4-pro',
+      activeProvider: current?.activeProvider ?? 'deepseek',
+      providersJson: current?.providersJson ?? '[]',
       theme: current?.theme ?? 'system',
       customModes: current?.customModes ?? '[]',
       autoCheckUpdates: autoCheckUpdates ?? current?.autoCheckUpdates ?? true,

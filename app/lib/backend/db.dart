@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:sqlite3/sqlite3.dart';
 
@@ -203,6 +203,8 @@ class Db {
     'base_url': 'https://api.deepseek.com',
     'model': 'deepseek-flash',
     'reason_model': 'deepseek-v4-pro',
+    'providers_v1': '[]',
+    'active_provider': 'deepseek',
     'theme': 'system',
     'auto_check_updates': 'true',
     'sidebar_collapsed': 'false',

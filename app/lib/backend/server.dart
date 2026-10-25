@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -29,6 +29,7 @@ class Backend {
   static Future<void> start() async {
     AppPaths.init();
     Db.init();
+    ProviderRegistry.ensureMigrated();
     if (_server != null) return;
     try {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, port);
@@ -72,13 +73,19 @@ class Backend {
           return _testSettings(request);
         }
         if (method == 'GET') {
-          final key = Db.setting('api_key');
+          ProviderRegistry.ensureMigrated();
+          final active = ProviderRegistry.active();
+          final key = active.apiKey;
           return _json(request, 200, {
             'api_key': key.length > 8 ? 'sk-${'•' * 8}${key.substring(key.length - 4)}' : (key.isEmpty ? '' : '已配置'),
             'has_key': key.isNotEmpty,
-            'base_url': Db.setting('base_url', 'https://api.deepseek.com'),
-            'model': Db.setting('model', 'deepseek-flash'),
-            'reason_model': Db.setting('reason_model', 'deepseek-v4-pro'),
+            'base_url': active.baseUrl,
+            'model': active.defaultModel,
+            'reason_model': active.reasonModel,
+            'active_provider': active.id,
+            'providers': jsonEncode([
+              for (final profile in ProviderRegistry.all()) profile.toJson(maskKey: true),
+            ]),
             'theme': Db.setting('theme', 'system'),
             'custom_modes': Db.setting('custom_modes', '[]'),
             'auto_check_updates': Db.setting('auto_check_updates', 'true') == 'true',
@@ -88,13 +95,43 @@ class Backend {
         }
         if (method == 'PUT') {
           final body = await _jsonBody(request);
+          ProviderRegistry.ensureMigrated();
+
+          // 新格式：providers_v1 全量列表 + active_provider。Key 为空或掩码
+          // 时保留旧 Key，避免设置页留空保存把 Key 清掉。
+          final incoming = ProviderRegistry.mergeIncoming(
+            body['providers'],
+            ProviderRegistry.all(),
+          );
+          if (incoming.isNotEmpty) ProviderRegistry.saveAll(incoming);
+          if (body['active_provider'] is String) {
+            ProviderRegistry.setActive(body['active_provider'].toString());
+          }
+
+          // 旧格式兼容：api_key/base_url/model/reason_model 写入当前供应商。
+          var active = ProviderRegistry.active();
+          var changed = false;
           if (body['api_key'] is String && !body['api_key'].toString().contains('•')) {
-            Db.setSetting('api_key', body['api_key'].toString().trim());
+            final value = body['api_key'].toString().trim();
+            Db.setSetting('api_key', value);
+            active = active.copyWith(apiKey: value);
+            changed = true;
           }
           for (final key in ['base_url', 'model', 'reason_model']) {
             if (body[key] is String && body[key].toString().isNotEmpty) {
-              Db.setSetting(key, body[key].toString().trim());
+              final value = body[key].toString().trim();
+              Db.setSetting(key, value);
+              if (key == 'base_url') active = active.copyWith(baseUrl: value);
+              if (key == 'model') active = active.copyWith(defaultModel: value);
+              if (key == 'reason_model') active = active.copyWith(reasonModel: value);
+              changed = true;
             }
+          }
+          if (changed) {
+            final profiles = ProviderRegistry.all();
+            final index = profiles.indexWhere((item) => item.id == active.id);
+            if (index >= 0) profiles[index] = active;
+            ProviderRegistry.saveAll(profiles);
           }
           final theme = body['theme']?.toString();
           if (theme == 'system' || theme == 'light' || theme == 'dark') {
@@ -113,10 +150,13 @@ class Backend {
             Db.setSetting('custom_modes', body['custom_modes'].toString());
           }
           request.response.statusCode = 200;
+          final saved = ProviderRegistry.active();
           return _json(request, 200, {
-            'has_key': Db.setting('api_key').isNotEmpty,
-            'base_url': Db.setting('base_url'),
-            'model': Db.setting('model'),
+            'has_key': saved.apiKey.isNotEmpty,
+            'base_url': saved.baseUrl,
+            'model': saved.defaultModel,
+            'reason_model': saved.reasonModel,
+            'active_provider': saved.id,
           });
         }
         return _json(request, 405, {'detail': 'method not allowed'});
@@ -861,7 +901,7 @@ class Backend {
 ${content.length > 6000 ? content.substring(0, 6000) : content}''';
     try {
       final (text, _) = await complete(
-        config: LlmConfig.fromDb(),
+        config: ProviderRegistry.config(),
         messages: [
           {'role': 'user', 'content': prompt},
         ],
@@ -898,7 +938,7 @@ ${content.length > 6000 ? content.substring(0, 6000) : content}''';
 ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     try {
       final (text, _) = await complete(
-        config: LlmConfig.fromDb(),
+        config: ProviderRegistry.config(),
         messages: [
           {'role': 'user', 'content': prompt},
         ],
@@ -923,9 +963,19 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
   // ------------------------------------------------------------ helpers
 
   static Future<void> _testSettings(HttpRequest request) async {
-    final config = LlmConfig.fromDb();
+    final body = await _jsonBody(request);
+    ProviderRegistry.ensureMigrated();
+    final providerId = body['provider_id']?.toString();
+    final modelOverride = body['model']?.toString().trim();
+    final config = ProviderRegistry.config(
+      providerId: (providerId == null || providerId.isEmpty) ? null : providerId,
+      modelOverride: (modelOverride == null || modelOverride.isEmpty) ? null : modelOverride,
+    );
     if (!config.ready) {
-      return _json(request, 200, {'ok': false, 'message': '还没有填写 API Key'});
+      return _json(request, 200, {
+        'ok': false,
+        'message': '还没有填写 ${config.providerName} API Key',
+      });
     }
     try {
       final (text, _) = await complete(
@@ -938,7 +988,8 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
       );
       return await _json(request, 200, {
         'ok': true,
-        'message': '连接正常（${config.model}）：${text.length > 20 ? text.substring(0, 20) : text}',
+        'message':
+            '连接正常（${config.providerName} · ${config.model}）：${text.length > 20 ? text.substring(0, 20) : text}',
       });
     } on LlmException catch (error) {
       return _json(request, 200, {'ok': false, 'message': error.message});
