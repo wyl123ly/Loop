@@ -25,11 +25,18 @@
 
 ## 产物
 - ZIP：`release/Loop-Desktop-win64.zip`（21,146,855 B）
-- ZIP SHA-256：`628843F71A02EC9FA3DF8581E22EF5510CD4E6F6BEDB3AEB87D80AEA196BBEC1`
-- `Loop.exe` SHA-256：`A3884E7D189C9AE1D4C2252F722E8ECC522B3BE7281CEEA4C6EB72B48773EF5C`
+- ZIP SHA-256：`DCE833E20CF5DA125EE2EEC7CB7D424A5D13FE36DA4ED8BD41EF47D8A28E56B0`
+- `Loop.exe` SHA-256：`F5628DD3065468CC9D23A6D11CEBB7CA3E577A6472239A0D013B05A478A4EE59`
 - `version.json`：`{"version":"0.8.6"}`
 
 ## 实测
 - 第二次启动退出，系统中仅 1 个 `Loop.exe`
 - 第二次启动后 `GetForegroundWindow()` 等于第一个主窗口句柄
 
+
+
+## 关于 Supabase 云同步
+
+- v0.8.7 的 Supabase 云同步功能已全部回退，本版不包含云端账号、快照上传/恢复。
+- 本地 SQLite、资料、学科和单实例运行保持不变。
+- `v0.8.7` tag 已删除，避免自动更新再次升级到云同步版本。
