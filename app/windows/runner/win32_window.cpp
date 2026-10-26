@@ -285,4 +285,27 @@ void Win32Window::UpdateTheme(HWND const window) {
     DwmSetWindowAttribute(window, DWMWA_USE_IMMERSIVE_DARK_MODE,
                           &enable_dark_mode, sizeof(enable_dark_mode));
   }
+
+  // Windows 11 draws a 1px non-client border, which shows as a white arc
+  // on dark rounded windows. Remove the border and force rounded corners.
+#ifndef DWMWA_BORDER_COLOR
+#define DWMWA_BORDER_COLOR 34
+#endif
+#ifndef DWMWA_COLOR_NONE
+#define DWMWA_COLOR_NONE 0xFFFFFFFE
+#endif
+#ifndef DWMWA_WINDOW_CORNER_PREFERENCE
+#define DWMWA_WINDOW_CORNER_PREFERENCE 33
+#endif
+#ifndef DWMWCP_ROUND
+#define DWMWCP_ROUND 2
+#endif
+
+  COLORREF border_color = DWMWA_COLOR_NONE;
+  DwmSetWindowAttribute(window, DWMWA_BORDER_COLOR, &border_color,
+                        sizeof(border_color));
+
+  int corner_preference = DWMWCP_ROUND;
+  DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE,
+                        &corner_preference, sizeof(corner_preference));
 }

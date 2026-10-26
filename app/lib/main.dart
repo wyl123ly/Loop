@@ -694,27 +694,33 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
             return Stack(
               fit: StackFit.expand,
               children: [
-                FloatingQaScaffold(
-                  floating: floating,
-                  minimal: minimal,
-                  framed: framed,
-                  maximized: maximized,
-                  chrome: _chrome(
+                ColoredBox(
+                  // 主窗口：圆角面板外的像素必须是主题底色，不能让桌面/引擎
+                  // 背景从圆角与 DWM 裁剪之间透出来（表现为右上角白弧）。
+                  // 浮窗/极简仍保持透明，避免破坏它们自己的圆角形态。
+                  color: !floating && !minimal ? pal.bgTop : Colors.transparent,
+                  child: FloatingQaScaffold(
                     floating: floating,
-                    compact: compact,
                     minimal: minimal,
-                  ),
-                  sidebar: floating
-                      ? const SizedBox.shrink()
-                      : _ResponsiveSidebar(
-                          index: _index,
-                          onSelect: _select,
-                          state: _state,
-                        ),
-                  content: IndexedStack(
-                    key: _contentKey,
-                    index: contentIndex,
-                    children: screens,
+                    framed: framed,
+                    maximized: maximized,
+                    chrome: _chrome(
+                      floating: floating,
+                      compact: compact,
+                      minimal: minimal,
+                    ),
+                    sidebar: floating
+                        ? const SizedBox.shrink()
+                        : _ResponsiveSidebar(
+                            index: _index,
+                            onSelect: _select,
+                            state: _state,
+                          ),
+                    content: IndexedStack(
+                      key: _contentKey,
+                      index: contentIndex,
+                      children: screens,
+                    ),
                   ),
                 ),
                 if (framed && !maximized && !minimal)
