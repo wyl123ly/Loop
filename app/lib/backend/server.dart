@@ -116,6 +116,9 @@ class Backend {
           'active_subject': SubjectStore.activeKey(),
         });
 
+      case 'cloud':
+        return _cloud(request, segments);
+
       case 'subjects':
         return _subjects(request, segments);
 
@@ -914,6 +917,73 @@ class Backend {
   // ------------------------------------------------------------ upload / materials
 
   static const _imageExts = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'};
+
+  static Future<void> _cloud(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
+    if (segments.length != 3 || segments[2] != 'config') {
+      return _json(request, 404, {'detail': 'not found'});
+    }
+    if (request.method == 'GET') {
+      return _json(request, 200, {
+        'url': Db.setting('cloud_url', ''),
+        'key': Db.setting('cloud_key', ''),
+        'device_id': Db.setting('cloud_device_id', ''),
+        'device_name': Db.setting(
+          'cloud_device_name',
+          Platform.localHostname,
+        ),
+        'auto_sync': Db.setting('cloud_auto_sync', 'true') == 'true',
+        'refresh_token': Db.setting('cloud_refresh_token', ''),
+        'last_snapshot': Db.setting('cloud_last_snapshot', ''),
+      });
+    }
+    if (request.method != 'PUT') {
+      return _json(request, 405, {'detail': 'method not allowed'});
+    }
+    final body = await _jsonBody(request);
+    final url = (body['url'] ?? '').toString().trim();
+    if (url.isNotEmpty) {
+      final parsed = Uri.tryParse(url);
+      if (parsed == null ||
+          parsed.scheme != 'https' ||
+          parsed.host.isEmpty) {
+        return _json(request, 400, {
+          'detail': 'Supabase URL 必须是 https://xxx.supabase.co',
+        });
+      }
+      Db.setSetting('cloud_url', url.replaceAll(RegExp(r'/+$'), ''));
+    }
+    if (body['key'] is String) {
+      final key = body['key'].toString().trim();
+      if (key.toLowerCase().contains('service_role')) {
+        return _json(request, 400, {
+          'detail': '不能使用 service_role key，请用 anon/publishable key。',
+        });
+      }
+      Db.setSetting('cloud_key', key);
+    }
+    if (body['device_id'] is String) {
+      Db.setSetting('cloud_device_id', body['device_id'].toString().trim());
+    }
+    if (body['device_name'] is String) {
+      Db.setSetting(
+        'cloud_device_name',
+        body['device_name'].toString().trim(),
+      );
+    }
+    if (body['auto_sync'] is bool) {
+      Db.setSetting('cloud_auto_sync', body['auto_sync'] == true ? 'true' : 'false');
+    }
+    if (body['refresh_token'] is String) {
+      Db.setSetting('cloud_refresh_token', body['refresh_token'].toString());
+    }
+    if (body['last_snapshot'] is String) {
+      Db.setSetting('cloud_last_snapshot', body['last_snapshot'].toString());
+    }
+    return _json(request, 200, {'ok': true});
+  }
 
   static Future<void> _upload(HttpRequest request) async {
     final bytes = await _readBytes(request);

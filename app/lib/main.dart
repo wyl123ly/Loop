@@ -9,6 +9,7 @@ import 'answer_ui/answer_window_app.dart';
 import 'backend/job_scheduler.dart';
 import 'backend/start.dart';
 import 'boot_prefs.dart';
+import 'cloud/cloud_restore_service.dart';
 import 'desktop/answer_host/answer_protocol.dart' show AnswerStatus;
 import 'desktop/answer_host/answer_transport_stub.dart'
     if (dart.library.io) 'desktop/answer_host/answer_transport_io.dart';
@@ -42,6 +43,9 @@ import 'widgets/window_resize_handles.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 上次下载的云端快照在启动、后端打开数据库之前替换 data/。
+  await applyPendingCloudRestore();
 
   // 第二引擎（回答浮窗）：由 desktop_multi_window 以
   // `["multi_window", windowId, payload]` 启动。这里不得初始化

@@ -123,6 +123,29 @@ class LoopApi {
     return jsonDecode(utf8.decode(response.bodyBytes));
   }
 
+  Future<Map<String, dynamic>> cloudConfig() async =>
+      (await _request('GET', '/api/cloud/config')) as Map<String, dynamic>;
+
+  Future<void> saveCloudConfig({
+    String? url,
+    String? key,
+    String? deviceId,
+    String? deviceName,
+    bool? autoSync,
+    String? refreshToken,
+    String? lastSnapshotId,
+  }) async {
+    final body = <String, dynamic>{};
+    if (url != null) body['url'] = url;
+    if (key != null) body['key'] = key;
+    if (deviceId != null) body['device_id'] = deviceId;
+    if (deviceName != null) body['device_name'] = deviceName;
+    if (autoSync != null) body['auto_sync'] = autoSync;
+    if (refreshToken != null) body['refresh_token'] = refreshToken;
+    if (lastSnapshotId != null) body['last_snapshot'] = lastSnapshotId;
+    await _request('PUT', '/api/cloud/config', body: body);
+  }
+
   Future<Map<String, dynamic>> health() async =>
       (await _request('GET', '/api/health')) as Map<String, dynamic>;
 

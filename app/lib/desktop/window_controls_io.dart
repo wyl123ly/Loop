@@ -12,6 +12,7 @@ import 'floating_signals.dart';
 import 'floating_window.dart';
 import 'hotkeys.dart';
 import 'minimal_window.dart';
+import '../cloud/cloud_sync_coordinator.dart';
 import 'screenshot_service.dart';
 import 'system_scale.dart';
 import 'win32_display.dart';
@@ -189,6 +190,13 @@ class WindowController with WindowListener, ScreenListener {
 
   Future<void> quit() async {
     if (_quitting) return;
+    try {
+      if (!await windowManager.isVisible()) {
+        await windowManager.show();
+        await windowManager.focus();
+      }
+    } catch (_) {}
+    if (!await CloudSyncCoordinator.instance.beforeExit()) return;
     _quitting = true;
     trayActive = false;
     _minimalTriggerTimer?.cancel();
@@ -293,6 +301,7 @@ class WindowController with WindowListener, ScreenListener {
   /// 主窗关闭顺序：先关回答窗（≤1s+兜底 500ms）再恢复 preventClose 并关主窗。
   Future<void> _closeWithAnswerCleanup() async {
     if (_closing) return;
+    if (!await CloudSyncCoordinator.instance.beforeExit()) return;
     _closing = true;
     try {
       await answers.shutdown();
