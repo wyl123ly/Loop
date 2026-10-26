@@ -23,12 +23,19 @@
 - 还需在正式包上补测：任务栏/Alt-Tab、八向缩放、贴靠、最小化/托盘、浮窗/极简/回答窗
 
 ## 产物
-- ZIP：`release/Loop-Desktop-win64.zip`（21,146,012 B）
-- ZIP SHA-256：`70EA41330BAB4529F8309FEB56C3CC18D3CA836378EB334CBE96404F0381730B`
-- `Loop.exe` SHA-256：`2EBCB857A19DD0700080B9633E5077A535133E12A4D44BB0F72D3BF319FF4281`
+- ZIP：`release/Loop-Desktop-win64.zip`（21,146,012 B，回退重建）
+- ZIP SHA-256：`E6D4FC5DFC0BEAD0F148C81424A565B713D1FD944D036FD36485B35BDB57B321`
+- `Loop.exe` SHA-256：`E8709CD0F5601D446A4D16E785C2F650CBB77C9A75B3B07DBD5E63788BA23E9D`
 - `version.json`：`{"version":"0.8.5"}`
 - 官方 `release/Loop-Desktop` 已更新为 v0.8.5
 
 ## 已知限制
 - 顶层圆角已统一到 Windows 原生 8px；Windows 阴影/抗锯齿在极近距离下仍可能有 1px 过渡，不是第二套圆角。
 - 正式包的任务栏/Alt-Tab、八向缩放、贴靠、最小化/托盘、浮窗/极简/回答窗仍需人工回归。
+
+## 回退说明（2026-10-26）
+
+- v0.9.0 的扫描 PDF 多模态转写已回退，`main` 恢复为 v0.8.5 功能；v0.9.0 保留在 tag 中供以后参考。
+- 回退提交：`48d8a29`（Revert v0.9.0 OCR）。
+- 数据库如曾被 v0.9.0 打开，会多出 `materials.ocr*` 列和 `material_ocr_pages` 表；v0.8.5 会忽略这些新增结构，不会删数据。
+- 回退后扫描 PDF 恢复为原来的「抽不到文字」提示；普通 PDF/DOCX/PPTX 与图片问答不变。
