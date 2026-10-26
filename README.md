@@ -116,6 +116,14 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.9**。
 - 保留 `data/loop.db`、`data/files` 等用户数据；失败自动回滚。
 - 无 GitHub 网络时会提示错误，并保留手动下载入口。
 
+#### 发布新版本（维护者）
+1. 构建：`powershell -ExecutionPolicy Bypass -File packaging\build_native.ps1`
+2. 设置 token：`$env:GITHUB_TOKEN = 'ghp_...'`（需要 repo 权限）
+3. 发布：`powershell -ExecutionPolicy Bypass -File packaging\publish_release.ps1 -Tag v0.8.9`
+4. 脚本会创建 Release、上传 `Loop-Desktop-win64.zip`；已存在同名附件会先删除再上传。
+
+> 注意：自动更新只认带 zip 附件的 Release。`checkLatest` 会跳过没有附件的 Release，因此 tag 已推送但附件未上传时不会误报新版本。
+
 ## 下载与运行
 - Windows 10/11 x64，解压 `Loop-Desktop-win64.zip` 后双击 `Loop.exe`。
 - 数据默认在 `%LOCALAPPDATA%\Loop\data`；可用 `LOOP_DATA_DIR` 指定其他目录。
