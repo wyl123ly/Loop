@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class Conversation {
   final int id;
   final String title;
@@ -16,12 +14,12 @@ class Conversation {
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) => Conversation(
-    id: json['id'] as int,
-    title: (json['title'] ?? '新对话') as String,
-    preview: (json['preview'] ?? '') as String,
-    messages: (json['messages'] ?? 0) as int,
-    updatedAt: (json['updated_at'] ?? '') as String,
-  );
+        id: json['id'] as int,
+        title: (json['title'] ?? '新对话') as String,
+        preview: (json['preview'] ?? '') as String,
+        messages: (json['messages'] ?? 0) as int,
+        updatedAt: (json['updated_at'] ?? '') as String,
+      );
 }
 
 class ToolStep {
@@ -32,10 +30,10 @@ class ToolStep {
   ToolStep({required this.name, required this.status, this.detail = ''});
 
   factory ToolStep.fromJson(Map<String, dynamic> json) => ToolStep(
-    name: (json['name'] ?? '') as String,
-    status: (json['status'] ?? '') as String,
-    detail: (json['detail'] ?? '') as String,
-  );
+        name: (json['name'] ?? '') as String,
+        status: (json['status'] ?? '') as String,
+        detail: (json['detail'] ?? '') as String,
+      );
 
   String get label {
     switch (name) {
@@ -91,10 +89,8 @@ class RefItem {
 
   RefItem({required this.name, required this.page});
 
-  factory RefItem.fromJson(Map<String, dynamic> json) => RefItem(
-    name: (json['name'] ?? '') as String,
-    page: (json['page'] ?? 0) as int,
-  );
+  factory RefItem.fromJson(Map<String, dynamic> json) =>
+      RefItem(name: (json['name'] ?? '') as String, page: (json['page'] ?? 0) as int);
 }
 
 class PlanItem {
@@ -102,37 +98,29 @@ class PlanItem {
   final String title;
   final String status;
 
-  const PlanItem({
-    required this.id,
-    required this.title,
-    this.status = 'pending',
-  });
+  const PlanItem({required this.id, required this.title, this.status = 'pending'});
 
   factory PlanItem.fromJson(Map<String, dynamic> json) => PlanItem(
-    id: (json['id'] ?? '').toString(),
-    title: (json['title'] ?? '').toString(),
-    status: (json['status'] ?? 'pending').toString(),
-  );
+        id: (json['id'] ?? '').toString(),
+        title: (json['title'] ?? '').toString(),
+        status: (json['status'] ?? 'pending').toString(),
+      );
 
   Map<String, dynamic> toJson() => {'id': id, 'title': title, 'status': status};
 }
 
 class AttachmentItem {
-  const AttachmentItem({
-    required this.id,
-    required this.name,
-    required this.isImage,
-  });
+  const AttachmentItem({required this.id, required this.name, required this.isImage});
 
   final String id;
   final String name;
   final bool isImage;
 
   factory AttachmentItem.fromJson(Map<String, dynamic> json) => AttachmentItem(
-    id: (json['id'] ?? '').toString(),
-    name: (json['name'] ?? '').toString(),
-    isImage: json['is_image'] == true,
-  );
+        id: (json['id'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        isImage: json['is_image'] == true,
+      );
 }
 
 class Message {
@@ -158,10 +146,10 @@ class Message {
     this.tokensIn = 0,
     this.tokensOut = 0,
     this.cost = 0,
-  }) : steps = steps ?? [],
-       refs = refs ?? [],
-       plan = plan ?? [],
-       attachments = attachments ?? [];
+  })  : steps = steps ?? [],
+        refs = refs ?? [],
+        plan = plan ?? [],
+        attachments = attachments ?? [];
 
   bool get isUser => role == 'user';
 
@@ -214,12 +202,12 @@ class TaskItem {
   bool get done => status == 'done';
 
   factory TaskItem.fromJson(Map<String, dynamic> json) => TaskItem(
-    id: json['id'] as int,
-    title: (json['title'] ?? '') as String,
-    due: (json['due'] ?? '') as String,
-    status: (json['status'] ?? 'todo') as String,
-    estimateMin: (json['estimate_min'] ?? 30) as int,
-  );
+        id: json['id'] as int,
+        title: (json['title'] ?? '') as String,
+        due: (json['due'] ?? '') as String,
+        status: (json['status'] ?? 'todo') as String,
+        estimateMin: (json['estimate_min'] ?? 30) as int,
+      );
 }
 
 class MaterialItem {
@@ -232,10 +220,6 @@ class MaterialItem {
   final int folderId;
   final String sourcePath;
   final String relativePath;
-  final bool ocr;
-  final String ocrStatus;
-  final String ocrModel;
-  final List<int> ocrFailedPages;
 
   MaterialItem({
     required this.id,
@@ -247,66 +231,18 @@ class MaterialItem {
     this.folderId = 0,
     this.sourcePath = '',
     this.relativePath = '',
-    this.ocr = false,
-    this.ocrStatus = '',
-    this.ocrModel = '',
-    this.ocrFailedPages = const [],
   });
 
   factory MaterialItem.fromJson(Map<String, dynamic> json) => MaterialItem(
-    id: json['id'] as int,
-    name: (json['name'] ?? '') as String,
-    kind: (json['kind'] ?? '') as String,
-    status: (json['status'] ?? '') as String,
-    pages: (json['pages'] ?? 0) as int,
-    chars: (json['chars'] ?? 0) as int,
-    folderId: (json['folder_id'] ?? 0) as int,
-    sourcePath: (json['source_path'] ?? '') as String,
-    relativePath: (json['relative_path'] ?? '') as String,
-    ocr: json['ocr'] == 1 || json['ocr'] == true,
-    ocrStatus: (json['ocr_status'] ?? '') as String,
-    ocrModel: (json['ocr_model'] ?? '') as String,
-    ocrFailedPages: _parseIntList(json['ocr_failed_pages']),
-  );
-}
-
-List<int> _parseIntList(Object? raw) {
-  if (raw is List) {
-    return raw.whereType<num>().map((e) => e.toInt()).toList();
-  }
-  if (raw is String && raw.trim().isNotEmpty) {
-    try {
-      final decoded = const JsonDecoder().convert(raw);
-      if (decoded is List) {
-        return decoded.whereType<num>().map((e) => e.toInt()).toList();
-      }
-    } catch (_) {}
-  }
-  return const [];
-}
-
-class VisionModelOption {
-  const VisionModelOption({
-    required this.id,
-    required this.provider,
-    required this.providerName,
-    required this.model,
-    required this.label,
-  });
-
-  final String id;
-  final String provider;
-  final String providerName;
-  final String model;
-  final String label;
-
-  factory VisionModelOption.fromJson(Map<String, dynamic> json) =>
-      VisionModelOption(
-        id: (json['id'] ?? '').toString(),
-        provider: (json['provider'] ?? '').toString(),
-        providerName: (json['provider_name'] ?? '').toString(),
-        model: (json['model'] ?? '').toString(),
-        label: (json['label'] ?? '').toString(),
+        id: json['id'] as int,
+        name: (json['name'] ?? '') as String,
+        kind: (json['kind'] ?? '') as String,
+        status: (json['status'] ?? '') as String,
+        pages: (json['pages'] ?? 0) as int,
+        chars: (json['chars'] ?? 0) as int,
+        folderId: (json['folder_id'] ?? 0) as int,
+        sourcePath: (json['source_path'] ?? '') as String,
+        relativePath: (json['relative_path'] ?? '') as String,
       );
 }
 
@@ -326,12 +262,12 @@ class MaterialFolder {
   });
 
   factory MaterialFolder.fromJson(Map<String, dynamic> json) => MaterialFolder(
-    id: json['id'] as int,
-    name: (json['name'] ?? '') as String,
-    rootPath: (json['root_path'] ?? '') as String,
-    fileCount: (json['file_count'] ?? 0) as int,
-    lastScanAt: (json['last_scan_at'] ?? '') as String,
-  );
+        id: json['id'] as int,
+        name: (json['name'] ?? '') as String,
+        rootPath: (json['root_path'] ?? '') as String,
+        fileCount: (json['file_count'] ?? 0) as int,
+        lastScanAt: (json['last_scan_at'] ?? '') as String,
+      );
 }
 
 class TodayData {
@@ -350,15 +286,15 @@ class TodayData {
   });
 
   factory TodayData.fromJson(Map<String, dynamic> json) => TodayData(
-    date: (json['date'] ?? '') as String,
-    tasks: (json['tasks'] as List? ?? [])
-        .whereType<Map>()
-        .map((e) => TaskItem.fromJson(Map<String, dynamic>.from(e)))
-        .toList(),
-    doneToday: (json['done_today'] ?? 0) as int,
-    openTotal: (json['open_total'] ?? 0) as int,
-    overdue: (json['overdue'] ?? 0) as int,
-  );
+        date: (json['date'] ?? '') as String,
+        tasks: (json['tasks'] as List? ?? [])
+            .whereType<Map>()
+            .map((e) => TaskItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+        doneToday: (json['done_today'] ?? 0) as int,
+        openTotal: (json['open_total'] ?? 0) as int,
+        overdue: (json['overdue'] ?? 0) as int,
+      );
 }
 
 class CustomMode {
@@ -375,18 +311,18 @@ class CustomMode {
   });
 
   factory CustomMode.fromJson(Map<String, dynamic> json) => CustomMode(
-    id: (json['id'] ?? 'custom').toString(),
-    name: (json['name'] ?? '自定义模式').toString(),
-    prompt: (json['prompt'] ?? '').toString(),
-    thinking: (json['thinking'] ?? 'medium').toString(),
-  );
+        id: (json['id'] ?? 'custom').toString(),
+        name: (json['name'] ?? '自定义模式').toString(),
+        prompt: (json['prompt'] ?? '').toString(),
+        thinking: (json['thinking'] ?? 'medium').toString(),
+      );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'prompt': prompt,
-    'thinking': thinking,
-  };
+        'id': id,
+        'name': name,
+        'prompt': prompt,
+        'thinking': thinking,
+      };
 }
 
 class SettingsData {
@@ -438,26 +374,25 @@ class SettingsData {
   });
 
   factory SettingsData.fromJson(Map<String, dynamic> json) => SettingsData(
-    apiKeyMasked: (json['api_key'] ?? '') as String,
-    hasKey: (json['has_key'] ?? false) as bool,
-    baseUrl: (json['base_url'] ?? '') as String,
-    model: (json['model'] ?? 'deepseek-flash') as String,
-    reasonModel: (json['reason_model'] ?? 'deepseek-v4-pro') as String,
-    activeProvider: (json['active_provider'] ?? 'deepseek') as String,
-    providersJson: (json['providers'] ?? '[]') as String,
-    theme: (json['theme'] ?? 'system') as String,
-    customModes: (json['custom_modes'] ?? '[]') as String,
-    autoCheckUpdates: (json['auto_check_updates'] ?? true) as bool,
-    sidebarCollapsed: (json['sidebar_collapsed'] ?? false) as bool,
-    streamOutput: (json['stream_output'] ?? true) as bool,
-    activeSubject: (json['active_subject'] ?? 'default') as String,
-    crossSubjectSearch: (json['cross_subject_search'] ?? false) as bool,
-    skillHubUrl:
-        (json['skill_hub_url'] ?? 'https://eduhub.deeptutor.info/api/v1')
-            as String,
-    subjectMigrationNoticeSeen:
-        (json['subject_migration_notice_seen'] ?? false) as bool,
-  );
+        apiKeyMasked: (json['api_key'] ?? '') as String,
+        hasKey: (json['has_key'] ?? false) as bool,
+        baseUrl: (json['base_url'] ?? '') as String,
+        model: (json['model'] ?? 'deepseek-flash') as String,
+        reasonModel: (json['reason_model'] ?? 'deepseek-v4-pro') as String,
+        activeProvider: (json['active_provider'] ?? 'deepseek') as String,
+        providersJson: (json['providers'] ?? '[]') as String,
+        theme: (json['theme'] ?? 'system') as String,
+        customModes: (json['custom_modes'] ?? '[]') as String,
+        autoCheckUpdates: (json['auto_check_updates'] ?? true) as bool,
+        sidebarCollapsed: (json['sidebar_collapsed'] ?? false) as bool,
+        streamOutput: (json['stream_output'] ?? true) as bool,
+        activeSubject: (json['active_subject'] ?? 'default') as String,
+        crossSubjectSearch: (json['cross_subject_search'] ?? false) as bool,
+        skillHubUrl: (json['skill_hub_url'] ??
+                'https://eduhub.deeptutor.info/api/v1') as String,
+        subjectMigrationNoticeSeen:
+            (json['subject_migration_notice_seen'] ?? false) as bool,
+      );
 }
 
 /// F-11：设置页「数据与迁移」的视图模型（迁移状态 + 一次性提示标记）。
@@ -486,13 +421,7 @@ class MigrationOverview {
     final counts = report['counts'];
     if (counts is! Map) return '';
     final parts = <String>[];
-    for (final key in [
-      'conversations',
-      'messages',
-      'materials',
-      'uploads',
-      'chunks',
-    ]) {
+    for (final key in ['conversations', 'messages', 'materials', 'uploads', 'chunks']) {
       final value = counts[key];
       if (value == null) continue;
       parts.add('$key=$value');
@@ -515,10 +444,7 @@ class MigrationOverview {
   List<Map<String, dynamic>> get fileErrors {
     final errors = report['file_errors'];
     if (errors is! List) return const [];
-    return [
-      for (final item in errors)
-        if (item is Map) Map<String, dynamic>.from(item),
-    ];
+    return [for (final item in errors) if (item is Map) Map<String, dynamic>.from(item)];
   }
 
   String get appliedAt {
@@ -530,22 +456,20 @@ class MigrationOverview {
     return applied.isEmpty ? '' : '${applied.first['applied_at'] ?? ''}';
   }
 
-  factory MigrationOverview.fromJson(
-    Map<String, dynamic> status,
-    SettingsData settings,
-  ) => MigrationOverview(
-    applied: [
-      for (final item in (status['applied'] as List? ?? []))
-        if (item is Map) Map<String, dynamic>.from(item),
-    ],
-    pending: [for (final item in (status['pending'] as List? ?? [])) '$item'],
-    running: status['running'] == true,
-    lastError: (status['last_error'] ?? '').toString(),
-    report: (status['report'] is Map)
-        ? Map<String, dynamic>.from(status['report'] as Map)
-        : const {},
-    noticeSeen: settings.subjectMigrationNoticeSeen,
-  );
+  factory MigrationOverview.fromJson(Map<String, dynamic> status, SettingsData settings) =>
+      MigrationOverview(
+        applied: [
+          for (final item in (status['applied'] as List? ?? []))
+            if (item is Map) Map<String, dynamic>.from(item),
+        ],
+        pending: [for (final item in (status['pending'] as List? ?? [])) '$item'],
+        running: status['running'] == true,
+        lastError: (status['last_error'] ?? '').toString(),
+        report: (status['report'] is Map)
+            ? Map<String, dynamic>.from(status['report'] as Map)
+            : const {},
+        noticeSeen: settings.subjectMigrationNoticeSeen,
+      );
 }
 
 class AgentSettingsData {
@@ -563,8 +487,7 @@ class AgentSettingsData {
     required this.background,
   });
 
-  factory AgentSettingsData.fromJson(Map<String, dynamic> json) =>
-      AgentSettingsData(
+  factory AgentSettingsData.fromJson(Map<String, dynamic> json) => AgentSettingsData(
         workspacePath: (json['workspace_path'] ?? '') as String,
         shell: (json['shell'] ?? true) as bool,
         browser: (json['browser'] ?? true) as bool,
@@ -597,16 +520,16 @@ class McpServerItem {
   });
 
   factory McpServerItem.fromJson(Map<String, dynamic> json) => McpServerItem(
-    id: json['id'] as int,
-    name: (json['name'] ?? '') as String,
-    transport: (json['transport'] ?? 'stdio') as String,
-    command: (json['command'] ?? '') as String,
-    args: (json['args'] ?? '[]') as String,
-    env: (json['env'] ?? '{}') as String,
-    workingDirectory: (json['working_directory'] ?? '') as String,
-    url: (json['url'] ?? '') as String,
-    enabled: (json['enabled'] ?? 0) == 1,
-  );
+        id: json['id'] as int,
+        name: (json['name'] ?? '') as String,
+        transport: (json['transport'] ?? 'stdio') as String,
+        command: (json['command'] ?? '') as String,
+        args: (json['args'] ?? '[]') as String,
+        env: (json['env'] ?? '{}') as String,
+        workingDirectory: (json['working_directory'] ?? '') as String,
+        url: (json['url'] ?? '') as String,
+        enabled: (json['enabled'] ?? 0) == 1,
+      );
 }
 
 class AgentJob {
@@ -633,16 +556,16 @@ class AgentJob {
   });
 
   factory AgentJob.fromJson(Map<String, dynamic> json) => AgentJob(
-    id: json['id'] as int,
-    title: (json['title'] ?? '') as String,
-    prompt: (json['prompt'] ?? '') as String,
-    scheduleKind: (json['schedule_kind'] ?? 'interval') as String,
-    scheduleValue: (json['schedule_value'] ?? '60') as String,
-    nextRun: (json['next_run'] ?? '') as String,
-    lastRun: (json['last_run'] ?? '') as String,
-    enabled: (json['enabled'] ?? 0) == 1,
-    lastStatus: (json['last_status'] ?? '') as String,
-  );
+        id: json['id'] as int,
+        title: (json['title'] ?? '') as String,
+        prompt: (json['prompt'] ?? '') as String,
+        scheduleKind: (json['schedule_kind'] ?? 'interval') as String,
+        scheduleValue: (json['schedule_value'] ?? '60') as String,
+        nextRun: (json['next_run'] ?? '') as String,
+        lastRun: (json['last_run'] ?? '') as String,
+        enabled: (json['enabled'] ?? 0) == 1,
+        lastStatus: (json['last_status'] ?? '') as String,
+      );
 }
 
 class AuditItem {
@@ -665,14 +588,14 @@ class AuditItem {
   });
 
   factory AuditItem.fromJson(Map<String, dynamic> json) => AuditItem(
-    id: json['id'] as int,
-    tool: (json['tool'] ?? '') as String,
-    args: (json['args'] ?? '') as String,
-    result: (json['result'] ?? '') as String,
-    approval: (json['approval'] ?? '') as String,
-    durationMs: (json['duration_ms'] ?? 0) as int,
-    createdAt: (json['created_at'] ?? '') as String,
-  );
+        id: json['id'] as int,
+        tool: (json['tool'] ?? '') as String,
+        args: (json['args'] ?? '') as String,
+        result: (json['result'] ?? '') as String,
+        approval: (json['approval'] ?? '') as String,
+        durationMs: (json['duration_ms'] ?? 0) as int,
+        createdAt: (json['created_at'] ?? '') as String,
+      );
 }
 
 class NoteItem {
@@ -691,12 +614,12 @@ class NoteItem {
   });
 
   factory NoteItem.fromJson(Map<String, dynamic> json) => NoteItem(
-    id: json['id'] as int,
-    title: (json['title'] ?? '未命名笔记') as String,
-    body: (json['body'] ?? '') as String,
-    sourceRef: (json['source_ref'] ?? '') as String,
-    createdAt: (json['created_at'] ?? '') as String,
-  );
+        id: json['id'] as int,
+        title: (json['title'] ?? '未命名笔记') as String,
+        body: (json['body'] ?? '') as String,
+        sourceRef: (json['source_ref'] ?? '') as String,
+        createdAt: (json['created_at'] ?? '') as String,
+      );
 }
 
 /// 学科（全局注册表 `subjects` 的一行，见规格 §3.1/§11.2）。
@@ -744,27 +667,27 @@ class Subject {
   bool get archived => status == 'archived';
 
   factory Subject.fromJson(Map<String, dynamic> json) => Subject(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    key: (json['key'] ?? '').toString(),
-    name: (json['name'] ?? '').toString(),
-    description: (json['description'] ?? '').toString(),
-    icon: (json['icon'] ?? '').toString(),
-    color: (json['color'] ?? '').toString(),
-    goal: (json['goal'] ?? '').toString(),
-    examDate: (json['exam_date'] ?? '').toString(),
-    dailyMinutes: (json['daily_minutes'] as num?)?.toInt() ?? 0,
-    level: (json['level'] ?? '').toString(),
-    status: (json['status'] ?? 'active').toString(),
-    isDefault: (json['is_default'] as num?)?.toInt() == 1,
-    sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
-    integrity: (json['integrity'] ?? 'ok').toString(),
-    lastOpenedAt: (json['last_opened_at'] ?? '').toString(),
-    createdAt: (json['created_at'] ?? '').toString(),
-    archivedAt: (json['archived_at'] ?? '').toString(),
-    counts: json['counts'] is Map
-        ? Map<String, dynamic>.from(json['counts'] as Map)
-        : const {},
-  );
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        key: (json['key'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        description: (json['description'] ?? '').toString(),
+        icon: (json['icon'] ?? '').toString(),
+        color: (json['color'] ?? '').toString(),
+        goal: (json['goal'] ?? '').toString(),
+        examDate: (json['exam_date'] ?? '').toString(),
+        dailyMinutes: (json['daily_minutes'] as num?)?.toInt() ?? 0,
+        level: (json['level'] ?? '').toString(),
+        status: (json['status'] ?? 'active').toString(),
+        isDefault: (json['is_default'] as num?)?.toInt() == 1,
+        sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+        integrity: (json['integrity'] ?? 'ok').toString(),
+        lastOpenedAt: (json['last_opened_at'] ?? '').toString(),
+        createdAt: (json['created_at'] ?? '').toString(),
+        archivedAt: (json['archived_at'] ?? '').toString(),
+        counts: json['counts'] is Map
+            ? Map<String, dynamic>.from(json['counts'] as Map)
+            : const {},
+      );
 }
 
 /// 学科内一个可追踪的掌握单元（§8.1）。
@@ -790,15 +713,15 @@ class TopicItem {
   });
 
   factory TopicItem.fromJson(Map<String, dynamic> json) => TopicItem(
-    id: (json['id'] as num?)?.toInt() ?? 0,
-    name: (json['name'] ?? '').toString(),
-    status: (json['status'] ?? 'learning').toString(),
-    mastery: (json['mastery'] as num?)?.toDouble() ?? 0,
-    confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
-    evidenceCount: (json['evidence_count'] as num?)?.toInt() ?? 0,
-    lastStudiedAt: (json['last_studied_at'] ?? '').toString(),
-    nextReviewAt: (json['next_review_at'] ?? '').toString(),
-  );
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: (json['name'] ?? '').toString(),
+        status: (json['status'] ?? 'learning').toString(),
+        mastery: (json['mastery'] as num?)?.toDouble() ?? 0,
+        confidence: (json['confidence'] as num?)?.toDouble() ?? 0,
+        evidenceCount: (json['evidence_count'] as num?)?.toInt() ?? 0,
+        lastStudiedAt: (json['last_studied_at'] ?? '').toString(),
+        nextReviewAt: (json['next_review_at'] ?? '').toString(),
+      );
 }
 
 /// 每日学习量（`progress_daily`）。
@@ -817,8 +740,7 @@ class ProgressDailyPoint {
     this.reviewDue = 0,
   });
 
-  factory ProgressDailyPoint.fromJson(Map<String, dynamic> json) =>
-      ProgressDailyPoint(
+  factory ProgressDailyPoint.fromJson(Map<String, dynamic> json) => ProgressDailyPoint(
         day: (json['day'] ?? '').toString(),
         minutes: (json['minutes'] as num?)?.toInt() ?? 0,
         events: (json['events'] as num?)?.toInt() ?? 0,
@@ -841,8 +763,7 @@ class SubjectProgress {
     this.daily = const [],
   });
 
-  factory SubjectProgress.fromJson(Map<String, dynamic> json) =>
-      SubjectProgress(
+  factory SubjectProgress.fromJson(Map<String, dynamic> json) => SubjectProgress(
         profile: json['profile'] is Map
             ? Map<String, dynamic>.from(json['profile'] as Map)
             : const {},
@@ -855,9 +776,7 @@ class SubjectProgress {
             .toList(),
         daily: (json['daily'] as List? ?? [])
             .whereType<Map>()
-            .map(
-              (e) => ProgressDailyPoint.fromJson(Map<String, dynamic>.from(e)),
-            )
+            .map((e) => ProgressDailyPoint.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
       );
 }
@@ -893,8 +812,7 @@ class SkillVerdictInfo {
   final bool requiresExplicitApproval;
   final bool unverified;
 
-  factory SkillVerdictInfo.fromJson(Map<String, dynamic> json) =>
-      SkillVerdictInfo(
+  factory SkillVerdictInfo.fromJson(Map<String, dynamic> json) => SkillVerdictInfo(
         status: (json['status'] ?? 'unknown').toString(),
         decision: (json['decision'] ?? '').toString(),
         detail: (json['detail'] ?? '').toString(),
@@ -975,8 +893,7 @@ class InstalledSkillInfo {
   final String pkgDir;
   final SkillVerdictInfo verdict;
 
-  factory InstalledSkillInfo.fromJson(Map<String, dynamic> json) =>
-      InstalledSkillInfo(
+  factory InstalledSkillInfo.fromJson(Map<String, dynamic> json) => InstalledSkillInfo(
         slug: (json['slug'] ?? '').toString(),
         version: (json['version'] ?? '').toString(),
         name: (json['name'] ?? '').toString(),
@@ -995,9 +912,7 @@ class InstalledSkillInfo {
         previousVersion: (json['previous_version'] ?? '').toString(),
         pkgDir: (json['pkg_dir'] ?? '').toString(),
         verdict: json['verdict'] is Map
-            ? SkillVerdictInfo.fromJson(
-                Map<String, dynamic>.from(json['verdict'] as Map),
-              )
+            ? SkillVerdictInfo.fromJson(Map<String, dynamic>.from(json['verdict'] as Map))
             : const SkillVerdictInfo(),
       );
 
@@ -1042,18 +957,18 @@ class HubSkillInfo {
   final bool installed;
 
   factory HubSkillInfo.fromJson(Map<String, dynamic> json) => HubSkillInfo(
-    slug: (json['slug'] ?? '').toString(),
-    name: (json['name'] ?? '').toString(),
-    summary: (json['summary'] ?? '').toString(),
-    version: (json['version'] ?? '').toString(),
-    owner: (json['owner'] ?? '').toString(),
-    ownerUrl: (json['owner_url'] ?? '').toString(),
-    downloads: (json['downloads'] as num?)?.toInt() ?? 0,
-    stars: (json['stars'] as num?)?.toInt() ?? 0,
-    updatedAt: (json['updated_at'] as num?)?.toInt() ?? 0,
-    webUrl: (json['web_url'] ?? '').toString(),
-    installed: json['installed'] == true,
-  );
+        slug: (json['slug'] ?? '').toString(),
+        name: (json['name'] ?? '').toString(),
+        summary: (json['summary'] ?? '').toString(),
+        version: (json['version'] ?? '').toString(),
+        owner: (json['owner'] ?? '').toString(),
+        ownerUrl: (json['owner_url'] ?? '').toString(),
+        downloads: (json['downloads'] as num?)?.toInt() ?? 0,
+        stars: (json['stars'] as num?)?.toInt() ?? 0,
+        updatedAt: (json['updated_at'] as num?)?.toInt() ?? 0,
+        webUrl: (json['web_url'] ?? '').toString(),
+        installed: json['installed'] == true,
+      );
 
   String get displayName => name.isEmpty ? slug : name;
 }
@@ -1088,21 +1003,19 @@ class SkillCatalogData {
       skills: (json['skills'] as List? ?? [])
           .whereType<Map>()
           .map((e) => HubSkillInfo.fromJson(Map<String, dynamic>.from(e)))
-          .map(
-            (item) => HubSkillInfo(
-              slug: item.slug,
-              name: item.name,
-              summary: item.summary,
-              version: item.version,
-              owner: item.owner,
-              ownerUrl: item.ownerUrl,
-              downloads: item.downloads,
-              stars: item.stars,
-              updatedAt: item.updatedAt,
-              webUrl: item.webUrl,
-              installed: installed.contains(item.slug),
-            ),
-          )
+          .map((item) => HubSkillInfo(
+                slug: item.slug,
+                name: item.name,
+                summary: item.summary,
+                version: item.version,
+                owner: item.owner,
+                ownerUrl: item.ownerUrl,
+                downloads: item.downloads,
+                stars: item.stars,
+                updatedAt: item.updatedAt,
+                webUrl: item.webUrl,
+                installed: installed.contains(item.slug),
+              ))
           .toList(),
     );
   }
@@ -1137,12 +1050,8 @@ class SkillPolicyInfo {
         ? Map<String, dynamic>.from(json['limits'] as Map)
         : const <String, dynamic>{};
     return SkillPolicyInfo(
-      hubAllowlist: (json['hub_allowlist'] as List? ?? ['eduhub'])
-          .map((e) => '$e')
-          .toList(),
-      languages: (json['languages'] as List? ?? ['zh', 'en'])
-          .map((e) => '$e')
-          .toList(),
+      hubAllowlist: (json['hub_allowlist'] as List? ?? ['eduhub']).map((e) => '$e').toList(),
+      languages: (json['languages'] as List? ?? ['zh', 'en']).map((e) => '$e').toList(),
       autoUpdate: json['auto_update'] == true,
       autoInstall: json['auto_install'] == true,
       verifyIsSecurityGuarantee: json['verify_is_security_guarantee'] == true,
@@ -1172,22 +1081,17 @@ class SkillLibraryData {
   final List<InstalledSkillInfo> installed;
   final SkillPolicyInfo policy;
 
-  factory SkillLibraryData.fromJson(Map<String, dynamic> json) =>
-      SkillLibraryData(
+  factory SkillLibraryData.fromJson(Map<String, dynamic> json) => SkillLibraryData(
         subjectKey: (json['subject_key'] ?? '').toString(),
         hub: (json['hub'] ?? 'eduhub').toString(),
         hubLabel: (json['hub_label'] ?? 'EduHub').toString(),
         webUrl: (json['web_url'] ?? '').toString(),
         installed: (json['installed'] as List? ?? [])
             .whereType<Map>()
-            .map(
-              (e) => InstalledSkillInfo.fromJson(Map<String, dynamic>.from(e)),
-            )
+            .map((e) => InstalledSkillInfo.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
         policy: json['policy'] is Map
-            ? SkillPolicyInfo.fromJson(
-                Map<String, dynamic>.from(json['policy'] as Map),
-              )
+            ? SkillPolicyInfo.fromJson(Map<String, dynamic>.from(json['policy'] as Map))
             : const SkillPolicyInfo(),
       );
 
