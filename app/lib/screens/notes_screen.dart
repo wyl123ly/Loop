@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -89,6 +91,34 @@ class _NotesScreenState extends State<NotesScreen> {
       content: Text('Markdown 已复制到剪贴板', style: TextStyle(color: pal.toastFg)),
       backgroundColor: pal.toastBg,
     ));
+  }
+
+  Future<void> _download(NoteItem note) async {
+    try {
+      final safe = note.title
+          .replaceAll(RegExp(r'[\\/:*?"<>|\n\r\t]'), '_')
+          .trim();
+      final name = safe.isEmpty ? 'note-${note.id}' : safe;
+      final location = await getSaveLocation(
+        suggestedName: '$name.md',
+        acceptedTypeGroups: const [
+          XTypeGroup(label: 'Markdown', extensions: ['md']),
+        ],
+      );
+      if (location == null) return;
+      await File(location.path).writeAsString(
+        '# ${note.title}\n\n${note.body}\n',
+        flush: true,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('已下载到 ${location.path}', style: TextStyle(color: pal.toastFg)),
+        backgroundColor: pal.toastBg,
+      ));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('下载失败：$error')));
+    }
   }
 
   Future<void> _delete(NoteItem note) async {
@@ -265,6 +295,12 @@ class _NotesScreenState extends State<NotesScreen> {
                         style: TextStyle(fontSize: 11.5, color: pal.faint)),
                   ],
                   const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => _download(note),
+                    icon: const Icon(Icons.download_rounded, size: 15),
+                    label: const Text('下载'),
+                  ),
+                  const SizedBox(width: 4),
                   TextButton.icon(
                     onPressed: () => _copy(note),
                     icon: const Icon(Icons.copy_rounded, size: 15),

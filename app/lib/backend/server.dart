@@ -546,6 +546,8 @@ class Backend {
           ]);
         }
         Db.run('UPDATE conversations SET updated_at=? WHERE id=?', [Db.nowIso(), conversationId]);
+        // 反馈 #6：用户每次提问都记一次真实活跃，用于学习时长统计。
+        ProgressModel.touchStudyActivity(source: 'chat');
 
         final response = request.response;
         response.statusCode = 200;
@@ -600,6 +602,7 @@ class Backend {
         'browser': Db.setting('agent_browser', 'true') == 'true',
         'mcp': Db.setting('agent_mcp', 'true') == 'true',
         'background': Db.setting('agent_background', 'false') == 'true',
+        'approval': Db.setting('agent_approval', 'manual'),
       });
     }
     final body = await _jsonBody(request);
@@ -615,6 +618,10 @@ class Backend {
       'agent_background': body['background'],
     }.entries) {
       if (entry.value is bool) Db.setSetting(entry.key, entry.value == true ? 'true' : 'false');
+    }
+    final approval = (body['approval'] ?? '').toString();
+    if (const {'manual', 'files', 'all'}.contains(approval)) {
+      Db.setSetting('agent_approval', approval);
     }
     return _json(request, 200, {'ok': true});
   }

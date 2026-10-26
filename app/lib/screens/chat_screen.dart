@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -157,6 +158,7 @@ class ChatScreenState extends State<ChatScreen> {
   String _thinking = 'medium';
   bool _sending = false;
   bool _uploading = false;
+  bool _dragging = false;
   bool _screenshotting = false;
   bool _generating = false;
   bool _loadingMessages = false;
@@ -519,24 +521,91 @@ class ChatScreenState extends State<ChatScreen> {
     try {
       final file = await openFile(acceptedTypeGroups: [group]);
       if (file == null) return;
-      final bytes = await file.readAsBytes();
-      setState(() => _uploading = true);
-      final result = await _appState.api.upload(bytes, file.name);
-      if (!mounted) return;
-      setState(() {
-        _uploading = false;
+      await _ingestFiles([file]);
+    } catch (error) {
+      _snack(error.toString(), isError: true);
+    }
+  }
+
+  /// 反馈 #2：文件/图片可以直接拖进对话框，也支持一次拖多个。
+  Future<void> _ingestFiles(List<XFile> files) async {
+    if (files.isEmpty || _sending) return;
+    setState(() => _uploading = true);
+    var added = 0;
+    String? note;
+    final errors = <String>[];
+    for (final file in files.take(10)) {
+      try {
+        final bytes = await file.readAsBytes();
+        if (bytes.length > 64 * 1024 * 1024) {
+          errors.add('${file.name} 超过 64MB，已跳过');
+          continue;
+        }
+        final result = await _appState.api.upload(bytes, file.name);
+        if (!mounted) return;
         _attachments.add(_Attachment(
           id: result['id'] as String,
           name: (result['name'] ?? file.name) as String,
           isImage: result['kind'] == 'image',
         ));
-      });
-      final isImage = result['kind'] == 'image';
-      _snack(isImage ? '图片已附上' : '已解析 ${result['pages']} 页，可以提问了');
-    } catch (error) {
-      if (mounted) setState(() => _uploading = false);
-      _snack(error.toString(), isError: true);
+        added++;
+        note = result['kind'] == 'image'
+            ? '图片已附上'
+            : '已解析 ${result['pages']} 页，可以提问了';
+      } catch (error) {
+        errors.add('${file.name}: $error');
+      }
     }
+    if (!mounted) return;
+    setState(() => _uploading = false);
+    if (added > 0) {
+      _snack(files.length > 1 ? '已附上 $added 个文件' : (note ?? '附件已加入'));
+    }
+    if (errors.isNotEmpty) {
+      _snack(errors.first, isError: true);
+    }
+  }
+
+  Widget _dropTarget(BuildContext context) {
+    return DropTarget(
+      onDragEntered: (_) => setState(() => _dragging = true),
+      onDragExited: (_) => setState(() => _dragging = false),
+      onDragDone: (details) {
+        setState(() => _dragging = false);
+        unawaited(_ingestFiles(details.files));
+      },
+      child: Stack(
+        children: [
+          _composer(context),
+          if (_dragging)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  key: const Key('chat-drop-hint'),
+                  color: pal.accent.withValues(alpha: 0.10),
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: pal.glassFill,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: pal.accent),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.file_download_outlined, size: 17, color: pal.accent),
+                        const SizedBox(width: 8),
+                        Text('松开即可添加附件', style: TextStyle(fontSize: 12.5, color: pal.ink)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Future<void> _takeScreenshot({required bool hideLoop}) async {
@@ -854,7 +923,7 @@ class ChatScreenState extends State<ChatScreen> {
         if (!widget.floating) _header(context),
         Expanded(child: _body()),
         if (_approval != null) _approvalCard(),
-        KeyedSubtree(key: _inputBarKey, child: _composer(context)),
+        KeyedSubtree(key: _inputBarKey, child: _dropTarget(context)),
       ],
     );
   }

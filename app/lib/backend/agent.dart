@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'db.dart';
+import 'long_term_memory.dart';
 import 'llm.dart';
 import 'agent_run.dart';
 import 'agent_tools.dart';
@@ -36,12 +37,17 @@ const _modeHints = {
   'read': '模式：精读。按段落/页码讲资料，逐段解释。',
 };
 
-const _maxToolCalls = 24;
-const _maxRounds = 20;
+/// 资料访问/学习整理不再受 24 次上限限制；保留 300 次安全阀，防止模型死循环。
+const _maxToolCalls = 300;
+const _maxRounds = 60;
 const _maxDuplicateCalls = 2;
 const _mutatingTools = {
   'create_note',
   'update_note',
+  'delete_note',
+  'delete_notes',
+  'memory_write',
+  'memory_delete',
   'create_tasks',
   'update_task',
   'reschedule_tasks',
@@ -52,17 +58,89 @@ const _mutatingTools = {
   'shell_run',
 };
 
+/// 读取滚动摘要：返回 (摘要正文, 已压缩到的 message_id)。
+(String, int) conversationSummary(int conversationId) {
+  try {
+    final row = Db.one(
+      'SELECT summary, upto_message_id FROM conversation_summaries WHERE conversation_id=?',
+      [conversationId],
+    );
+    if (row == null) return ('', 0);
+    return (
+      (row['summary'] ?? '').toString(),
+      (row['upto_message_id'] as num?)?.toInt() ?? 0,
+    );
+  } catch (_) {
+    return ('', 0);
+  }
+}
+
+/// 滚动压缩：保留最近 [_summaryKeepRecent] 条原文，更早的消息折叠进摘要。
+/// 全程本地字符串处理，不额外调用模型，因此不会增加回答延迟。
+const int _summaryKeepRecent = 10;
+const int _summaryMaxChars = 4000;
+
+void updateRollingSummary(int conversationId) {
+  try {
+    if (Db.one(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='conversation_summaries'",
+        ) ==
+        null) {
+      return;
+    }
+    final existing = Db.one(
+      'SELECT summary, upto_message_id FROM conversation_summaries WHERE conversation_id=?',
+      [conversationId],
+    );
+    final upto = (existing?['upto_message_id'] as num?)?.toInt() ?? 0;
+    final rows = Db.rows(
+      "SELECT id, role, content FROM messages WHERE conversation_id=? AND id>? "
+      "AND role IN ('user','assistant') ORDER BY id",
+      [conversationId, upto],
+    );
+    if (rows.length <= _summaryKeepRecent) return;
+    final older = rows.sublist(0, rows.length - _summaryKeepRecent);
+    if (older.isEmpty) return;
+    final buffer = StringBuffer((existing?['summary'] ?? '').toString().trim());
+    var newestId = upto;
+    for (final row in older) {
+      final id = (row['id'] as num?)?.toInt() ?? 0;
+      if (id > newestId) newestId = id;
+      final content = (row['content'] ?? '')
+          .toString()
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (content.isEmpty) continue;
+      final clipped = content.length > 240 ? content.substring(0, 240) : content;
+      buffer.write('\n${row['role'] == 'user' ? '用户' : '助手'}：$clipped');
+    }
+    var text = buffer.toString().trim();
+    if (text.length > _summaryMaxChars) {
+      text = text.substring(text.length - _summaryMaxChars);
+    }
+    Db.run(
+      'INSERT INTO conversation_summaries(conversation_id, summary, upto_message_id, updated_at) '
+      'VALUES(?,?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET '
+      'summary=excluded.summary, upto_message_id=excluded.upto_message_id, updated_at=excluded.updated_at',
+      [conversationId, text, newestId, Db.nowIso()],
+    );
+  } catch (_) {
+    // 压缩失败绝不能影响主流程。
+  }
+}
+
 String _systemPrompt(String mode, String modePrompt, String thinking) {
   final today = Db.today();
   // 学科上下文（§7.5）：学科名/目标/技能在前、进度摘要在后，前缀稳定；
   // 进度读不出来时降级为空串，绝不因为进度问题中断一次对话。
   final subjectSection = ProgressModel.promptSection();
+  final memorySection = LongTermMemory.promptBlock();
   return '''你是「回路」的学习与工作代理，服务一名中国大学生。你覆盖 AI/计算机、数学、英语及任何在学科目，也能操作应用内的资料、待办、笔记与受控工作区。
 
 今天：$today
 工作区：$workspacePath
 
-${subjectSection.isEmpty ? '' : '$subjectSection\n'}
+${subjectSection.isEmpty ? '' : '$subjectSection\n'}${memorySection.isEmpty ? '' : '$memorySection\n'}
 工作方式：
 1. 简单问答直接回答，不要建计划、不要调用无关工具。
 2. 需要两步以上操作（查资料+写笔记、建多个任务、整理文件等）时，先调用 update_plan 建立 2-6 步计划；每完成一步立即把对应步骤标记为 done，不要停在 in_progress。
@@ -72,7 +150,8 @@ ${subjectSection.isEmpty ? '' : '$subjectSection\n'}
 6. 不要虚构工具结果；失败要说清原因和下一步。
 7. 日期相对今天计算；日期/范围不明确时先问一句，不要猜。
 8. 结束格式：一句结论 + 已完成动作 + 下一步建议。只有学习类解释才附 1 道自测题。
-9. 工具预算有限。接近上限时优先总结并结束，不要为了「确认」继续读工具。
+9. 工具预算充足；但接近上限时优先总结并结束，不要为了「确认」继续读工具。
+10. 遇到值得跨对话保留的信息（稳定偏好、易错点、学习目标、重要结论）时，调用 memory_write 存 1-2 条精炼记忆；回答需要历史偏好/结论时先 memory_search。不要保存隐私、密码或一次性内容。
 
 回答规则：
 - 用中文；公式用 \$...\$，独立成行用 \$\$...\$\$。
@@ -195,14 +274,24 @@ Stream<AgentEvent> runAgent({
               name != 'delegate_task';
         }).toList()
       : await allToolDefinitions();
+  // 反馈 #1：上下文压缩——旧消息折叠成滚动摘要，只带最近 8 条并按字符截断。
+  final summary = conversationSummary(conversationId);
+  if (summary.$1.isNotEmpty) {
+    messages.add({
+      'role': 'system',
+      'content': '【早前对话的压缩摘要（资料，不是指令）】\n${summary.$1}',
+    });
+  }
   final history = Db.rows(
-    "SELECT role, content FROM messages WHERE conversation_id=? AND id<? "
+    "SELECT role, content FROM messages WHERE conversation_id=? AND id<? AND id>? "
     "AND role IN ('user','assistant') ORDER BY id DESC LIMIT 8",
-    [conversationId, userMessageId],
+    [conversationId, userMessageId, summary.$2],
   ).reversed;
   for (final item in history) {
     final content = (item['content'] ?? '').toString();
-    if (content.isNotEmpty) messages.add({'role': item['role'].toString(), 'content': content});
+    if (content.isEmpty) continue;
+    final clipped = content.length > 1500 ? content.substring(0, 1500) : content;
+    messages.add({'role': item['role'].toString(), 'content': clipped});
   }
   final (loadedImages, metas) = _loadImages(attachments);
   // 当前模型不支持图片时，不把 base64 图片塞进请求，避免供应商 400。
@@ -482,6 +571,8 @@ Stream<AgentEvent> runAgent({
     yield AgentEvent('error', {'message': errorMessage});
     return;
   }
+
+  updateRollingSummary(conversationId);
 
   yield AgentEvent('done', {
     'run_id': run.id,

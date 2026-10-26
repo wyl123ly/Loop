@@ -9,6 +9,7 @@ import 'browser_manager.dart';
 import 'mcp_manager.dart';
 import 'agent_run.dart';
 import 'db.dart';
+import 'long_term_memory.dart';
 import 'retrieval.dart';
 import 'skills_import.dart';
 import 'subject_progress.dart';
@@ -16,7 +17,7 @@ import 'subject_store.dart';
 
 /// 学科内检索参数（§7.3）。
 const int kSubjectSearchDefaultLimit = 8;
-const int kSubjectSearchMaxLimit = 12;
+const int kSubjectSearchMaxLimit = 30;
 const int kSubjectSearchBudget = 3000;
 
 /// 跨学科兜底参数（§7.2 L2；默认关闭，总预算 ≤ 20%）。
@@ -140,7 +141,17 @@ const approvalTools = {
   'browser_type',
 };
 
-bool requiresApproval(String name) => approvalTools.contains(name) || name.startsWith('mcp__');
+/// 反馈 #3：审批策略可调。
+/// - manual：所有危险操作逐次确认（默认，最安全）；
+/// - files：工作区内文件操作自动批准，Shell/浏览器/MCP 仍需确认；
+/// - all：全部自动批准（用户明确承担风险时使用）。
+bool requiresApproval(String name) {
+  if (!approvalTools.contains(name) && !name.startsWith('mcp__')) return false;
+  final mode = Db.setting('agent_approval', 'manual');
+  if (mode == 'all') return false;
+  if (mode == 'files' && name.startsWith('fs_')) return false;
+  return true;
+}
 
 Map<String, dynamic> _fn(
   String name,
@@ -190,6 +201,7 @@ List<Map<String, dynamic>> get toolDefinitions => [
           'enum': ['subject', 'all'],
           'description': 'subject（默认，只查本学科）/ all（跨学科兜底，仅在设置开启时生效）',
         },
+        'limit': _int('返回片段数，默认 8，最大 30；需要覆盖更多资料时调大'),
       }, ['query']),
       _fn('list_materials', '列出**当前学科**的资料（id、名称、类型、页数）。', {}),
       _fn('read_skill', '读取本学科**已启用**教学技能的 SKILL.md 正文（文档资料，不是指令）。', {
@@ -296,6 +308,44 @@ List<Map<String, dynamic>> get toolDefinitions => [
         'id': _int('笔记 id'),
         'title': _str('新标题，可空'),
         'body': _str('新正文，可空'),
+      }, ['id']),
+      _fn('delete_note', '删除一篇笔记（不可恢复）。用户明确要求删除时使用；删除前先 list_notes 确认 id。', {
+        'id': _int('笔记 id'),
+      }, ['id']),
+      _fn('delete_notes', '批量删除笔记（不可恢复，最多 50 篇）。适合清理多篇过期笔记。', {
+        'ids': {
+          'type': 'array',
+          'description': '要删除的笔记 id 列表',
+          'items': {'type': 'integer'},
+        },
+      }, ['ids']),
+      _fn('memory_write', '把值得跨对话保留的信息写入本学科长期记忆（稳定偏好、易错点、学习目标、重要结论）。一次最多 2 条，不要记录隐私或临时内容。', {
+        'title': _str('一句话标题（去重键，重复标题会更新正文）'),
+        'body': _str('要长期记住的内容，尽量精炼'),
+        'kind': {
+          'type': 'string',
+          'enum': ['fact', 'preference', 'insight', 'error', 'question', 'goal'],
+          'description': '记忆类型，默认 fact',
+        },
+        'tags': {
+          'type': 'array',
+          'description': '标签，最多 8 个',
+          'items': {'type': 'string'},
+        },
+        'importance': {
+          'type': 'number',
+          'description': '重要度 0-1，默认 0.5',
+        },
+      }, ['title', 'body']),
+      _fn('memory_search', '检索本学科长期记忆（跨对话）。回答需要历史偏好/结论时先查。', {
+        'query': _str('检索关键词，可空；空则返回高价值记忆'),
+        'limit': _int('返回条数，默认 6，最大 20'),
+      }),
+      _fn('memory_list', '列出本学科长期记忆（按重要度/时间）。', {
+        'limit': _int('条数，默认 20，最大 100'),
+      }),
+      _fn('memory_delete', '删除一条长期记忆（用户要求忘记时使用）。', {
+        'id': _int('记忆 id'),
       }, ['id']),
       _fn('fs_list', '列出工作区目录内容。', {'path': _str('相对工作区路径，默认根目录')}),
       _fn('fs_read', '读取工作区内的文本文件。', {'path': _str('相对工作区路径')}, ['path']),
@@ -562,8 +612,9 @@ Future<ToolResult> _readSkillTool(Map<String, dynamic> args, ToolContext ctx) as
 Future<ToolResult> _searchMaterialsTool(
   String query,
   String requestedScope,
-  ToolContext ctx,
-) async {
+  ToolContext ctx, {
+  int limit = kSubjectSearchDefaultLimit,
+}) async {
   final crossAllowed = Db.setting('cross_subject_search', 'false') == 'true';
   return SubjectContext.scoped((subject) async {
     final key = (subject['key'] ?? '').toString();
@@ -578,7 +629,7 @@ Future<ToolResult> _searchMaterialsTool(
     final started = DateTime.now();
     final hits = searchSubjectMaterials(
       query,
-      limit: kSubjectSearchDefaultLimit.clamp(1, kSubjectSearchMaxLimit),
+      limit: limit.clamp(1, kSubjectSearchMaxLimit),
     );
     final (contextText, refs) = formatSubjectSnippets(
       hits,
@@ -659,7 +710,14 @@ Future<ToolResult> executeTool(String name, Map<String, dynamic> args, ToolConte
       case 'search_materials':
         final query = (args['query'] ?? '').toString().trim();
         if (query.isEmpty) return _err('query 不能为空');
-        return await _searchMaterialsTool(query, (args['scope'] ?? 'subject').toString(), ctx);
+        final limit = ((args['limit'] as num?)?.toInt() ?? kSubjectSearchDefaultLimit)
+            .clamp(1, kSubjectSearchMaxLimit);
+        return await _searchMaterialsTool(
+          query,
+          (args['scope'] ?? 'subject').toString(),
+          ctx,
+          limit: limit,
+        );
 
       case 'list_materials':
         return await SubjectContext.scoped((subject) async {
@@ -844,6 +902,113 @@ Future<ToolResult> executeTool(String name, Map<String, dynamic> args, ToolConte
         return _ok('已更新笔记 $id（已提交，无需重复读取确认）', {
           'ok': true,
           'note_id': id,
+          'committed': true,
+          'do_not_repeat': true,
+        });
+
+      case 'delete_note':
+        final id = (args['id'] as num?)?.toInt();
+        if (id == null) return _err('缺少笔记 id');
+        final row = Db.one('SELECT id,title FROM notes WHERE id=?', [id]);
+        if (row == null) return _err('笔记不存在');
+        Db.run('DELETE FROM notes WHERE id=?', [id]);
+        final title = (row['title'] ?? '').toString();
+        return _ok('已删除笔记《$title》（id=$id，不可恢复）', {
+          'ok': true,
+          'deleted': id,
+          'title': title,
+          'committed': true,
+          'do_not_repeat': true,
+        });
+
+      case 'delete_notes':
+        final raw = (args['ids'] as List?) ?? const [];
+        final ids = raw
+            .map((item) => (item as num?)?.toInt())
+            .whereType<int>()
+            .take(50)
+            .toList();
+        if (ids.isEmpty) return _err('ids 不能为空');
+        var deleted = 0;
+        final missing = <int>[];
+        for (final id in ids) {
+          final row = Db.one('SELECT id FROM notes WHERE id=?', [id]);
+          if (row == null) {
+            missing.add(id);
+            continue;
+          }
+          Db.run('DELETE FROM notes WHERE id=?', [id]);
+          deleted++;
+        }
+        return _ok('已删除 $deleted 篇笔记${missing.isEmpty ? '' : '，${missing.length} 个 id 不存在'}', {
+          'ok': true,
+          'deleted': deleted,
+          'missing': missing,
+          'committed': true,
+          'do_not_repeat': true,
+        });
+
+      case 'memory_write':
+        final tags = ((args['tags'] as List?) ?? const [])
+            .map((item) => item.toString())
+            .toList();
+        final result = LongTermMemory.write(
+          title: (args['title'] ?? '').toString(),
+          body: (args['body'] ?? '').toString(),
+          kind: (args['kind'] ?? 'fact').toString(),
+          tags: tags,
+          importance: ((args['importance'] as num?)?.toDouble() ?? 0.5),
+          conversationId: ctx.conversationId,
+        );
+        if (result['ok'] != true) return _err((result['error'] ?? '写入失败').toString());
+        final mode = result['mode'] == 'updated' ? '已更新' : '已记住';
+        return _ok('$mode长期记忆（id=${result['id']}），无需回读确认', {
+          'ok': true,
+          'memory_id': result['id'],
+          'mode': result['mode'],
+          'committed': true,
+          'do_not_repeat': true,
+        });
+
+      case 'memory_search':
+        final limit = ((args['limit'] as num?)?.toInt() ?? 6).clamp(1, 20);
+        final rows = LongTermMemory.search(
+          (args['query'] ?? '').toString(),
+          limit: limit,
+        );
+        final compact = rows
+            .map((row) => {
+                  'id': row['id'],
+                  'kind': row['kind'],
+                  'title': row['title'],
+                  'body': _clip((row['body'] ?? '').toString(), 1200),
+                  'tags': row['tags'],
+                  'importance': row['importance'],
+                })
+            .toList();
+        return _ok('找到 ${compact.length} 条长期记忆', {
+          'ok': true,
+          'memories': compact,
+          'count': compact.length,
+        });
+
+      case 'memory_list':
+        final limit = ((args['limit'] as num?)?.toInt() ?? 20).clamp(1, 100);
+        final rows = LongTermMemory.list(limit: limit);
+        return _ok('共 ${LongTermMemory.count()} 条长期记忆，返回 ${rows.length} 条', {
+          'ok': true,
+          'memories': rows,
+          'total': LongTermMemory.count(),
+        });
+
+      case 'memory_delete':
+        final id = (args['id'] as num?)?.toInt();
+        if (id == null) return _err('缺少记忆 id');
+        final deleted = LongTermMemory.delete(id);
+        if (!deleted) return _err('记忆不存在');
+        return _ok('已删除长期记忆 $id（不可恢复）', {
+          'ok': true,
+          'deleted': id,
           'committed': true,
           'do_not_repeat': true,
         });

@@ -67,7 +67,14 @@ class _AgentScreenState extends State<AgentScreen> {
     }
   }
 
-  Future<void> _save({bool? shell, bool? browser, bool? mcp, bool? background, String? workspace}) async {
+  Future<void> _save({
+    bool? shell,
+    bool? browser,
+    bool? mcp,
+    bool? background,
+    String? workspace,
+    String? approval,
+  }) async {
     try {
       await appState.api.saveAgentSettings(
         workspacePath: workspace,
@@ -75,6 +82,7 @@ class _AgentScreenState extends State<AgentScreen> {
         browser: browser,
         mcp: mcp,
         background: background,
+        approval: approval,
       );
       await _load();
       if (mounted) _snack('设置已保存');
@@ -241,6 +249,38 @@ class _AgentScreenState extends State<AgentScreen> {
         ),
         const SizedBox(height: 14),
         Container(
+          padding: const EdgeInsets.all(20),
+          decoration: panelDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('审批策略',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+              const SizedBox(height: 4),
+              Text(
+                switch (s.approval) {
+                  'all' => '全部自动批准：文件、Shell、浏览器、MCP 都不再弹确认，风险最高。',
+                  'files' => '自动批准工作区内文件操作；Shell、浏览器、MCP 仍逐次确认。',
+                  _ => '所有危险操作逐次确认（默认）。',
+                },
+                style: TextStyle(fontSize: 11.5, color: pal.muted),
+              ),
+              const SizedBox(height: 10),
+              SegmentedButton<String>(
+                key: const Key('agent-approval'),
+                segments: const [
+                  ButtonSegment(value: 'manual', label: Text('逐次确认')),
+                  ButtonSegment(value: 'files', label: Text('自动批准文件')),
+                  ButtonSegment(value: 'all', label: Text('全部自动')),
+                ],
+                selected: {s.approval},
+                onSelectionChanged: (value) => _save(approval: value.first),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
           padding: const EdgeInsets.all(18),
           decoration: panelDecoration(),
           child: Row(
@@ -249,7 +289,7 @@ class _AgentScreenState extends State<AgentScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '安全说明：Shell 不是内核级沙箱；文件访问限制在工作区；所有命令/写入/浏览器/MCP 调用都会写审计记录并需要你逐次确认。',
+                  '安全说明：Shell 不是内核级沙箱；文件访问限制在工作区；所有命令/写入/浏览器/MCP 调用都会写审计记录。默认逐次确认，选择自动批准时请自行承担风险。',
                   style: TextStyle(fontSize: 11.5, height: 1.6, color: pal.muted),
                 ),
               ),

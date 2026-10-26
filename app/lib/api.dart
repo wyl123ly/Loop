@@ -189,6 +189,7 @@ class LoopApi {
     bool? browser,
     bool? mcp,
     bool? background,
+    String? approval,
   }) async {
     await _request('POST', '/api/agent/settings', body: {
       'workspace_path': ?workspacePath,
@@ -196,6 +197,7 @@ class LoopApi {
       'browser': ?browser,
       'mcp': ?mcp,
       'background': ?background,
+      'approval': ?approval,
     });
   }
 

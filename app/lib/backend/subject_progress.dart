@@ -41,6 +41,17 @@ const double kMaxMasteryDelta = 0.25;
 
 /// 滑窗：同一 topic [kMasteryWindowMinutes] 分钟内最多 [kMasteryWindowMax] 次计分。
 const int kMasteryWindowMinutes = 10;
+
+/// 反馈 #6：真实学习时长按“活跃会话”统计，而不是完全相信模型填的 duration_min。
+///
+/// 规则：
+/// - 同一个会话内，两条消息间隔 <= [kSessionIdleBreakMinutes] 分钟视为连续学习；
+/// - 单次间隔最多计入 [kSessionGapCapSeconds] 秒（防止挂着窗口刷时长）；
+/// - 间隔超过阈值则开新会话；
+/// - 新会话给 [kSessionFirstTouchSeconds] 秒起步，避免只发一条消息记 0 分钟。
+const int kSessionIdleBreakMinutes = 15;
+const int kSessionGapCapSeconds = 300;
+const int kSessionFirstTouchSeconds = 60;
 const int kMasteryWindowMax = 2;
 
 /// 用户手工值标记前缀（`meta` 表；重算不覆盖，AC-03 断言 5）。
@@ -486,7 +497,8 @@ class ProgressModel {
       }
       final messageId = (item['message_id'] as num?)?.toInt() ?? fallbackMessageId;
       final materialId = (item['material_id'] as num?)?.toInt() ?? 0;
-      final durationMin = ((item['duration_min'] as num?)?.toInt() ?? 0).clamp(0, 600);
+      // 模型自报时长只作为补充证据；上限收紧到 180 分钟，避免极端虚报。
+    final durationMin = ((item['duration_min'] as num?)?.toInt() ?? 0).clamp(0, 180);
       var note = (item['note'] ?? '').toString().trim();
       if (note.isEmpty && kind == 'task' && item['task_id'] != null) {
         note = 'task#${(item['task_id'] as num?)?.toInt() ?? item['task_id']}';
@@ -1169,15 +1181,85 @@ class ProgressModel {
     return {};
   }
 
+  /// 记录一次真实学习活跃（发消息 / Agent 运行）。
+  ///
+  /// 返回本次计入的秒数、当前会话累计和当天分钟数，便于测试和 UI 展示。
+  static Map<String, Object?> touchStudyActivity({String source = 'chat'}) {
+    if (!_hasTable('study_sessions')) {
+      return {'ok': false, 'reason': 'no_sessions_table'};
+    }
+    final now = DateTime.now();
+    final iso = now.toIso8601String();
+    final last = Db.one('SELECT * FROM study_sessions ORDER BY id DESC LIMIT 1');
+    var sessionId = 0;
+    var credited = 0;
+    var previousDay = '';
+    if (last != null) {
+      final lastAt = DateTime.tryParse((last['last_at'] ?? '').toString());
+      final gap = lastAt == null ? 1 << 30 : now.difference(lastAt).inSeconds;
+      if (gap >= 0 && gap <= kSessionIdleBreakMinutes * 60) {
+        credited = gap > kSessionGapCapSeconds ? kSessionGapCapSeconds : gap;
+        sessionId = (last['id'] as num).toInt();
+        Db.run(
+          'UPDATE study_sessions SET last_at=?, active_seconds=active_seconds+?, '
+          'messages=messages+1 WHERE id=?',
+          [iso, credited, sessionId],
+        );
+        if (lastAt != null) previousDay = lastAt.toIso8601String().substring(0, 10);
+      }
+    }
+    if (sessionId == 0) {
+      credited = kSessionFirstTouchSeconds;
+      sessionId = Db.insert('study_sessions', {
+        'started_at': iso,
+        'last_at': iso,
+        'active_seconds': credited,
+        'messages': 1,
+        'source': source,
+        'created_at': iso,
+      });
+    }
+    if (previousDay.isNotEmpty && previousDay != iso.substring(0, 10)) {
+      _refreshDay(previousDay);
+    }
+    _refreshDay(iso.substring(0, 10));
+    final active = _int(
+      'SELECT COALESCE(active_seconds,0) FROM study_sessions WHERE id=?',
+      [sessionId],
+    );
+    final todayMinutes = _int(
+      'SELECT COALESCE(minutes,0) FROM progress_daily WHERE day=?',
+      [iso.substring(0, 10)],
+    );
+    return {
+      'ok': true,
+      'session_id': sessionId,
+      'credited_seconds': credited,
+      'session_seconds': active,
+      'today_minutes': todayMinutes,
+      'source': source,
+    };
+  }
+
   /// 日汇总 upsert：**完全由事件/知识点派生**，因此可重复执行且结果一致。
   static void _refreshDay(String day) {
     if (!_hasTable('progress_daily')) return;
     final normalized = _dateOnly(day);
     if (normalized.length != 10) return;
-    final minutes = _int(
+    final eventMinutes = _int(
       'SELECT COALESCE(SUM(duration_min),0) FROM study_events WHERE substr(ts,1,10)=?',
       [normalized],
     );
+    // 反馈 #6：真实活跃时长优先；模型自报时长只在其更大时作为离线学习补充。
+    final sessionSeconds = _hasTable('study_sessions')
+        ? _int(
+            'SELECT COALESCE(SUM(active_seconds),0) FROM study_sessions '
+            'WHERE substr(last_at,1,10)=?',
+            [normalized],
+          )
+        : 0;
+    final sessionMinutes = (sessionSeconds / 60).round();
+    final minutes = sessionMinutes > eventMinutes ? sessionMinutes : eventMinutes;
     final events = _int(
       'SELECT COUNT(*) FROM study_events WHERE substr(ts,1,10)=?',
       [normalized],
@@ -1206,6 +1288,12 @@ class ProgressModel {
     final days = Db.rows(
       "SELECT DISTINCT substr(ts,1,10) AS day FROM study_events WHERE ts<>'' ORDER BY day DESC LIMIT 90",
     ).map((row) => (row['day'] ?? '').toString()).where((d) => d.length == 10).toSet();
+    if (_hasTable('study_sessions')) {
+      days.addAll(Db.rows(
+        "SELECT DISTINCT substr(last_at,1,10) AS day FROM study_sessions "
+        "WHERE last_at<>'' ORDER BY day DESC LIMIT 90",
+      ).map((row) => (row['day'] ?? '').toString()).where((d) => d.length == 10));
+    }
     if (days.isEmpty) return 0;
     final startOffset = days.contains(today) ? 0 : 1;
     var streak = 0;

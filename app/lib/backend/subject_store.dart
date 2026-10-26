@@ -1149,6 +1149,39 @@ class SubjectStore {
       CREATE UNIQUE INDEX IF NOT EXISTS idx_events_dedupe
         ON study_events(message_id, kind, topic) WHERE message_id <> 0;
       CREATE INDEX IF NOT EXISTS idx_events_ts ON study_events(ts);
+      CREATE TABLE IF NOT EXISTS conversation_summaries(
+        conversation_id INTEGER PRIMARY KEY,
+        summary TEXT DEFAULT '',
+        upto_message_id INTEGER DEFAULT 0,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS memories(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT DEFAULT 'fact',
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        tags TEXT DEFAULT '',
+        importance REAL DEFAULT 0.5,
+        source_conversation_id INTEGER DEFAULT 0,
+        source_message_id INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        last_used_at TEXT DEFAULT '',
+        use_count INTEGER DEFAULT 0
+      );
+      CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(memory_id UNINDEXED, tokens);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_title ON memories(title COLLATE NOCASE);
+      CREATE INDEX IF NOT EXISTS idx_memories_updated ON memories(updated_at);
+      CREATE TABLE IF NOT EXISTS study_sessions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        started_at TEXT NOT NULL,
+        last_at TEXT NOT NULL,
+        active_seconds INTEGER DEFAULT 0,
+        messages INTEGER DEFAULT 0,
+        source TEXT DEFAULT 'chat',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_sessions_last ON study_sessions(last_at);
       CREATE TABLE IF NOT EXISTS progress_daily(
         day TEXT PRIMARY KEY,
         minutes INTEGER DEFAULT 0,

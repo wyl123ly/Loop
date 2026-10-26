@@ -479,12 +479,16 @@ class AgentSettingsData {
   final bool mcp;
   final bool background;
 
+  /// 审批策略：manual（逐次确认）/ files（自动批准工作区文件）/ all（全部自动）。
+  final String approval;
+
   const AgentSettingsData({
     required this.workspacePath,
     required this.shell,
     required this.browser,
     required this.mcp,
     required this.background,
+    this.approval = 'manual',
   });
 
   factory AgentSettingsData.fromJson(Map<String, dynamic> json) => AgentSettingsData(
@@ -493,6 +497,7 @@ class AgentSettingsData {
         browser: (json['browser'] ?? true) as bool,
         mcp: (json['mcp'] ?? true) as bool,
         background: (json['background'] ?? false) as bool,
+        approval: (json['approval'] ?? 'manual') as String,
       );
 }
 
