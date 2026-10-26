@@ -48,7 +48,8 @@ class UpdateCancelled implements Exception {
 }
 
 class UpdateService {
-  static const _defaultApi = 'https://api.github.com/repos/${AppVersion.repo}/releases/latest';
+  static const _defaultApi =
+      'https://api.github.com/repos/${AppVersion.repo}/releases?per_page=10';
 
   static String get apiEndpoint {
     final override = Platform.environment['LOOP_UPDATE_API'];
@@ -91,10 +92,17 @@ class UpdateService {
         throw UpdateException('检查更新失败（HTTP ${response.statusCode}）');
       }
       final data = jsonDecode(utf8.decode(response.bodyBytes));
-      if (data is! Map<String, dynamic>) {
-        throw const UpdateException('GitHub 返回格式异常');
+      if (data is List) {
+        final releases = data
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+        return parseReleaseList(releases);
       }
-      return parseLatest(data);
+      if (data is Map<String, dynamic>) {
+        return parseLatest(data);
+      }
+      throw const UpdateException('GitHub 返回格式异常');
     } on TimeoutException {
       throw const UpdateException('连接 GitHub 超时，请检查网络');
     } on SocketException {
@@ -102,6 +110,22 @@ class UpdateService {
     } finally {
       if (client == null) httpClient.close();
     }
+  }
+
+  /// 从 Release 列表里挑**最新且带可用附件**的一版：
+  /// 最新 Release 还没上传 zip 时，自动回退到上一个有附件的版本。
+  static UpdateInfo parseReleaseList(List<Map<String, dynamic>> releases) {
+    final usable = releases.where((item) {
+      return item['draft'] != true && item['prerelease'] != true;
+    });
+    for (final release in usable) {
+      try {
+        return parseLatest(release);
+      } on UpdateException {
+        continue;
+      }
+    }
+    throw const UpdateException('最近的 Release 里都没有可用的 ${AppVersion.assetName}');
   }
 
   static UpdateInfo parseLatest(Map<String, dynamic> data) {
@@ -215,8 +239,9 @@ class UpdateService {
           Directory(target).createSync(recursive: true);
         }
       }
-      final exe = File(p.join(staging.path, 'Loop.exe'));
-      if (!exe.existsSync()) throw const UpdateException('更新包里没有 Loop.exe');
+      _flattenSingleRoot(staging);
+      final exe = _findEntryExe(staging);
+      if (exe == null) throw const UpdateException('更新包里没有 Loop.exe');
       final versionFile = File(p.join(staging.path, 'version.json'));
       if (!versionFile.existsSync()) throw const UpdateException('更新包里没有 version.json');
       final versionData = jsonDecode(versionFile.readAsStringSync());
@@ -224,20 +249,71 @@ class UpdateService {
       if (packaged != info.version) {
         throw UpdateException('更新包版本 $packaged 与 Release 版本 ${info.version} 不一致');
       }
-      for (final path in ['data/loop.db', 'data/files', 'data/uploads']) {
-        final item = FileSystemEntity.typeSync(p.join(staging.path, path));
-        if (item == FileSystemEntityType.directory) {
-          Directory(p.join(staging.path, path)).deleteSync(recursive: true);
-        } else if (item == FileSystemEntityType.file) {
-          File(p.join(staging.path, path)).deleteSync();
-        }
-      }
+      _removeUserData(staging.path);
       return staging;
     } catch (error) {
       if (staging.existsSync()) staging.deleteSync(recursive: true);
       if (error is UpdateException) rethrow;
       throw UpdateException('解压更新包失败：$error');
     }
+  }
+
+  /// 更新包里的用户数据路径：即使误打进包里也在安装前删除，绝不覆盖本机数据。
+  static const List<String> userDataPaths = [
+    'data/loop.db',
+    'data/loop.db-wal',
+    'data/loop.db-shm',
+    'data/files',
+    'data/uploads',
+    'data/subjects',
+    'data/skills',
+    'data/mcp',
+    'data/logs',
+    'data/tmp',
+    'data/backups',
+    'data/trash',
+    'data/tray.ico',
+  ];
+
+  static void _removeUserData(String root) {
+    for (final path in userDataPaths) {
+      final target = p.join(root, path);
+      final type = FileSystemEntity.typeSync(target);
+      if (type == FileSystemEntityType.directory) {
+        Directory(target).deleteSync(recursive: true);
+      } else if (type == FileSystemEntityType.file) {
+        File(target).deleteSync();
+      }
+    }
+  }
+
+  /// 有些打包工具会多包一层目录；把唯一子目录的内容提升到 staging 根。
+  static void _flattenSingleRoot(Directory staging) {
+    final entries = staging.listSync();
+    if (entries.length != 1 || entries.first is! Directory) return;
+    final inner = entries.first as Directory;
+    for (final entity in inner.listSync()) {
+      final target = p.join(staging.path, p.basename(entity.path));
+      if (FileSystemEntity.typeSync(target) == FileSystemEntityType.notFound) {
+        entity.renameSync(target);
+      }
+    }
+    try {
+      inner.deleteSync(recursive: true);
+    } catch (_) {}
+  }
+
+  static File? _findEntryExe(Directory staging) {
+    for (final name in ['Loop.exe', 'loop.exe']) {
+      final file = File(p.join(staging.path, name));
+      if (file.existsSync()) return file;
+    }
+    for (final entity in staging.listSync(recursive: true, followLinks: false)) {
+      if (entity is File && p.basename(entity.path).toLowerCase() == 'loop.exe') {
+        return entity;
+      }
+    }
+    return null;
   }
 
   static Future<void> launchInstaller(Directory staging, UpdateInfo info) async {
@@ -266,7 +342,7 @@ class UpdateService {
         '-ParentPid', '$pid',
         '-InstallDir', installDir,
         '-StagingDir', staging.path,
-        '-ExeName', 'Loop.exe',
+        '-ExeName', p.basename(Platform.resolvedExecutable),
         '-BackupDir', backup,
         '-LogPath', log,
       ],

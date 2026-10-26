@@ -1,6 +1,6 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.8.8**。
+Windows 桌面 AI 学习工作台，当前版本 **v0.8.9**。
 学科、对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite（**每学科一个独立数据库**），
 模型使用 DeepSeek 等 OpenAI 兼容供应商。
 
@@ -123,6 +123,12 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.8**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.8.9 · 2026-10-26
+- 更新链路加固：Release 列表回退（最新 Release 没附件时找上一个可用版本）、跳过 draft/prerelease。
+- 更新包支持自动展平多包一层的目录；用户数据（loop.db/subjects/files/skills/mcp/logs 等）永不写入更新包、永不进备份。
+- `updater.ps1` 改为全 ASCII 注释，修复 Windows PowerShell 5.1 按 ANSI 解析中文导致脚本语法错误的问题；等待父进程时间 30s→120s，并新增 `-NoRestart` 便于测试。
+- 新增 5 条更新回归测试（含真实执行 updater.ps1），全量 **493 passed / 1 skipped**。
 
 ### v0.8.8 · 2026-10-26
 - 修复自动更新卡在「正在准备重启安装」并报 `Bad state: Process is detached` 的问题：detached 子进程不再读取 `exitCode`。
