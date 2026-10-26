@@ -33,6 +33,13 @@ class AppState extends ChangeNotifier {
   ThemeMode themeMode = ThemeMode.system;
   List<CustomMode> customModes = [];
 
+  /// 只在主题/外观变化时 +1：MaterialApp 只监听它，不再被会话、学科等
+  /// 高频通知带着重建整棵树（主题切换卡顿的主因之一）。
+  final ValueNotifier<int> appearanceRevision = ValueNotifier<int>(0);
+
+  /// 启动状态（splash → Shell / 错误页）变化时 +1。
+  final ValueNotifier<int> bootRevision = ValueNotifier<int>(0);
+
   /// 学科列表（含归档与否由后端决定；默认只含未归档）。
   List<Subject> subjects = [];
 
@@ -66,6 +73,7 @@ class AppState extends ChangeNotifier {
           customModes = [];
         }
         bootstrapError = null;
+        appearanceRevision.value++;
         break;
       } catch (error) {
         bootstrapError = error.toString();
@@ -77,6 +85,7 @@ class AppState extends ChangeNotifier {
     await loadSubjects();
     await refreshConversations();
     ready = true;
+    bootRevision.value++;
     notifyListeners();
   }
 
@@ -255,13 +264,23 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setTheme(ThemeMode mode) async {
+    if (themeMode == mode) return;
     themeMode = mode;
+    // 先让界面立即换色；持久化放到后台，不阻塞这一帧。
+    appearanceRevision.value++;
     notifyListeners();
     try {
       await api.saveSettings(
         theme: switch (mode) { ThemeMode.light => 'light', ThemeMode.dark => 'dark', _ => 'system' },
       );
     } catch (_) {}
+  }
+
+  /// 系统深浅色变化：只有跟随系统时才需要重刷界面。
+  void notifySystemBrightnessChanged() {
+    if (themeMode != ThemeMode.system) return;
+    appearanceRevision.value++;
+    notifyListeners();
   }
 
   void newChat() => newChatSignal.value++;

@@ -1,6 +1,6 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.8.9**。
+Windows 桌面 AI 学习工作台，当前版本 **v0.8.10**。
 学科、对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite（**每学科一个独立数据库**），
 模型使用 DeepSeek 等 OpenAI 兼容供应商。
 
@@ -131,6 +131,12 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.9**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.8.10 · 2026-10-26
+- 修复主题切换卡顿：MaterialApp 只监听外观/启动两个低频信号，会话、学科、流式输出等高频通知不再重建整棵应用。
+- 两套 `ThemeData` 缓存复用，不再每次 build 重新生成；关闭整棵树的主题插值动画（200ms lerp），切换瞬间完成。
+- 回答浮窗主题同步改为“主题变化/启动完成/host ready”时才发 IPC，不再每次 build 都发。
+- 新增 6 条主题切换回归测试（含真实 `LoopApp` 接线：会话通知不重建 MaterialApp、ThemeData 实例复用、零动画时长），全量 **499 passed / 1 skipped**；其它功能与 UI 未改动。
 
 ### v0.8.9 · 2026-10-26
 - 更新链路加固：Release 列表回退（最新 Release 没附件时找上一个可用版本）、跳过 draft/prerelease。

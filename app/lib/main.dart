@@ -80,30 +80,65 @@ LoopPalette _paletteFor(ThemeMode mode) {
 }
 
 class LoopApp extends StatefulWidget {
-  const LoopApp({super.key});
+  const LoopApp({super.key, this.state, this.home});
+
+  /// 可选注入，便于 widget 测试；生产环境使用全局 [appState]。
+  final AppState? state;
+
+  /// 测试替身：替换启动完成后的 home（生产为 [Shell]）。
+  final Widget? home;
 
   @override
   State<LoopApp> createState() => _LoopAppState();
 }
 
 class _LoopAppState extends State<LoopApp> with WidgetsBindingObserver {
+  // 两份主题只构造一次；此前每次 build 都会重新生成两份 ThemeData。
+  late final ThemeData _lightTheme = loopTheme(LoopPalette.light);
+  late final ThemeData _darkTheme = loopTheme(LoopPalette.dark);
+
+  AppState get _state => widget.state ?? appState;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    appState.bootstrap();
-    unawaited(checkForUpdatesOnStartup());
+    _state.appearanceRevision.addListener(_onAppearanceChanged);
+    _state.bootRevision.addListener(_onBootChanged);
+    WindowController.instance.readyNotifier.addListener(_onHostReady);
+    _state.bootstrap();
+    if (widget.state == null) unawaited(checkForUpdatesOnStartup());
+    // 首帧后补一次回答窗主题同步（host 可能在 initState 前就已 ready）。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleAnswerThemeSync());
   }
 
   @override
   void dispose() {
+    _state.appearanceRevision.removeListener(_onAppearanceChanged);
+    _state.bootRevision.removeListener(_onBootChanged);
+    WindowController.instance.readyNotifier.removeListener(_onHostReady);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  void _onAppearanceChanged() {
+    if (mounted) setState(() {});
+    _scheduleAnswerThemeSync();
+  }
+
+  void _onBootChanged() {
+    if (mounted) setState(() {});
+    _scheduleAnswerThemeSync();
+  }
+
+  void _onHostReady() {
+    if (WindowController.instance.ready) _scheduleAnswerThemeSync();
+  }
+
   @override
   void didChangePlatformBrightness() {
-    if (appState.themeMode == ThemeMode.system) setState(() {});
+    // 只更新调色板；是否重刷由 AppState 判断（跟随系统才需要）。
+    _state.notifySystemBrightnessChanged();
   }
 
   /// F-02：主题变化同步到已打开的回答窗（第二引擎不读设置/DB）。
@@ -111,7 +146,7 @@ class _LoopAppState extends State<LoopApp> with WidgetsBindingObserver {
   /// 在 post-frame 调用，避免 build 期间发 IPC；重复值由 host 去重。
   void _scheduleAnswerThemeSync() {
     if (!WindowController.instance.ready) return;
-    final mode = appState.themeMode.name;
+    final mode = _state.themeMode.name;
     final dark = LoopTheme.palette.isDark;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!WindowController.instance.ready) return;
@@ -124,23 +159,30 @@ class _LoopAppState extends State<LoopApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: appState,
+    // 只监听“外观”和“启动状态”两个低频信号：
+    // 会话/学科/流式输出等高频 appState 通知不再重建整个 MaterialApp。
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        _state.appearanceRevision,
+        _state.bootRevision,
+      ]),
       builder: (context, _) {
-        LoopTheme.palette = _paletteFor(appState.themeMode);
-        _scheduleAnswerThemeSync();
+        LoopTheme.palette = _paletteFor(_state.themeMode);
         return MaterialApp(
           title: '回路 Loop',
           debugShowCheckedModeBanner: false,
           navigatorKey: rootNavigatorKey,
-          theme: loopTheme(LoopPalette.light),
-          darkTheme: loopTheme(LoopPalette.dark),
-          themeMode: appState.themeMode,
-          home: appState.ready
-              ? (appState.bootstrapError != null
-                  ? _BootError(message: appState.bootstrapError!)
-                  : const Shell())
-              : const _Splash(),
+          theme: _lightTheme,
+          darkTheme: _darkTheme,
+          themeMode: _state.themeMode,
+          // 关闭整棵树的主题插值动画：切换瞬间完成，不再逐帧 lerp 造成卡顿。
+          themeAnimationDuration: Duration.zero,
+          home: widget.home ??
+              (_state.ready
+                  ? (_state.bootstrapError != null
+                      ? _BootError(message: _state.bootstrapError!, state: _state)
+                      : const Shell())
+                  : const _Splash()),
         );
       },
     );
@@ -174,9 +216,12 @@ class _Splash extends StatelessWidget {
 }
 
 class _BootError extends StatelessWidget {
-  const _BootError({required this.message});
+  const _BootError({required this.message, this.state});
 
   final String message;
+  final AppState? state;
+
+  AppState get _state => state ?? appState;
 
   @override
   Widget build(BuildContext context) {
@@ -199,9 +244,9 @@ class _BootError extends StatelessWidget {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () {
-                  appState.bootstrapError = null;
-                  appState.bootstrap();
-    unawaited(checkForUpdatesOnStartup());
+                  _state.bootstrapError = null;
+                  _state.bootstrap();
+                  if (state == null) unawaited(checkForUpdatesOnStartup());
                 },
                 child: const Text('重试'),
               ),
