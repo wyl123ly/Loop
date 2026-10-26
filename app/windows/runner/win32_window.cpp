@@ -189,6 +189,17 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case Win32Window::kLoopActivateMessage:
+      if (::IsIconic(hwnd)) {
+        ::ShowWindow(hwnd, SW_RESTORE);
+      } else {
+        ::ShowWindow(hwnd, SW_SHOW);
+      }
+      ::SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+      ::SetForegroundWindow(hwnd);
+      return 0;
+
     case WM_NCCALCSIZE:
       if (wparam == TRUE) {
         // Frameless window: let the client cover the whole window so the

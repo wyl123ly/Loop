@@ -12,6 +12,10 @@
 // rendering and input handling
 class Win32Window {
  public:
+  /// Second instance asks the first instance to bring itself to front.
+  static constexpr UINT kLoopActivateMessage = WM_APP + 0x51;
+
+ public:
   struct Point {
     unsigned int x;
     unsigned int y;
