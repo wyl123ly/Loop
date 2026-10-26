@@ -134,6 +134,14 @@ class Db {
       );
       CREATE INDEX IF NOT EXISTS idx_chunks_mat ON chunks(material_id);
       CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(chunk_id UNINDEXED, tokens);
+    CREATE TABLE IF NOT EXISTS material_ocr_pages(
+      material_id INTEGER NOT NULL,
+      page INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      chars INTEGER DEFAULT 0,
+      error TEXT DEFAULT '',
+      PRIMARY KEY(material_id, page)
+    );
       CREATE TABLE IF NOT EXISTS tasks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -295,7 +303,9 @@ class Db {
     // 老库补齐列：只对**确实存在**的表执行，避免在生产 schema（无学习表）上
     // 反复抛 "no such table" 被吞掉。
     try {
-      db.execute("ALTER TABLE mcp_servers ADD COLUMN working_directory TEXT DEFAULT ''");
+      db.execute(
+        "ALTER TABLE mcp_servers ADD COLUMN working_directory TEXT DEFAULT ''",
+      );
     } catch (_) {}
     final columns = <String, String>{
       'messages': "plan TEXT DEFAULT '[]'",
@@ -316,6 +326,11 @@ class Db {
       "ALTER TABLE materials ADD COLUMN source_mtime INTEGER DEFAULT 0",
       "ALTER TABLE materials ADD COLUMN source_size INTEGER DEFAULT 0",
       "ALTER TABLE materials ADD COLUMN relative_path TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr INTEGER DEFAULT 0",
+      "ALTER TABLE materials ADD COLUMN ocr_model TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_status TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_failed_pages TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_at TEXT DEFAULT ''",
     ]) {
       final table = sql.split(' ')[2];
       if (!tableExists(table)) continue;
@@ -330,10 +345,10 @@ class Db {
   /// 把缺失的默认设置补进老库（幂等；启动迁移与测试升级路径共用）。
   static void seedDefaults() {
     for (final entry in _defaults.entries) {
-      db.execute(
-        'INSERT OR IGNORE INTO settings(key, value) VALUES(?, ?)',
-        [entry.key, entry.value],
-      );
+      db.execute('INSERT OR IGNORE INTO settings(key, value) VALUES(?, ?)', [
+        entry.key,
+        entry.value,
+      ]);
     }
   }
 
@@ -387,7 +402,7 @@ class Db {
   );
 
   /// F-16（t13 复修）：解析前先剔除字符串字面量与注释——否则
-/// `WHERE title = 'from settings'` 或 `-- 见 materials 表` 会被误判成跨库引用。
+  /// `WHERE title = 'from settings'` 或 `-- 见 materials 表` 会被误判成跨库引用。
   static String stripSqlNoise(String sql) {
     final out = StringBuffer();
     var i = 0;
@@ -472,11 +487,50 @@ class Db {
 
   /// 关键字不得被当成表名（`UPDATE SET x=1` 里的 `SET`、`INSERT INTO … VALUES …`）。
   static const Set<String> _sqlKeywords = {
-    'set', 'values', 'select', 'where', 'and', 'or', 'on', 'using', 'as', 'if',
-    'exists', 'all', 'any', 'not', 'null', 'limit', 'order', 'group', 'by',
-    'left', 'right', 'inner', 'outer', 'cross', 'union', 'when', 'then', 'else',
-    'end', 'case', 'with', 'temporary', 'virtual', 'insert', 'update', 'delete',
-    'from', 'join', 'into', 'table', 'index', 'view', 'trigger', 'pragma',
+    'set',
+    'values',
+    'select',
+    'where',
+    'and',
+    'or',
+    'on',
+    'using',
+    'as',
+    'if',
+    'exists',
+    'all',
+    'any',
+    'not',
+    'null',
+    'limit',
+    'order',
+    'group',
+    'by',
+    'left',
+    'right',
+    'inner',
+    'outer',
+    'cross',
+    'union',
+    'when',
+    'then',
+    'else',
+    'end',
+    'case',
+    'with',
+    'temporary',
+    'virtual',
+    'insert',
+    'update',
+    'delete',
+    'from',
+    'join',
+    'into',
+    'table',
+    'index',
+    'view',
+    'trigger',
+    'pragma',
   };
 
   static bool _isAppOwned(String table) =>
@@ -573,7 +627,9 @@ class Db {
       if (dbPath.isNotEmpty) assertSubjectScopePath(dbPath);
       return body();
     }
-    final path = dbPath.isNotEmpty ? dbPath : (scopePathResolver?.call(database) ?? '');
+    final path = dbPath.isNotEmpty
+        ? dbPath
+        : (scopePathResolver?.call(database) ?? '');
     assertSubjectScopePath(path);
     final scope = SubjectScope(
       database: database,
@@ -582,17 +638,14 @@ class Db {
       dbPath: path,
     );
     final observer = scopeObserver;
-    return runZoned(
-      () async {
-        observer?.call(database, true);
-        try {
-          return await body();
-        } finally {
-          observer?.call(database, false);
-        }
-      },
-      zoneValues: {_scopeKey: scope},
-    );
+    return runZoned(() async {
+      observer?.call(database, true);
+      try {
+        return await body();
+      } finally {
+        observer?.call(database, false);
+      }
+    }, zoneValues: {_scopeKey: scope});
   }
 
   /// 同步版作用域（供测试/短事务使用）。
@@ -607,7 +660,9 @@ class Db {
       if (dbPath.isNotEmpty) assertSubjectScopePath(dbPath);
       return body();
     }
-    final path = dbPath.isNotEmpty ? dbPath : (scopePathResolver?.call(database) ?? '');
+    final path = dbPath.isNotEmpty
+        ? dbPath
+        : (scopePathResolver?.call(database) ?? '');
     assertSubjectScopePath(path);
     final scope = SubjectScope(
       database: database,
@@ -616,29 +671,32 @@ class Db {
       dbPath: path,
     );
     final observer = scopeObserver;
-    return runZoned(
-      () {
-        observer?.call(database, true);
-        try {
-          return body();
-        } finally {
-          observer?.call(database, false);
-        }
-      },
-      zoneValues: {_scopeKey: scope},
-    );
+    return runZoned(() {
+      observer?.call(database, true);
+      try {
+        return body();
+      } finally {
+        observer?.call(database, false);
+      }
+    }, zoneValues: {_scopeKey: scope});
   }
 
   // ---------------------------------------------------------------- 查询
 
-  static List<Map<String, Object?>> rows(String sql, [List<Object?> params = const []]) {
+  static List<Map<String, Object?>> rows(
+    String sql, [
+    List<Object?> params = const [],
+  ]) {
     return _target(sql)
         .select(sql, params)
         .map((row) => Map<String, Object?>.from(row))
         .toList();
   }
 
-  static Map<String, Object?>? one(String sql, [List<Object?> params = const []]) {
+  static Map<String, Object?>? one(
+    String sql, [
+    List<Object?> params = const [],
+  ]) {
     final result = _target(sql).select(sql, params);
     if (result.isEmpty) return null;
     return Map<String, Object?>.from(result.first);
@@ -670,16 +728,25 @@ class Db {
 
   // ------------------------------------------------- 始终落在全局库的便捷方法
 
-  static List<Map<String, Object?>> globalRows(String sql, [List<Object?> params = const []]) =>
-      db.select(sql, params).map((row) => Map<String, Object?>.from(row)).toList();
+  static List<Map<String, Object?>> globalRows(
+    String sql, [
+    List<Object?> params = const [],
+  ]) => db
+      .select(sql, params)
+      .map((row) => Map<String, Object?>.from(row))
+      .toList();
 
-  static Map<String, Object?>? globalOne(String sql, [List<Object?> params = const []]) {
+  static Map<String, Object?>? globalOne(
+    String sql, [
+    List<Object?> params = const [],
+  ]) {
     final result = db.select(sql, params);
     if (result.isEmpty) return null;
     return Map<String, Object?>.from(result.first);
   }
 
-  static void globalRun(String sql, [List<Object?> params = const []]) => db.execute(sql, params);
+  static void globalRun(String sql, [List<Object?> params = const []]) =>
+      db.execute(sql, params);
 
   static bool tableExists(String name) => tableExistsIn(db, name);
 
@@ -703,7 +770,9 @@ class Db {
   // ---------------------------------------------------------------- 设置
 
   static String setting(String key, [String fallback = '']) {
-    final value = globalOne('SELECT value FROM settings WHERE key=?', [key])?['value'];
+    final value = globalOne('SELECT value FROM settings WHERE key=?', [
+      key,
+    ])?['value'];
     if (value == null) return fallback;
     final text = value.toString();
     return text.isEmpty ? fallback : text;
@@ -741,7 +810,10 @@ class Db {
     try {
       final data = jsonDecode(raw.toString());
       if (data is List) {
-        return data.whereType<Map>().map((e) => Map<String, Object?>.from(e)).toList();
+        return data
+            .whereType<Map>()
+            .map((e) => Map<String, Object?>.from(e))
+            .toList();
       }
     } catch (_) {}
     return [];

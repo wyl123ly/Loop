@@ -15,6 +15,7 @@ import 'job_scheduler.dart';
 import 'mcp_manager.dart';
 import 'db.dart';
 import 'llm.dart';
+import 'ocr_vision.dart';
 import 'parsing.dart';
 import 'paths.dart';
 import 'retrieval.dart';
@@ -23,6 +24,63 @@ import 'skills_registry.dart';
 import 'subject_migration.dart';
 import 'subject_progress.dart';
 import 'subject_store.dart';
+
+class _PendingPdf {
+  _PendingPdf({
+    required this.token,
+    required this.name,
+    required this.path,
+    required this.pages,
+    required this.subjectKey,
+    required this.createdAt,
+  });
+
+  final String token;
+  final String name;
+  final String path;
+  final int pages;
+  final String subjectKey;
+  final DateTime createdAt;
+}
+
+class _OcrJob {
+  _OcrJob({
+    required this.token,
+    required this.subjectKey,
+    required this.name,
+    required this.path,
+    required this.pages,
+    required this.providerId,
+    required this.model,
+  });
+
+  final String token;
+  final String subjectKey;
+  final String name;
+  final String path;
+  final int pages;
+  final String providerId;
+  final String model;
+  String status = 'queued'; // queued / running / done / failed / cancelled
+  int currentPage = 0;
+  int done = 0;
+  final List<int> failedPages = [];
+  String phase = 'queued';
+  String error = '';
+  Map<String, Object?>? result;
+
+  Map<String, Object?> toJson() => {
+    'token': token,
+    'status': status,
+    'pages': pages,
+    'current_page': currentPage,
+    'done': done,
+    'failed_pages': failedPages,
+    'phase': phase,
+    'error': error,
+    'result': result,
+  };
+}
 
 /// 进程内 HTTP 服务：绑定 127.0.0.1:8765，和 Flutter UI 同进程，没有子进程。
 class Backend {
@@ -54,12 +112,18 @@ class Backend {
 
   /// 测试专用：真实 HTTP 服务 + 隔离数据目录（端口 0 = 随机空闲端口）。
   /// 不启动后台任务调度器（避免测试里残留 Timer）。
-  static Future<int> startForTests(Directory dataDir, {int listenPort = 0}) async {
+  static Future<int> startForTests(
+    Directory dataDir, {
+    int listenPort = 0,
+  }) async {
     await stopForTests();
     SubjectStore.initTempForTests(dataDir);
     SubjectMigration.ensureApplied();
     ProviderRegistry.ensureMigrated();
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, listenPort);
+    final server = await HttpServer.bind(
+      InternetAddress.loopbackIPv4,
+      listenPort,
+    );
     _server = server;
     server.listen(_handle, onError: (Object _) {});
     return server.port;
@@ -132,7 +196,9 @@ class Backend {
         if (segments.length >= 3 && segments[2] == 'test' && method == 'POST') {
           return _testSettings(request);
         }
-        if (segments.length >= 3 && segments[2] == 'models' && method == 'POST') {
+        if (segments.length >= 3 &&
+            segments[2] == 'models' &&
+            method == 'POST') {
           return _fetchProviderModels(request);
         }
         if (method == 'GET') {
@@ -140,28 +206,36 @@ class Backend {
           final active = ProviderRegistry.active();
           final key = active.apiKey;
           return _json(request, 200, {
-            'api_key': key.length > 8 ? 'sk-${'•' * 8}${key.substring(key.length - 4)}' : (key.isEmpty ? '' : '已配置'),
+            'api_key': key.length > 8
+                ? 'sk-${'•' * 8}${key.substring(key.length - 4)}'
+                : (key.isEmpty ? '' : '已配置'),
             'has_key': key.isNotEmpty,
             'base_url': active.baseUrl,
             'model': active.defaultModel,
             'reason_model': active.reasonModel,
             'active_provider': active.id,
             'providers': jsonEncode([
-              for (final profile in ProviderRegistry.all()) profile.toJson(maskKey: true),
+              for (final profile in ProviderRegistry.all())
+                profile.toJson(maskKey: true),
             ]),
             'theme': Db.setting('theme', 'system'),
             'custom_modes': Db.setting('custom_modes', '[]'),
-            'auto_check_updates': Db.setting('auto_check_updates', 'true') == 'true',
-            'sidebar_collapsed': Db.setting('sidebar_collapsed', 'false') == 'true',
+            'auto_check_updates':
+                Db.setting('auto_check_updates', 'true') == 'true',
+            'sidebar_collapsed':
+                Db.setting('sidebar_collapsed', 'false') == 'true',
             'stream_output': Db.setting('stream_output', 'true') == 'true',
             // v0.8.0 学科作用域（§4.2）：前端启动时同步当前学科。
             'active_subject': SubjectStore.activeKey(),
-            'cross_subject_search': Db.setting('cross_subject_search', 'false') == 'true',
+            'cross_subject_search':
+                Db.setting('cross_subject_search', 'false') == 'true',
             // F-18：hub 恒等于后端白名单（DB 里的历史值可能是被改过的旧值）。
-            'skill_hub_url': SkillHubAllowlist.hubs[SkillHubAllowlist.defaultHub]!.baseUrl,
+            'skill_hub_url':
+                SkillHubAllowlist.hubs[SkillHubAllowlist.defaultHub]!.baseUrl,
             'skill_hub_url_readonly': true,
             'skill_hub_note': '教学技能来源由后端白名单固定（仅 EduHub），不可在前端修改。',
-            'skill_inject_max': int.tryParse(Db.setting('skill_inject_max', '3')) ?? 3,
+            'skill_inject_max':
+                int.tryParse(Db.setting('skill_inject_max', '3')) ?? 3,
             // F-11：迁移后一次性提示是否已看过（UI 只提示一次）。
             'subject_migration_notice_seen':
                 Db.setting('subject_migration_notice_seen', 'false') == 'true',
@@ -185,7 +259,8 @@ class Backend {
           // 旧格式兼容：api_key/base_url/model/reason_model 写入当前供应商。
           var active = ProviderRegistry.active();
           var changed = false;
-          if (body['api_key'] is String && !body['api_key'].toString().contains('•')) {
+          if (body['api_key'] is String &&
+              !body['api_key'].toString().contains('•')) {
             final value = body['api_key'].toString().trim();
             Db.setSetting('api_key', value);
             active = active.copyWith(apiKey: value);
@@ -197,7 +272,9 @@ class Backend {
               Db.setSetting(key, value);
               if (key == 'base_url') active = active.copyWith(baseUrl: value);
               if (key == 'model') active = active.copyWith(defaultModel: value);
-              if (key == 'reason_model') active = active.copyWith(reasonModel: value);
+              if (key == 'reason_model') {
+                active = active.copyWith(reasonModel: value);
+              }
               changed = true;
             }
           }
@@ -212,18 +289,28 @@ class Backend {
             Db.setSetting('theme', theme!);
           }
           if (body['sidebar_collapsed'] is bool) {
-            Db.setSetting('sidebar_collapsed', body['sidebar_collapsed'] == true ? 'true' : 'false');
+            Db.setSetting(
+              'sidebar_collapsed',
+              body['sidebar_collapsed'] == true ? 'true' : 'false',
+            );
           }
           if (body['auto_check_updates'] is bool) {
-            Db.setSetting('auto_check_updates', body['auto_check_updates'] == true ? 'true' : 'false');
+            Db.setSetting(
+              'auto_check_updates',
+              body['auto_check_updates'] == true ? 'true' : 'false',
+            );
           }
           if (body['stream_output'] is bool) {
-            Db.setSetting('stream_output', body['stream_output'] == true ? 'true' : 'false');
+            Db.setSetting(
+              'stream_output',
+              body['stream_output'] == true ? 'true' : 'false',
+            );
           }
           if (body['custom_modes'] is String) {
             Db.setSetting('custom_modes', body['custom_modes'].toString());
           }
-          if (body['active_subject'] is String && body['active_subject'].toString().isNotEmpty) {
+          if (body['active_subject'] is String &&
+              body['active_subject'].toString().isNotEmpty) {
             // 当前学科：非法 key 直接 404（不回退他科）。
             SubjectStore.setActive(body['active_subject'].toString());
           }
@@ -282,7 +369,9 @@ class Backend {
               return _json(request, 200, {'ok': true});
             });
           }
-          if (segments.length == 4 && segments[3] == 'messages' && method == 'GET') {
+          if (segments.length == 4 &&
+              segments[3] == 'messages' &&
+              method == 'GET') {
             return _listMessages(request, id);
           }
         }
@@ -293,13 +382,25 @@ class Backend {
         return _json(request, 405, {'detail': 'method not allowed'});
 
       case 'agent':
-        if (method == 'POST' && segments.length == 3) return _agentControl(request, segments[2]);
-        if (method == 'GET' && segments.length == 3 && segments[2] == 'settings') return _agentSettings(request);
-        if ((method == 'PUT' || method == 'POST') && segments.length == 3 && segments[2] == 'settings') return _agentSettings(request);
+        if (method == 'POST' && segments.length == 3) {
+          return _agentControl(request, segments[2]);
+        }
+        if (method == 'GET' &&
+            segments.length == 3 &&
+            segments[2] == 'settings') {
+          return _agentSettings(request);
+        }
+        if ((method == 'PUT' || method == 'POST') &&
+            segments.length == 3 &&
+            segments[2] == 'settings') {
+          return _agentSettings(request);
+        }
         return _json(request, 404, {'detail': 'not found'});
 
       case 'mcp':
-        if (segments.length >= 3 && segments[2] == 'servers') return _mcp(request, segments);
+        if (segments.length >= 3 && segments[2] == 'servers') {
+          return _mcp(request, segments);
+        }
         return _json(request, 404, {'detail': 'not found'});
 
       case 'jobs':
@@ -307,8 +408,16 @@ class Backend {
 
       case 'audit':
         if (method == 'GET') {
-          final limit = int.tryParse(request.uri.queryParameters['limit'] ?? '100') ?? 100;
-          return _json(request, 200, Db.rows('SELECT * FROM agent_audit ORDER BY id DESC LIMIT ?', [limit.clamp(1, 500)]));
+          final limit =
+              int.tryParse(request.uri.queryParameters['limit'] ?? '100') ??
+              100;
+          return _json(
+            request,
+            200,
+            Db.rows('SELECT * FROM agent_audit ORDER BY id DESC LIMIT ?', [
+              limit.clamp(1, 500),
+            ]),
+          );
         }
         return _json(request, 405, {'detail': 'method not allowed'});
 
@@ -317,14 +426,36 @@ class Backend {
         return _json(request, 405, {'detail': 'method not allowed'});
 
       case 'materials':
-        if (segments.length >= 3 && segments[2] == 'folders') return _materialFolders(request, segments);
-        if (segments.length == 3 && segments[2] == 'scan' && method == 'POST') return _scanFolder(request);
-        if (segments.length == 3 && segments[2] == 'import' && method == 'POST') return _importFolder(request);
-        if (segments.length == 3 && segments[2] == 'import-cancel' && method == 'POST') {
+        if (segments.length >= 3 && segments[2] == 'folders') {
+          return _materialFolders(request, segments);
+        }
+        if (segments.length == 3 && segments[2] == 'scan' && method == 'POST') {
+          return _scanFolder(request);
+        }
+        if (segments.length == 3 && segments[2] == 'import' && method == 'POST') {
+          return _importFolder(request);
+        }
+        if (segments.length == 3 &&
+            segments[2] == 'import-cancel' &&
+            method == 'POST') {
           final body = await _jsonBody(request);
           final token = (body['token'] ?? '').toString();
           if (_importCancels.containsKey(token)) _importCancels[token] = true;
           return _json(request, 200, {'ok': true});
+        }
+        if (segments.length == 3 && segments[2] == 'ocr' && method == 'POST') {
+          return _startOcr(request);
+        }
+        if (segments.length == 4 && segments[2] == 'ocr' && method == 'GET') {
+          final job = _ocrJobs[segments[3]];
+          if (job == null) return _json(request, 404, {'detail': 'OCR 任务不存在'});
+          return _json(request, 200, job.toJson());
+        }
+        if (segments.length == 5 &&
+            segments[2] == 'ocr' &&
+            segments[4] == 'cancel' &&
+            method == 'POST') {
+          return _cancelOcr(request, segments[3]);
         }
         if (segments.length == 2 && method == 'GET') {
           return _scoped(request, (record, db) async {
@@ -343,16 +474,22 @@ class Backend {
             return _json(request, 200, {'ok': true});
           });
         }
-        if (segments.length == 4 && segments[3] == 'preview' && method == 'GET') {
+        if (segments.length == 4 &&
+            segments[3] == 'preview' &&
+            method == 'GET') {
           return _scoped(request, (record, db) async {
             // ID 只在其学科库内有意义：找不到即 404，不回退到他科（§6.4）。
             final material = db.one('SELECT * FROM materials WHERE id=?', [id]);
-            if (material == null) return _json(request, 404, {'detail': '资料不存在'});
+            if (material == null) {
+              return _json(request, 404, {'detail': '资料不存在'});
+            }
             final chunks = db.rows(
               'SELECT page, text FROM chunks WHERE material_id=? ORDER BY id LIMIT 4',
               [id],
             );
-            final text = chunks.map((c) => 'p.${c['page']}\n${c['text']}').join('\n\n');
+            final text = chunks
+                .map((c) => 'p.${c['page']}\n${c['text']}')
+                .join('\n\n');
             return _json(request, 200, {
               'id': id,
               'name': material['name'],
@@ -360,7 +497,9 @@ class Backend {
               'pages': material['pages'],
               'chars': material['chars'],
               'subject_key': record.key,
-              'text': text.isEmpty ? '（没有可显示的文字）' : (text.length > 5000 ? text.substring(0, 5000) : text),
+              'text': text.isEmpty
+                  ? '（没有可显示的文字）'
+                  : (text.length > 5000 ? text.substring(0, 5000) : text),
             });
           });
         }
@@ -393,11 +532,14 @@ class Backend {
 
       case 'notes':
         if (segments.length == 2 && method == 'GET') {
-          return _scoped(request, (record, db) async => _json(
-                request,
-                200,
-                db.rows('SELECT * FROM notes ORDER BY id DESC LIMIT 100'),
-              ));
+          return _scoped(
+            request,
+            (record, db) async => _json(
+              request,
+              200,
+              db.rows('SELECT * FROM notes ORDER BY id DESC LIMIT 100'),
+            ),
+          );
         }
         final id = int.tryParse(segments.length > 2 ? segments[2] : '');
         if (id != null && method == 'DELETE') {
@@ -423,16 +565,24 @@ class Backend {
   /// 缺省 = 当前学科；`?subject=<key|id>` 显式指定（§6.1）。学科间不串库。
   static Future<void> _listConversations(HttpRequest request) async {
     return _scoped(request, (record, db) async {
-      final items = db.rows('SELECT * FROM conversations ORDER BY updated_at DESC LIMIT 100');
+      final items = db.rows(
+        'SELECT * FROM conversations ORDER BY updated_at DESC LIMIT 100',
+      );
       for (final item in items) {
         final id = item['id'];
-        final last =
-            db.one('SELECT content FROM messages WHERE conversation_id=? ORDER BY id DESC LIMIT 1', [id]);
+        final last = db.one(
+          'SELECT content FROM messages WHERE conversation_id=? ORDER BY id DESC LIMIT 1',
+          [id],
+        );
         item['preview'] = (last?['content'] ?? '').toString();
         if ((item['preview'] as String).length > 60) {
           item['preview'] = (item['preview'] as String).substring(0, 60);
         }
-        item['messages'] = db.scalar('SELECT COUNT(*) FROM messages WHERE conversation_id=?', [id]) ?? 0;
+        item['messages'] =
+            db.scalar('SELECT COUNT(*) FROM messages WHERE conversation_id=?', [
+              id,
+            ]) ??
+            0;
         item['subject_key'] = record.key;
       }
       return _json(request, 200, items);
@@ -453,9 +603,14 @@ class Backend {
     }, jsonBody: body);
   }
 
-  static Future<void> _listMessages(HttpRequest request, int conversationId) async {
+  static Future<void> _listMessages(
+    HttpRequest request,
+    int conversationId,
+  ) async {
     return _scoped(request, (record, db) async {
-      final conversation = db.one('SELECT id FROM conversations WHERE id=?', [conversationId]);
+      final conversation = db.one('SELECT id FROM conversations WHERE id=?', [
+        conversationId,
+      ]);
       if (conversation == null) return _json(request, 404, {'detail': '会话不存在'});
       final items = db.rows(
         'SELECT * FROM messages WHERE conversation_id=? ORDER BY id',
@@ -503,14 +658,20 @@ class Backend {
           });
         }
         // 会话必须存在于**本学科库**：找不到即 404，不回退到他科（§6.4 防串库）。
-        final conversation = Db.one('SELECT * FROM conversations WHERE id=?', [conversationId]);
-        if (conversation == null) return _json(request, 404, {'detail': '会话不存在'});
+        final conversation = Db.one('SELECT * FROM conversations WHERE id=?', [
+          conversationId,
+        ]);
+        if (conversation == null) {
+          return _json(request, 404, {'detail': '会话不存在'});
+        }
 
         final attachmentMeta = <Map<String, Object?>>[];
         for (final attachment in attachments) {
           if (attachment.startsWith('img_')) {
             final id = int.tryParse(attachment.substring(4));
-            final row = id == null ? null : Db.one('SELECT name FROM uploads WHERE id=?', [id]);
+            final row = id == null
+                ? null
+                : Db.one('SELECT name FROM uploads WHERE id=?', [id]);
             if (row != null) {
               attachmentMeta.add({
                 'id': attachment,
@@ -520,7 +681,9 @@ class Backend {
             }
           } else if (attachment.startsWith('mat_')) {
             final id = int.tryParse(attachment.substring(4));
-            final row = id == null ? null : Db.one('SELECT name FROM materials WHERE id=?', [id]);
+            final row = id == null
+                ? null
+                : Db.one('SELECT name FROM materials WHERE id=?', [id]);
             if (row != null) {
               attachmentMeta.add({
                 'id': attachment,
@@ -539,23 +702,35 @@ class Backend {
           'attachments': jsonEncode(attachmentMeta),
           'created_at': Db.nowIso(),
         });
-        if ((conversation['title'] ?? '') == '' || conversation['title'] == '新对话') {
+        if ((conversation['title'] ?? '') == '' ||
+            conversation['title'] == '新对话') {
           Db.run('UPDATE conversations SET title=? WHERE id=?', [
-            text.isEmpty ? '新对话' : (text.length > 20 ? text.substring(0, 20) : text),
+            text.isEmpty
+                ? '新对话'
+                : (text.length > 20 ? text.substring(0, 20) : text),
             conversationId,
           ]);
         }
-        Db.run('UPDATE conversations SET updated_at=? WHERE id=?', [Db.nowIso(), conversationId]);
+        Db.run('UPDATE conversations SET updated_at=? WHERE id=?', [
+          Db.nowIso(),
+          conversationId,
+        ]);
 
         final response = request.response;
         response.statusCode = 200;
-        response.headers.contentType = ContentType('text', 'event-stream', charset: 'utf-8');
+        response.headers.contentType = ContentType(
+          'text',
+          'event-stream',
+          charset: 'utf-8',
+        );
         response.headers.set('Cache-Control', 'no-cache');
         response.headers.set('X-Accel-Buffering', 'no');
         response.bufferOutput = false;
 
         final run = AgentRuns.start(conversationId, subjectKey: subject.key);
-        response.write('event: run\ndata: ${jsonEncode({'run_id': run.id, 'subject_key': subject.key})}\n\n');
+        response.write(
+          'event: run\ndata: ${jsonEncode({'run_id': run.id, 'subject_key': subject.key})}\n\n',
+        );
         await response.flush();
 
         final events = runAgent(
@@ -574,7 +749,9 @@ class Backend {
           await for (final event in events) {
             if (event.event == 'cancelled') status = 'cancelled';
             if (event.event == 'error') status = 'error';
-            response.write('event: ${event.event}\ndata: ${jsonEncode(event.data)}\n\n');
+            response.write(
+              'event: ${event.event}\ndata: ${jsonEncode(event.data)}\n\n',
+            );
             await response.flush();
           }
         } catch (_) {
@@ -584,7 +761,10 @@ class Backend {
           run.finish(status);
           AgentRuns.remove(run.id);
         }
-        Db.run('UPDATE conversations SET updated_at=? WHERE id=?', [Db.nowIso(), conversationId]);
+        Db.run('UPDATE conversations SET updated_at=? WHERE id=?', [
+          Db.nowIso(),
+          conversationId,
+        ]);
         await response.close();
       },
       subjectKey: subject.key,
@@ -603,7 +783,8 @@ class Backend {
       });
     }
     final body = await _jsonBody(request);
-    if (body['workspace_path'] is String && (body['workspace_path'] as String).trim().isNotEmpty) {
+    if (body['workspace_path'] is String &&
+        (body['workspace_path'] as String).trim().isNotEmpty) {
       final dir = Directory((body['workspace_path'] as String).trim());
       if (!dir.existsSync()) dir.createSync(recursive: true);
       Db.setSetting('workspace_path', dir.path);
@@ -614,7 +795,9 @@ class Backend {
       'agent_mcp': body['mcp'],
       'agent_background': body['background'],
     }.entries) {
-      if (entry.value is bool) Db.setSetting(entry.key, entry.value == true ? 'true' : 'false');
+      if (entry.value is bool) {
+        Db.setSetting(entry.key, entry.value == true ? 'true' : 'false');
+      }
     }
     return _json(request, 200, {'ok': true});
   }
@@ -627,11 +810,17 @@ class Backend {
         final body = await _jsonBody(request);
         final name = (body['name'] ?? '').toString().trim();
         if (name.isEmpty) return _json(request, 400, {'detail': '名称不能为空'});
-        final transport = (body['transport'] ?? 'stdio').toString() == 'http' ? 'http' : 'stdio';
+        final transport = (body['transport'] ?? 'stdio').toString() == 'http'
+            ? 'http'
+            : 'stdio';
         final command = (body['command'] ?? '').toString().trim();
         final url = (body['url'] ?? '').toString().trim();
-        if (transport == 'stdio' && command.isEmpty) return _json(request, 400, {'detail': 'stdio 需要命令'});
-        if (transport == 'http' && url.isEmpty) return _json(request, 400, {'detail': 'HTTP 需要 URL'});
+        if (transport == 'stdio' && command.isEmpty) {
+          return _json(request, 400, {'detail': 'stdio 需要命令'});
+        }
+        if (transport == 'http' && url.isEmpty) {
+          return _json(request, 400, {'detail': 'HTTP 需要 URL'});
+        }
         final args = body['args'];
         final env = body['env'];
         final id = Db.insert('mcp_servers', {
@@ -659,14 +848,24 @@ class Backend {
     if (method == 'PATCH') {
       final body = await _jsonBody(request);
       final fields = <String, Object?>{};
-      for (final key in ['name', 'transport', 'command', 'url', 'working_directory']) {
+      for (final key in [
+        'name',
+        'transport',
+        'command',
+        'url',
+        'working_directory',
+      ]) {
         if (body[key] is String) fields[key] = body[key];
       }
       if (body['args'] is String || body['args'] is List) {
-        fields['args'] = body['args'] is String ? body['args'] : jsonEncode(body['args']);
+        fields['args'] = body['args'] is String
+            ? body['args']
+            : jsonEncode(body['args']);
       }
       if (body['env'] is String || body['env'] is Map) {
-        fields['env'] = body['env'] is String ? body['env'] : jsonEncode(body['env']);
+        fields['env'] = body['env'] is String
+            ? body['env']
+            : jsonEncode(body['env']);
       }
       if (body['enabled'] is bool) {
         fields['enabled'] = body['enabled'] == true ? 1 : 0;
@@ -674,7 +873,10 @@ class Backend {
       }
       if (fields.isNotEmpty) {
         final sets = fields.keys.map((key) => '$key=?').join(',');
-        Db.run('UPDATE mcp_servers SET $sets WHERE id=?', [...fields.values, id]);
+        Db.run('UPDATE mcp_servers SET $sets WHERE id=?', [
+          ...fields.values,
+          id,
+        ]);
       }
       return _json(request, 200, {'ok': true});
     }
@@ -688,14 +890,26 @@ class Backend {
 
   static Future<void> _jobs(HttpRequest request, List<String> segments) async {
     if (segments.length == 2) {
-      if (request.method == 'GET') return _json(request, 200, Db.rows('SELECT * FROM agent_jobs ORDER BY id DESC'));
+      if (request.method == 'GET') {
+        return _json(
+          request,
+          200,
+          Db.rows('SELECT * FROM agent_jobs ORDER BY id DESC'),
+        );
+      }
       if (request.method == 'POST') {
         final body = await _jsonBody(request);
         final title = (body['title'] ?? '').toString().trim();
         final prompt = (body['prompt'] ?? '').toString().trim();
-        if (title.isEmpty || prompt.isEmpty) return _json(request, 400, {'detail': '标题和内容不能为空'});
-        final kind = (body['schedule_kind'] ?? 'interval').toString() == 'daily' ? 'daily' : 'interval';
-        final value = (body['schedule_value'] ?? (kind == 'daily' ? '08:00' : '60')).toString();
+        if (title.isEmpty || prompt.isEmpty) {
+          return _json(request, 400, {'detail': '标题和内容不能为空'});
+        }
+        final kind = (body['schedule_kind'] ?? 'interval').toString() == 'daily'
+            ? 'daily'
+            : 'interval';
+        final value =
+            (body['schedule_value'] ?? (kind == 'daily' ? '08:00' : '60'))
+                .toString();
         final id = Db.insert('agent_jobs', {
           'title': title,
           'prompt': prompt,
@@ -714,7 +928,9 @@ class Backend {
     if (id == null) return _json(request, 400, {'detail': 'bad id'});
     final row = Db.one('SELECT * FROM agent_jobs WHERE id=?', [id]);
     if (row == null) return _json(request, 404, {'detail': '任务不存在'});
-    if (segments.length == 4 && segments[3] == 'run' && request.method == 'POST') {
+    if (segments.length == 4 &&
+        segments[3] == 'run' &&
+        request.method == 'POST') {
       unawaited(JobScheduler.runJob(row));
       return _json(request, 200, {'ok': true});
     }
@@ -723,12 +939,21 @@ class Backend {
       final fields = <String, Object?>{};
       if (body['title'] is String) fields['title'] = body['title'];
       if (body['prompt'] is String) fields['prompt'] = body['prompt'];
-      if (body['schedule_kind'] is String) fields['schedule_kind'] = body['schedule_kind'];
-      if (body['schedule_value'] is String) fields['schedule_value'] = body['schedule_value'];
-      if (body['enabled'] is bool) fields['enabled'] = body['enabled'] == true ? 1 : 0;
+      if (body['schedule_kind'] is String) {
+        fields['schedule_kind'] = body['schedule_kind'];
+      }
+      if (body['schedule_value'] is String) {
+        fields['schedule_value'] = body['schedule_value'];
+      }
+      if (body['enabled'] is bool) {
+        fields['enabled'] = body['enabled'] == true ? 1 : 0;
+      }
       if (fields.isNotEmpty) {
         final sets = fields.keys.map((key) => '$key=?').join(',');
-        Db.run('UPDATE agent_jobs SET $sets WHERE id=?', [...fields.values, id]);
+        Db.run('UPDATE agent_jobs SET $sets WHERE id=?', [
+          ...fields.values,
+          id,
+        ]);
       }
       return _json(request, 200, {'ok': true});
     }
@@ -761,8 +986,14 @@ class Backend {
   }
 
   static final Map<String, bool> _importCancels = {};
+  static final Map<String, _PendingPdf> _pendingPdfs = {};
+  static final Map<String, _OcrJob> _ocrJobs = {};
+  static final Map<String, bool> _ocrCancels = {};
 
-  static Future<void> _materialFolders(HttpRequest request, List<String> segments) async {
+  static Future<void> _materialFolders(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
     if (segments.length == 3 && request.method == 'GET') {
       return _scoped(request, (record, db) async {
         final rows = db.rows('''
@@ -780,10 +1011,14 @@ class Backend {
         return _json(request, 200, {'ok': true});
       });
     }
-    if (segments.length == 5 && segments[4] == 'rescan' && request.method == 'POST') {
+    if (segments.length == 5 &&
+        segments[4] == 'rescan' &&
+        request.method == 'POST') {
       final id = int.tryParse(segments[3]);
       return _scoped(request, (record, db) async {
-        final folder = db.one('SELECT * FROM material_folders WHERE id=?', [id]);
+        final folder = db.one('SELECT * FROM material_folders WHERE id=?', [
+          id,
+        ]);
         if (folder == null) return _json(request, 404, {'detail': '文件夹不存在'});
         return _json(request, 200, {
           'root_path': folder['root_path'],
@@ -829,7 +1064,9 @@ class Backend {
     final path = (body['path'] ?? '').toString().trim();
     if (path.isEmpty) return _json(request, 400, {'detail': '缺少文件夹路径'});
     final recursive = body['recursive'] != false;
-    final duplicate = (body['duplicate'] ?? 'skip').toString() == 'update' ? 'update' : 'skip';
+    final duplicate = (body['duplicate'] ?? 'skip').toString() == 'update'
+        ? 'update'
+        : 'skip';
     final token = (body['token'] ?? '').toString().isEmpty
         ? DateTime.now().microsecondsSinceEpoch.toString()
         : body['token'].toString();
@@ -849,7 +1086,11 @@ class Backend {
 
       final response = request.response;
       response.statusCode = 200;
-      response.headers.contentType = ContentType('text', 'event-stream', charset: 'utf-8');
+      response.headers.contentType = ContentType(
+        'text',
+        'event-stream',
+        charset: 'utf-8',
+      );
       response.headers.set('Cache-Control', 'no-cache');
       response.bufferOutput = false;
 
@@ -857,14 +1098,9 @@ class Backend {
       final supported = scan.supported;
       final files = supported;
       const skippedByLimit = 0;
-      response.write('event: start\ndata: ${jsonEncode({
-        'token': token,
-        'folder_id': folderId,
-        'root': scan.root,
-        'name': scan.name,
-        'total': files.length,
-        'subject_key': record.key,
-      })}\n\n');
+      response.write(
+        'event: start\ndata: ${jsonEncode({'token': token, 'folder_id': folderId, 'root': scan.root, 'name': scan.name, 'total': files.length, 'subject_key': record.key})}\n\n',
+      );
       await response.flush();
 
       var imported = 0;
@@ -880,27 +1116,22 @@ class Backend {
           if (status == 'skipped') skipped++;
           if (status == 'failed') failed++;
           done++;
-          response.write('event: file\ndata: ${jsonEncode({
-            'name': file.name,
-            'relative': file.relative,
-            'status': status,
-            'reason': result['reason'] ?? '',
-            'pages': result['pages'] ?? 0,
-            'chars': result['chars'] ?? 0,
-          })}\n\n');
-          response.write('event: progress\ndata: ${jsonEncode({'done': done, 'total': files.length})}\n\n');
+          response.write(
+            'event: file\ndata: ${jsonEncode({'name': file.name, 'relative': file.relative, 'status': status, 'reason': result['reason'] ?? '', 'pages': result['pages'] ?? 0, 'chars': result['chars'] ?? 0})}\n\n',
+          );
+          response.write(
+            'event: progress\ndata: ${jsonEncode({'done': done, 'total': files.length})}\n\n',
+          );
           await response.flush();
         }
         final cancelled = _importCancels[token] == true;
-        Db.run('UPDATE material_folders SET last_scan_at=? WHERE id=?', [Db.nowIso(), folderId]);
-        response.write('event: done\ndata: ${jsonEncode({
-          'cancelled': cancelled,
-          'imported': imported,
-          'skipped': skipped,
-          'failed': failed,
-          'folder_id': folderId,
-          'subject_key': record.key,
-        })}\n\n');
+        Db.run('UPDATE material_folders SET last_scan_at=? WHERE id=?', [
+          Db.nowIso(),
+          folderId,
+        ]);
+        response.write(
+          'event: done\ndata: ${jsonEncode({'cancelled': cancelled, 'imported': imported, 'skipped': skipped, 'failed': failed, 'folder_id': folderId, 'subject_key': record.key})}\n\n',
+        );
         await response.flush();
       } catch (_) {
         // 客户端断开时停止导入。
@@ -915,6 +1146,230 @@ class Backend {
 
   static const _imageExts = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'};
 
+  static void _cleanupPendingPdfs() {
+    final now = DateTime.now();
+    for (final entry in _pendingPdfs.entries.toList()) {
+      if (now.difference(entry.value.createdAt) < const Duration(hours: 24)) {
+        continue;
+      }
+      final job = _ocrJobs[entry.key];
+      if (job != null && job.status == 'running') continue;
+      _pendingPdfs.remove(entry.key);
+      try {
+        final file = File(entry.value.path);
+        if (file.existsSync()) file.deleteSync();
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> _startOcr(HttpRequest request) async {
+    final body = await _jsonBody(request);
+    if (body['consent'] != true) {
+      return _json(request, 400, {'detail': '需要先确认页面图会发送给所选模型供应商。'});
+    }
+    final token = (body['token'] ?? '').toString();
+    final pending = _pendingPdfs[token];
+    if (pending == null) {
+      return _json(request, 404, {'detail': '扫描件临时文件已过期，请重新上传。'});
+    }
+    final existing = _ocrJobs[token];
+    if (existing != null && existing.status == 'running') {
+      return _json(request, 409, {'detail': '这个扫描件正在转写中。'});
+    }
+    const maxPages = 30;
+    if (pending.pages > maxPages) {
+      return _json(request, 400, {
+        'detail': '扫描件共 ${pending.pages} 页，超过单次上限 $maxPages 页，请分批上传。',
+      });
+    }
+    final models = visionModelOptions();
+    if (models.isEmpty) {
+      return _json(request, 400, {'detail': '当前没有可用的视觉模型，请先在设置里配置。'});
+    }
+    final providerId = (body['provider'] ?? '').toString();
+    final modelId = (body['model'] ?? '').toString();
+    final selected = models.firstWhere(
+      (item) => item.providerId == providerId && item.model == modelId,
+      orElse: () => models.first,
+    );
+    try {
+      ocrConfig(selected.providerId, selected.model);
+    } catch (error) {
+      return _json(request, 400, {'detail': error.toString()});
+    }
+
+    final job = _OcrJob(
+      token: token,
+      subjectKey: pending.subjectKey,
+      name: pending.name,
+      path: pending.path,
+      pages: pending.pages,
+      providerId: selected.providerId,
+      model: selected.model,
+    );
+    _ocrJobs[token] = job;
+    _ocrCancels[token] = false;
+    unawaited(_runOcrJob(job));
+    return _json(request, 200, {
+      'token': token,
+      'pages': pending.pages,
+      'model': '${selected.providerName} · ${selected.model}',
+    });
+  }
+
+  static Future<void> _cancelOcr(HttpRequest request, String token) async {
+    final pending = _pendingPdfs[token];
+    final job = _ocrJobs[token];
+    if (pending == null && job == null) {
+      return _json(request, 404, {'detail': 'OCR 任务不存在'});
+    }
+    _ocrCancels[token] = true;
+    if (job == null) {
+      _pendingPdfs.remove(token);
+      try {
+        final file = File(pending!.path);
+        if (file.existsSync()) file.deleteSync();
+      } catch (_) {}
+    }
+    return _json(request, 200, {'ok': true});
+  }
+
+  static Future<void> _runOcrJob(_OcrJob job) async {
+    final record = SubjectStore.byKey(job.subjectKey);
+    if (record == null || record.archived) {
+      job.status = 'failed';
+      job.error = '学科不存在或已归档，不能写入资料。';
+      return;
+    }
+    final subjectDb = SubjectStore.open(job.subjectKey);
+    final pages = List<String>.filled(job.pages, '');
+    final errors = <String>[];
+    job.status = 'running';
+    job.phase = 'starting';
+    try {
+      final config = ocrConfig(job.providerId, job.model);
+      for (var index = 0; index < job.pages; index++) {
+        if (_ocrCancels[job.token] == true) {
+          job.status = 'cancelled';
+          job.phase = 'cancelled';
+          return;
+        }
+        job.currentPage = index + 1;
+        job.phase = 'rendering';
+        final png = await renderPdfPage(job.path, index);
+        if (_ocrCancels[job.token] == true) {
+          job.status = 'cancelled';
+          job.phase = 'cancelled';
+          return;
+        }
+        job.phase = 'transcribing';
+        String text = '';
+        Object? lastError;
+        for (var attempt = 0; attempt < 2; attempt++) {
+          try {
+            text = await transcribePage(
+              config: config,
+              png: png,
+              page: index + 1,
+            );
+            lastError = null;
+            break;
+          } catch (error) {
+            lastError = error;
+            if (attempt == 0) {
+              await Future<void>.delayed(const Duration(seconds: 1));
+            }
+          }
+        }
+        if (lastError != null) {
+          job.failedPages.add(index + 1);
+          errors.add('第 ${index + 1} 页：$lastError');
+        } else if (text.trim().length < 10) {
+          job.failedPages.add(index + 1);
+          errors.add('第 ${index + 1} 页：转写结果过短或空白');
+        } else {
+          pages[index] = text;
+        }
+        job.done = index + 1;
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final failed = job.failedPages.length;
+      if (failed > 0 &&
+          (failed / job.pages > 0.2 || job.failedPages.contains(1))) {
+        job.status = 'failed';
+        job.phase = 'failed';
+        job.error = '转写失败页过多（$failed/$job.pages）：${errors.take(3).join('；')}';
+        return;
+      }
+      final total = pages.fold<int>(0, (sum, page) => sum + page.length);
+      job.phase = 'saving';
+      await Db.runScoped(
+        subjectDb.database,
+        () async {
+          final ocrFailed = failed > 0 ? 'ocr_partial' : 'ready';
+          final materialId = Db.insert('materials', {
+            'name': job.name,
+            'kind': 'pdf',
+            'path': job.path,
+            'status': ocrFailed,
+            'pages': pages.length,
+            'chars': total,
+            'created_at': Db.nowIso(),
+            'ocr': 1,
+            'ocr_model': '${job.providerId}/${job.model}',
+            'ocr_status': failed > 0 ? 'partial' : 'ready',
+            'ocr_failed_pages': jsonEncode(job.failedPages),
+            'ocr_at': Db.nowIso(),
+          });
+          final chunks = indexMaterial(materialId, pages);
+          for (var index = 0; index < pages.length; index++) {
+            final pageNo = index + 1;
+            Db.insert('material_ocr_pages', {
+              'material_id': materialId,
+              'page': pageNo,
+              'status': job.failedPages.contains(pageNo) ? 'failed' : 'done',
+              'chars': pages[index].length,
+              'error': errors
+                  .where((item) => item.startsWith('第 $pageNo 页'))
+                  .join('；'),
+            });
+          }
+          job.result = {
+            'kind': 'material',
+            'id': 'mat_$materialId',
+            'name': job.name,
+            'pages': pages.length,
+            'chars': total,
+            'chunks': chunks,
+            'failed_pages': job.failedPages,
+            'ocr': true,
+            'ocr_model': '${job.providerId}/${job.model}',
+            'subject_key': job.subjectKey,
+          };
+        },
+        subjectKey: job.subjectKey,
+        filesDir: record.filesPath,
+        dbPath: subjectDb.path,
+      );
+      job.status = 'done';
+      job.phase = 'done';
+      _pendingPdfs.remove(job.token);
+    } catch (error) {
+      job.status = 'failed';
+      job.phase = 'failed';
+      job.error = '转写失败：$error';
+    } finally {
+      if (job.status == 'cancelled') {
+        _pendingPdfs.remove(job.token);
+        try {
+          final file = File(job.path);
+          if (file.existsSync()) file.deleteSync();
+        } catch (_) {}
+      }
+    }
+  }
+
   static Future<void> _upload(HttpRequest request) async {
     final bytes = await _readBytes(request);
     if (bytes.length > 30 * 1024 * 1024) {
@@ -926,12 +1381,17 @@ class Backend {
     // 上传落盘到**当前学科**的资料目录（§5.3：迁移后不再写 data/files）。
     return _scopedWrite(request, (record, db) async {
       final random = Random().nextInt(1 << 31).toRadixString(16);
-      final targetDir = Directory(record.filesPath)..createSync(recursive: true);
-      final savedPath = p.join(targetDir.path, '${DateTime.now().microsecondsSinceEpoch}_$random$ext');
+      final targetDir = Directory(record.filesPath)
+        ..createSync(recursive: true);
+      final savedPath = p.join(
+        targetDir.path,
+        '${DateTime.now().microsecondsSinceEpoch}_$random$ext',
+      );
       final file = File(savedPath);
       await file.writeAsBytes(bytes);
 
-      final mime = request.headers.contentType?.mimeType ?? 'application/octet-stream';
+      final mime =
+          request.headers.contentType?.mimeType ?? 'application/octet-stream';
       if (mime.startsWith('image/') || _imageExts.contains(ext)) {
         final id = db.insert('uploads', {
           'name': name,
@@ -956,11 +1416,38 @@ class Backend {
       }
       final total = pages.fold<int>(0, (sum, page) => sum + page.length);
       if (total < 10) {
+        if (ext == '.pdf' && pages.isNotEmpty) {
+          // 扫描件：保留文件，交给视觉模型逐页转写。
+          _cleanupPendingPdfs();
+          final token = 'ocr_${DateTime.now().microsecondsSinceEpoch}_$random';
+          _pendingPdfs[token] = _PendingPdf(
+            token: token,
+            name: name,
+            path: savedPath,
+            pages: pages.length,
+            subjectKey: record.key,
+            createdAt: DateTime.now(),
+          );
+          final models = visionModelOptions();
+          return _json(request, 409, {
+            'code': 'scan_pdf',
+            'detail': models.isEmpty
+                ? '这个 PDF 没有文本层，且当前没有可用的视觉模型。请先在设置里配置一个支持图片的模型。'
+                : '这个 PDF 没有文本层（扫描件）。可以用视觉模型逐页转写后再加入资料库。',
+            'token': token,
+            'name': name,
+            'pages': pages.length,
+            'chars': total,
+            'vision_models': [for (final item in models) item.toJson()],
+          });
+        }
         if (file.existsSync()) file.deleteSync();
-        return _json(request, 400, {'detail': '这个文件里几乎抽不到文字（可能是扫描件）。可以先截图，再用图片提问。'});
+        return _json(request, 400, {
+          'detail': '这个文件里几乎抽不到文字（可能是扫描件）。可以先截图，再用图片提问。',
+        });
       }
 
-    final materialId = db.insert('materials', {
+      final materialId = db.insert('materials', {
         'name': name,
         'kind': ext.replaceFirst('.', ''),
         'path': savedPath,
@@ -979,7 +1466,9 @@ class Backend {
         'chars': total,
         'chunks': chunks,
         'subject_key': record.key,
-        'preview': pages.isNotEmpty ? pages.first.substring(0, min(200, pages.first.length)) : '',
+        'preview': pages.isNotEmpty
+            ? pages.first.substring(0, min(200, pages.first.length))
+            : '',
       });
     });
   }
@@ -996,7 +1485,9 @@ class Backend {
     if (row == null) return _json(request, 404, {'detail': '图片不存在'});
     final file = File((row['path'] ?? '').toString());
     if (!file.existsSync()) return _json(request, 404, {'detail': '图片不存在'});
-    request.response.headers.contentType = ContentType.parse((row['mime'] ?? 'image/png').toString());
+    request.response.headers.contentType = ContentType.parse(
+      (row['mime'] ?? 'image/png').toString(),
+    );
     await request.response.addStream(file.openRead());
     return request.response.close();
   }
@@ -1071,7 +1562,9 @@ class Backend {
         "SELECT COUNT(*) FROM tasks WHERE status='done' AND substr(done_at,1,10)=?",
         [today],
       );
-      final openTotal = db.scalar("SELECT COUNT(*) FROM tasks WHERE status='todo'");
+      final openTotal = db.scalar(
+        "SELECT COUNT(*) FROM tasks WHERE status='todo'",
+      );
       final overdue = db.scalar(
         "SELECT COUNT(*) FROM tasks WHERE status='todo' AND due<>'' AND due<?",
         [today],
@@ -1130,7 +1623,10 @@ ${content.length > 6000 ? content.substring(0, 6000) : content}''';
           'source_ref': 'msg:$messageId',
           'created_at': Db.nowIso(),
         });
-        return await _json(request, 200, {'id': noteId, 'subject_key': record.key});
+        return await _json(request, 200, {
+          'id': noteId,
+          'subject_key': record.key,
+        });
       } on LlmException catch (error) {
         return await _json(request, 400, {'detail': error.message});
       }
@@ -1160,16 +1656,26 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
           temperature: 0.3,
         );
         final data = extractJson(text);
-        final title = ((data is Map ? data['title'] : null) ?? '').toString().trim();
+        final title = ((data is Map ? data['title'] : null) ?? '')
+            .toString()
+            .trim();
         final finalTitle = title.isEmpty ? '复习这次对话的内容' : title;
         final taskId = db.insert('tasks', {
-          'title': finalTitle.length > 40 ? finalTitle.substring(0, 40) : finalTitle,
+          'title': finalTitle.length > 40
+              ? finalTitle.substring(0, 40)
+              : finalTitle,
           'due': Db.today(),
-          'estimate_min': (data is Map ? (data['estimate_min'] as num?)?.toInt() : null) ?? 30,
+          'estimate_min':
+              (data is Map ? (data['estimate_min'] as num?)?.toInt() : null) ??
+              30,
           'status': 'todo',
           'created_at': Db.nowIso(),
         });
-        return await _json(request, 200, {'id': taskId, 'title': finalTitle, 'subject_key': record.key});
+        return await _json(request, 200, {
+          'id': taskId,
+          'title': finalTitle,
+          'subject_key': record.key,
+        });
       } on LlmException catch (error) {
         return await _json(request, 400, {'detail': error.message});
       }
@@ -1187,14 +1693,19 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     bool write = false,
   }) {
     final query = request.uri.queryParameters['subject'];
-    final fromQuery = (query != null && query.trim().isNotEmpty) ? query.trim() : null;
+    final fromQuery = (query != null && query.trim().isNotEmpty)
+        ? query.trim()
+        : null;
     final rawBody = body?['subject'];
-    final fromBody =
-        (rawBody != null && rawBody.toString().trim().isNotEmpty) ? rawBody.toString().trim() : null;
+    final fromBody = (rawBody != null && rawBody.toString().trim().isNotEmpty)
+        ? rawBody.toString().trim()
+        : null;
     final ref = fromQuery ?? fromBody;
     if (ref == null) return SubjectStore.activeSubject();
     final record = SubjectStore.require(ref);
-    if (record.archived && write) throw SubjectError(409, '学科已归档：${record.name}');
+    if (record.archived && write) {
+      throw SubjectError(409, '学科已归档：${record.name}');
+    }
     return record;
   }
 
@@ -1235,15 +1746,24 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
   /// hub 白名单：只有后端登记过的 registry 能被访问。**前端即便伪造 hub
   /// 参数也无法指向任意 URL**（防 SSRF）——非白名单值直接 400。
   static String _skillHub(String? requested) {
-    final hub = (requested ?? SkillHubAllowlist.defaultHub).trim().toLowerCase();
+    final hub = (requested ?? SkillHubAllowlist.defaultHub)
+        .trim()
+        .toLowerCase();
     if (!SkillHubAllowlist.contains(hub)) {
-      throw SkillImportError('blocked', '不支持的 registry：$hub（仅允许 eduhub）', status: 400);
+      throw SkillImportError(
+        'blocked',
+        '不支持的 registry：$hub（仅允许 eduhub）',
+        status: 400,
+      );
     }
     return hub;
   }
 
   static SkillImporter _skillImporter(String subjectKey, String hub) =>
-      SkillImporter(subjectKey: subjectKey, registry: SkillRegistry.forHub(hub));
+      SkillImporter(
+        subjectKey: subjectKey,
+        registry: SkillRegistry.forHub(hub),
+      );
 
   static String _skillSlug(String raw) {
     final slug = raw.trim();
@@ -1258,28 +1778,37 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
   /// 对外的策略声明。**不把 verify 说成安全扫描**（research §4.3/§7.2）。
   static Map<String, dynamic> _skillPolicy() => {
-        'hub_allowlist': SkillHubAllowlist.hubs.keys.toList(),
-        'languages': SkillRegistry.languages,
-        'auto_update': false,
-        'auto_install': false,
-        'verify_is_security_guarantee': false,
-        'verify_note': 'registry 的静态扫描只覆盖已知高危模式，置信度通常为 low，'
-            '且技能包没有签名——它不代表"安全"，只表示没有被规则命中。',
-        'limits': {
-          'max_file_bytes': SkillImportLimits.maxFileBytes,
-          'max_total_bytes': SkillImportLimits.maxTotalBytes,
-          'max_files': SkillImportLimits.maxFiles,
-        },
-      };
+    'hub_allowlist': SkillHubAllowlist.hubs.keys.toList(),
+    'languages': SkillRegistry.languages,
+    'auto_update': false,
+    'auto_install': false,
+    'verify_is_security_guarantee': false,
+    'verify_note':
+        'registry 的静态扫描只覆盖已知高危模式，置信度通常为 low，'
+        '且技能包没有签名——它不代表"安全"，只表示没有被规则命中。',
+    'limits': {
+      'max_file_bytes': SkillImportLimits.maxFileBytes,
+      'max_total_bytes': SkillImportLimits.maxTotalBytes,
+      'max_files': SkillImportLimits.maxFiles,
+    },
+  };
 
-  static Future<void> _skills(HttpRequest request, List<String> segments) async {
+  static Future<void> _skills(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
     final method = request.method;
 
     // GET /api/skills —— 默认视图是「已安装」，纯本地读取，离线可用。
     if (segments.length == 2) {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       return _scoped(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         final installed = [for (final item in importer.list()) item.toJson()];
         return _json(request, 200, {
           'ok': true,
@@ -1298,9 +1827,14 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
     // F-13/AC-05 断言 7：以 lock 为权威重建索引，返回是否确实重建过。
     if (action == 'installed') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       return _scoped(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         final rebuilt = importer.rebuildIndex();
         final installed = [for (final item in importer.list()) item.toJson()];
         return _json(request, 200, {
@@ -1310,7 +1844,10 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
           'count': installed.length,
           'installed': installed,
           'index_rebuilt': rebuilt,
-          'pinned': [for (final item in importer.list()) if (item.pinned) item.slug],
+          'pinned': [
+            for (final item in importer.list())
+              if (item.pinned) item.slug,
+          ],
           'policy': _skillPolicy(),
         });
       });
@@ -1318,10 +1855,15 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
     // GET /api/skills/status —— 本地状态 + 缓存的联网探测结果（?probe=true 才真探）。
     if (action == 'status') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final probe = request.uri.queryParameters['probe'] == 'true';
       return _scoped(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         var online = Db.setting('skill_hub_last_ok', 'false') == 'true';
         String? probeError;
         if (probe) {
@@ -1355,11 +1897,15 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
     // POST /api/skills/check-updates —— 只查不装（F-5）。离线时逐个标 offline。
     if (action == 'check-updates') {
-      if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'POST') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final body = await _jsonBody(request);
-      final hub = _skillHub((body['hub'] ?? '').toString().trim().isEmpty
-          ? null
-          : body['hub'].toString());
+      final hub = _skillHub(
+        (body['hub'] ?? '').toString().trim().isEmpty
+            ? null
+            : body['hub'].toString(),
+      );
       return _scopedWrite(request, (record, db) async {
         final importer = _skillImporter(record.key, hub);
         final items = <Map<String, dynamic>>[];
@@ -1375,12 +1921,16 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
             continue;
           }
           try {
-            final detail = await importer.registry.detail(item.slug, files: false);
+            final detail = await importer.registry.detail(
+              item.slug,
+              files: false,
+            );
             items.add({
               'slug': item.slug,
               'installed': item.version,
               'latest': detail.version,
-              'update_available': detail.version.isNotEmpty && detail.version != item.version,
+              'update_available':
+                  detail.version.isNotEmpty && detail.version != item.version,
               'pinned': false,
             });
           } catch (error) {
@@ -1406,15 +1956,21 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (action == 'catalog') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final hub = _skillHub(request.uri.queryParameters['hub']);
       final query = request.uri.queryParameters['q'] ?? '';
       final language = (request.uri.queryParameters['language'] ?? '').trim();
       if (language.isNotEmpty && !SkillRegistry.isSupportedLanguage(language)) {
         throw SkillImportError(
-            'unsupported_language', '只支持 zh / en 两种语言：$language', status: 400);
+          'unsupported_language',
+          '只支持 zh / en 两种语言：$language',
+          status: 400,
+        );
       }
-      final limit = int.tryParse(request.uri.queryParameters['limit'] ?? '') ?? 30;
+      final limit =
+          int.tryParse(request.uri.queryParameters['limit'] ?? '') ?? 30;
       return _scoped(request, (record, db) async {
         final importer = _skillImporter(record.key, hub);
         final skills = await importer.registry.search(query, limit: limit);
@@ -1432,14 +1988,19 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (action == 'detail') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final hub = _skillHub(request.uri.queryParameters['hub']);
       final slug = _skillSlug(request.uri.queryParameters['slug'] ?? '');
       final version = (request.uri.queryParameters['version'] ?? '').trim();
       return _scoped(request, (record, db) async {
         final importer = _skillImporter(record.key, hub);
-        final detail = await importer.registry
-            .detail(slug, version: version.isEmpty ? null : version, files: true);
+        final detail = await importer.registry.detail(
+          slug,
+          version: version.isEmpty ? null : version,
+          files: true,
+        );
         return _json(request, 200, {
           'ok': true,
           'subject_key': record.key,
@@ -1450,14 +2011,18 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (action == 'verify') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final hub = _skillHub(request.uri.queryParameters['hub']);
       final slug = _skillSlug(request.uri.queryParameters['slug'] ?? '');
       final version = (request.uri.queryParameters['version'] ?? '').trim();
       return _scoped(request, (record, db) async {
         final importer = _skillImporter(record.key, hub);
-        final verdict = await importer.registry
-            .verify(slug, version: version.isEmpty ? null : version);
+        final verdict = await importer.registry.verify(
+          slug,
+          version: version.isEmpty ? null : version,
+        );
         return _json(request, 200, {
           'ok': true,
           'subject_key': record.key,
@@ -1468,9 +2033,14 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (action == 'playbooks') {
-      if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'GET') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       return _scoped(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         final items = importer.enabledPlaybooks();
         return _json(request, 200, {
           'ok': true,
@@ -1482,17 +2052,24 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (action == 'install') {
-      if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+      if (method != 'POST') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
       final body = await _jsonBody(request);
-      final hub = _skillHub((body['hub'] ?? '').toString().trim().isEmpty
-          ? null
-          : body['hub'].toString());
+      final hub = _skillHub(
+        (body['hub'] ?? '').toString().trim().isEmpty
+            ? null
+            : body['hub'].toString(),
+      );
       final slug = _skillSlug((body['slug'] ?? '').toString());
       final version = (body['version'] ?? '').toString().trim();
       final language = (body['language'] ?? '').toString().trim();
       if (language.isNotEmpty && !SkillRegistry.isSupportedLanguage(language)) {
         throw SkillImportError(
-            'unsupported_language', '只支持 zh / en 两种语言：$language', status: 400);
+          'unsupported_language',
+          '只支持 zh / en 两种语言：$language',
+          status: 400,
+        );
       }
       // 默认允许"裁决不可得时降级安装"，但会明确标注 unverified。
       final allowUnverified = body['allow_unverified'] != false;
@@ -1548,25 +2125,39 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
       // GET /api/skills/{slug}/raw —— 只读文本（白名单文件 + 目录内防穿越）。
       if (op == 'raw') {
-        if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+        if (method != 'GET') {
+          return _json(request, 405, {'detail': 'method not allowed'});
+        }
         final rel = (request.uri.queryParameters['path'] ?? 'SKILL.md').trim();
         return _scoped(request, (record, db) async {
-          final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+          final importer = _skillImporter(
+            record.key,
+            SkillHubAllowlist.defaultHub,
+          );
           final item = importer.require(slug);
           final target = p.normalize(p.join(item.pkgDir, rel));
           if (!p.isWithin(p.normalize(item.pkgDir), target)) {
             throw SkillImportError('bad_path', '路径必须在该技能目录内：$rel', status: 400);
           }
-          if (!SkillImportLimits.allowedSuffixes
-              .contains(SkillImportLimits.suffixOf(rel))) {
-            throw SkillImportError('suffix_not_allowed', '该文件类型不提供读取：$rel', status: 400);
+          if (!SkillImportLimits.allowedSuffixes.contains(
+            SkillImportLimits.suffixOf(rel),
+          )) {
+            throw SkillImportError(
+              'suffix_not_allowed',
+              '该文件类型不提供读取：$rel',
+              status: 400,
+            );
           }
           final file = File(target);
           if (!file.existsSync()) {
             throw SkillImportError('not_found', '文件不存在：$rel', status: 404);
           }
           if (file.lengthSync() > 200000) {
-            throw SkillImportError('too_large', '文件过大（>200KB）：$rel', status: 413);
+            throw SkillImportError(
+              'too_large',
+              '文件过大（>200KB）：$rel',
+              status: 413,
+            );
           }
           return _json(request, 200, {
             'ok': true,
@@ -1580,15 +2171,23 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
       // POST /api/skills/{slug}/update —— 同 install 语义（F-5）。
       if (op == 'update') {
-        if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+        if (method != 'POST') {
+          return _json(request, 405, {'detail': 'method not allowed'});
+        }
         final body = await _jsonBody(request);
         final version = (body['version'] ?? '').toString().trim();
         return _scopedWrite(request, (record, db) async {
-          final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+          final importer = _skillImporter(
+            record.key,
+            SkillHubAllowlist.defaultHub,
+          );
           final before = importer.require(slug);
           if (before.pinned && body['unpin'] != true) {
             throw SkillImportError(
-                'pinned', '该技能已锁定版本，先解锁才能更新：$slug', status: 409);
+              'pinned',
+              '该技能已锁定版本，先解锁才能更新：$slug',
+              status: 409,
+            );
           }
           final installed = await importer.install(
             slug,
@@ -1620,10 +2219,17 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
           op != 'pin') {
         return _json(request, 404, {'detail': 'not found'});
       }
-      if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
-      final body = op == 'pin' ? await _jsonBody(request) : const <String, dynamic>{};
+      if (method != 'POST') {
+        return _json(request, 405, {'detail': 'method not allowed'});
+      }
+      final body = op == 'pin'
+          ? await _jsonBody(request)
+          : const <String, dynamic>{};
       return _scopedWrite(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         final InstalledSkill skill;
         switch (op) {
           case 'enable':
@@ -1654,18 +2260,32 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
       // F-5：DELETE 必须带 confirm（= slug 或 1）。
       final confirm = request.uri.queryParameters['confirm'] ?? '';
       if (confirm.isEmpty) {
-        throw SkillImportError('confirm_required', '删除技能需要二次确认（confirm=$slug）', status: 400);
+        throw SkillImportError(
+          'confirm_required',
+          '删除技能需要二次确认（confirm=$slug）',
+          status: 400,
+        );
       }
       if (confirm != slug && confirm != '1' && confirm != 'true') {
-        throw SkillImportError('confirm_mismatch', 'confirm 与 slug 不符：$confirm', status: 400);
+        throw SkillImportError(
+          'confirm_mismatch',
+          'confirm 与 slug 不符：$confirm',
+          status: 400,
+        );
       }
       return _scopedWrite(request, (record, db) async {
-        final importer = _skillImporter(record.key, SkillHubAllowlist.defaultHub);
+        final importer = _skillImporter(
+          record.key,
+          SkillHubAllowlist.defaultHub,
+        );
         final result = importer.remove(slug);
         _skillAudit(
           action: 'skill_remove',
           subjectKey: record.key,
-          detail: {'slug': slug, 'dir_delete_pending': result['dir_delete_pending'] == true},
+          detail: {
+            'slug': slug,
+            'dir_delete_pending': result['dir_delete_pending'] == true,
+          },
         );
         return _json(request, 200, {...result, 'subject_key': record.key});
       });
@@ -1702,17 +2322,25 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
   // ------------------------------------------------------------ /api/subjects
 
-  static Future<void> _subjects(HttpRequest request, List<String> segments) async {
+  static Future<void> _subjects(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
     final method = request.method;
     SubjectStore.init();
 
     if (segments.length == 2) {
       if (method == 'GET') {
-        final includeArchived = request.uri.queryParameters['include_archived'] == 'true';
+        final includeArchived =
+            request.uri.queryParameters['include_archived'] == 'true';
         final withCounts = request.uri.queryParameters['counts'] == 'true';
         final items = [
-          for (final record in SubjectStore.list(includeArchived: includeArchived))
-            record.toJson(counts: withCounts ? SubjectStore.counts(record.key) : null),
+          for (final record in SubjectStore.list(
+            includeArchived: includeArchived,
+          ))
+            record.toJson(
+              counts: withCounts ? SubjectStore.counts(record.key) : null,
+            ),
         ];
         return _json(request, 200, items);
       }
@@ -1734,11 +2362,19 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     }
 
     if (segments[2] == 'active') {
-      if (method == 'GET') return _json(request, 200, SubjectStore.activeSubject().toJson());
+      if (method == 'GET') {
+        return _json(request, 200, SubjectStore.activeSubject().toJson());
+      }
       if (method == 'PUT' || method == 'POST') {
         final body = await _jsonBody(request);
-        final record = SubjectStore.setActive((body['subject'] ?? body['key'] ?? '').toString());
-        return _json(request, 200, {'ok': true, 'active_subject': record.key, 'subject': record.toJson()});
+        final record = SubjectStore.setActive(
+          (body['subject'] ?? body['key'] ?? '').toString(),
+        );
+        return _json(request, 200, {
+          'ok': true,
+          'active_subject': record.key,
+          'subject': record.toJson(),
+        });
       }
       return _json(request, 405, {'detail': 'method not allowed'});
     }
@@ -1757,20 +2393,30 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     if (segments.length == 4) {
       switch (segments[3]) {
         case 'archive':
-          if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+          if (method != 'POST') {
+            return _json(request, 405, {'detail': 'method not allowed'});
+          }
           return _json(request, 200, SubjectStore.archive(id).toJson());
         case 'restore':
-          if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+          if (method != 'POST') {
+            return _json(request, 405, {'detail': 'method not allowed'});
+          }
           return _json(request, 200, SubjectStore.restore(id).toJson());
         case 'rebuild-empty':
-          if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+          if (method != 'POST') {
+            return _json(request, 405, {'detail': 'method not allowed'});
+          }
           return _json(request, 200, SubjectStore.rebuildEmpty(id).toJson());
         case 'remove-registry':
-          if (method != 'POST') return _json(request, 405, {'detail': 'method not allowed'});
+          if (method != 'POST') {
+            return _json(request, 405, {'detail': 'method not allowed'});
+          }
           SubjectStore.removeRegistryRow(id);
           return _json(request, 200, {'ok': true, 'removed': record.key});
         case 'path':
-          if (method != 'GET') return _json(request, 405, {'detail': 'method not allowed'});
+          if (method != 'GET') {
+            return _json(request, 405, {'detail': 'method not allowed'});
+          }
           return _json(request, 200, {
             'key': record.key,
             'data_dir': AppPaths.data.path,
@@ -1830,18 +2476,23 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
         final offset = int.tryParse(query['offset'] ?? '') ?? 0;
         final days = int.tryParse(query['days'] ?? '') ?? 30;
         final includeArchived = query['include_archived'] == 'true';
-        final data = await run(() async => ProgressModel.snapshot(
-              topicLimit: limit.clamp(1, 200),
-              topicOffset: offset < 0 ? 0 : offset,
-              dailyDays: days.clamp(1, 180),
-              includeArchivedTopics: includeArchived,
-            ));
+        final data = await run(
+          () async => ProgressModel.snapshot(
+            topicLimit: limit.clamp(1, 200),
+            topicOffset: offset < 0 ? 0 : offset,
+            dailyDays: days.clamp(1, 180),
+            includeArchivedTopics: includeArchived,
+          ),
+        );
         data['subject_id'] = record.id;
         return _json(request, 200, data);
       }
       if (method == 'PATCH') {
         final body = await _jsonBody(request);
-        final data = await run(() async => ProgressModel.patch(body), write: true);
+        final data = await run(
+          () async => ProgressModel.patch(body),
+          write: true,
+        );
         data['subject_id'] = record.id;
         return _json(request, 200, data);
       }
@@ -1864,7 +2515,10 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
         return _json(request, 200, data);
       }
       if (action == 'recompute' && method == 'POST') {
-        final data = await run(() async => ProgressModel.recompute(), write: true);
+        final data = await run(
+          () async => ProgressModel.recompute(),
+          write: true,
+        );
         data['subject_id'] = record.id;
         return _json(request, 200, data);
       }
@@ -1873,9 +2527,16 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
     if (segments.length == 6 && segments[4] == 'topics' && method == 'DELETE') {
       final topicId = int.tryParse(segments[5]);
-      if (topicId == null) return _json(request, 400, {'detail': 'bad topic id'});
-      final data = await run(() async => ProgressModel.archiveTopic(topicId), write: true);
-      if (data == null) return _json(request, 404, {'detail': '知识点不存在：$topicId'});
+      if (topicId == null) {
+        return _json(request, 400, {'detail': 'bad topic id'});
+      }
+      final data = await run(
+        () async => ProgressModel.archiveTopic(topicId),
+        write: true,
+      );
+      if (data == null) {
+        return _json(request, 404, {'detail': '知识点不存在：$topicId'});
+      }
       data['subject_id'] = record.id;
       return _json(request, 200, data);
     }
@@ -1885,11 +2546,18 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
   // ------------------------------------------------------------ /api/migrations
 
-  static Future<void> _migrations(HttpRequest request, List<String> segments) async {
-    if (segments.length == 3 && segments[2] == 'status' && request.method == 'GET') {
+  static Future<void> _migrations(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
+    if (segments.length == 3 &&
+        segments[2] == 'status' &&
+        request.method == 'GET') {
       return _json(request, 200, SubjectMigration.status());
     }
-    if (segments.length == 3 && segments[2] == 'run' && request.method == 'POST') {
+    if (segments.length == 3 &&
+        segments[2] == 'run' &&
+        request.method == 'POST') {
       return _json(request, 200, SubjectMigration.ensureApplied());
     }
     return _json(request, 404, {'detail': 'not found'});
@@ -1897,8 +2565,13 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
 
   // ------------------------------------------------------------ /api/diagnostics
 
-  static Future<void> _diagnostics(HttpRequest request, List<String> segments) async {
-    if (segments.length == 4 && segments[2] == 'subject' && request.method == 'GET') {
+  static Future<void> _diagnostics(
+    HttpRequest request,
+    List<String> segments,
+  ) async {
+    if (segments.length == 4 &&
+        segments[2] == 'subject' &&
+        request.method == 'GET') {
       final id = int.tryParse(segments[3]);
       if (id == null) return _json(request, 400, {'detail': 'bad id'});
       return _json(request, 200, SubjectStore.diagnostics(id));
@@ -1913,7 +2586,9 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     ProviderRegistry.ensureMigrated();
     final providerId = body['provider_id']?.toString();
     final config = ProviderRegistry.config(
-      providerId: (providerId == null || providerId.isEmpty) ? null : providerId,
+      providerId: (providerId == null || providerId.isEmpty)
+          ? null
+          : providerId,
     );
     try {
       final models = await fetchModels(config);
@@ -1938,8 +2613,12 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     final providerId = body['provider_id']?.toString();
     final modelOverride = body['model']?.toString().trim();
     final config = ProviderRegistry.config(
-      providerId: (providerId == null || providerId.isEmpty) ? null : providerId,
-      modelOverride: (modelOverride == null || modelOverride.isEmpty) ? null : modelOverride,
+      providerId: (providerId == null || providerId.isEmpty)
+          ? null
+          : providerId,
+      modelOverride: (modelOverride == null || modelOverride.isEmpty)
+          ? null
+          : modelOverride,
     );
     if (!config.ready) {
       return _json(request, 200, {
@@ -1986,7 +2665,11 @@ ${content.length > 4000 ? content.substring(0, 4000) : content}''';
     return builder.takeBytes();
   }
 
-  static Future<void> _json(HttpRequest request, int status, Object? data) async {
+  static Future<void> _json(
+    HttpRequest request,
+    int status,
+    Object? data,
+  ) async {
     final response = request.response;
     response.statusCode = status;
     response.headers.contentType = ContentType.json;

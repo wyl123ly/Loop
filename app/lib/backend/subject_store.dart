@@ -32,7 +32,13 @@ const String kDefaultSubjectName = '通用';
 const int kSubjectMaxOpenHandles = 4;
 
 const Set<String> kSubjectStatusValues = {'active', 'archived'};
-const Set<String> kSubjectLevelValues = {'', 'new', 'beginner', 'intermediate', 'advanced'};
+const Set<String> kSubjectLevelValues = {
+  '',
+  'new',
+  'beginner',
+  'intermediate',
+  'advanced',
+};
 
 /// 学科层错误：`status` 直接映射 HTTP 状态码（400/404/409/503，§11.7）。
 class SubjectError implements Exception {
@@ -101,7 +107,9 @@ class SubjectRecord {
   String get dbPath {
     final fromRegistry = AppPaths.resolveFromData(dbRelPath);
     final canonical = AppPaths.subjectDbPath(key);
-    return p.normalize(fromRegistry) == p.normalize(canonical) ? canonical : fromRegistry;
+    return p.normalize(fromRegistry) == p.normalize(canonical)
+        ? canonical
+        : fromRegistry;
   }
 
   String get dirPath => AppPaths.subjectDir(key).path;
@@ -109,54 +117,55 @@ class SubjectRecord {
   String get skillsPath => AppPaths.subjectSkillsDir(key).path;
 
   static SubjectRecord fromRow(Map<String, Object?> row) => SubjectRecord(
-        id: (row['id'] as num).toInt(),
-        key: (row['key'] ?? '').toString(),
-        name: (row['name'] ?? '').toString(),
-        description: (row['description'] ?? '').toString(),
-        icon: (row['icon'] ?? '').toString(),
-        color: (row['color'] ?? '').toString(),
-        goal: (row['goal'] ?? '').toString(),
-        examDate: (row['exam_date'] ?? '').toString(),
-        dailyMinutes: (row['daily_minutes'] as num?)?.toInt() ?? 0,
-        level: (row['level'] ?? '').toString(),
-        status: (row['status'] ?? 'active').toString(),
-        isDefault: ((row['is_default'] as num?)?.toInt() ?? 0) == 1,
-        sortOrder: (row['sort_order'] as num?)?.toInt() ?? 0,
-        dbRelPath: (row['db_rel_path'] ?? '').toString(),
-        filesRelPath: (row['files_rel_path'] ?? '').toString(),
-        skillsRelPath: (row['skills_rel_path'] ?? '').toString(),
-        schemaVersion: (row['schema_version'] as num?)?.toInt() ?? kSubjectSchemaVersion,
-        integrity: (row['integrity'] ?? 'ok').toString(),
-        createdAt: (row['created_at'] ?? '').toString(),
-        updatedAt: (row['updated_at'] ?? '').toString(),
-        lastOpenedAt: (row['last_opened_at'] ?? '').toString(),
-        archivedAt: (row['archived_at'] ?? '').toString(),
-      );
+    id: (row['id'] as num).toInt(),
+    key: (row['key'] ?? '').toString(),
+    name: (row['name'] ?? '').toString(),
+    description: (row['description'] ?? '').toString(),
+    icon: (row['icon'] ?? '').toString(),
+    color: (row['color'] ?? '').toString(),
+    goal: (row['goal'] ?? '').toString(),
+    examDate: (row['exam_date'] ?? '').toString(),
+    dailyMinutes: (row['daily_minutes'] as num?)?.toInt() ?? 0,
+    level: (row['level'] ?? '').toString(),
+    status: (row['status'] ?? 'active').toString(),
+    isDefault: ((row['is_default'] as num?)?.toInt() ?? 0) == 1,
+    sortOrder: (row['sort_order'] as num?)?.toInt() ?? 0,
+    dbRelPath: (row['db_rel_path'] ?? '').toString(),
+    filesRelPath: (row['files_rel_path'] ?? '').toString(),
+    skillsRelPath: (row['skills_rel_path'] ?? '').toString(),
+    schemaVersion:
+        (row['schema_version'] as num?)?.toInt() ?? kSubjectSchemaVersion,
+    integrity: (row['integrity'] ?? 'ok').toString(),
+    createdAt: (row['created_at'] ?? '').toString(),
+    updatedAt: (row['updated_at'] ?? '').toString(),
+    lastOpenedAt: (row['last_opened_at'] ?? '').toString(),
+    archivedAt: (row['archived_at'] ?? '').toString(),
+  );
 
   /// API 形状（§11.2）；`counts` 由调用方按需计算（P1）。
   Map<String, Object?> toJson({Map<String, Object?>? counts}) => {
-        'id': id,
-        'key': key,
-        'name': name,
-        'description': description,
-        'icon': icon,
-        'color': color,
-        'goal': goal,
-        'exam_date': examDate,
-        'daily_minutes': dailyMinutes,
-        'level': level,
-        'status': status,
-        'is_default': isDefault ? 1 : 0,
-        'sort_order': sortOrder,
-        'integrity': integrity,
-        'schema_version': schemaVersion,
-        'last_opened_at': lastOpenedAt,
-        'created_at': createdAt,
-        'updated_at': updatedAt,
-        'archived_at': archivedAt,
-        'db_rel_path': dbRelPath,
-        'counts': ?counts,
-      };
+    'id': id,
+    'key': key,
+    'name': name,
+    'description': description,
+    'icon': icon,
+    'color': color,
+    'goal': goal,
+    'exam_date': examDate,
+    'daily_minutes': dailyMinutes,
+    'level': level,
+    'status': status,
+    'is_default': isDefault ? 1 : 0,
+    'sort_order': sortOrder,
+    'integrity': integrity,
+    'schema_version': schemaVersion,
+    'last_opened_at': lastOpenedAt,
+    'created_at': createdAt,
+    'updated_at': updatedAt,
+    'archived_at': archivedAt,
+    'db_rel_path': dbRelPath,
+    'counts': ?counts,
+  };
 
   @override
   String toString() => 'SubjectRecord($id/$key/$name/$status)';
@@ -176,8 +185,13 @@ class SubjectDb {
 
   bool get closed => _closed;
 
-  List<Map<String, Object?>> rows(String sql, [List<Object?> params = const []]) =>
-      database.select(sql, params).map((row) => Map<String, Object?>.from(row)).toList();
+  List<Map<String, Object?>> rows(
+    String sql, [
+    List<Object?> params = const [],
+  ]) => database
+      .select(sql, params)
+      .map((row) => Map<String, Object?>.from(row))
+      .toList();
 
   Map<String, Object?>? one(String sql, [List<Object?> params = const []]) {
     final result = database.select(sql, params);
@@ -204,7 +218,8 @@ class SubjectDb {
     }
   }
 
-  void run(String sql, [List<Object?> params = const []]) => database.execute(sql, params);
+  void run(String sql, [List<Object?> params = const []]) =>
+      database.execute(sql, params);
 
   int count(String table) => Db.rowCountIn(database, table);
 
@@ -273,7 +288,8 @@ class SubjectDb {
 
 /// 学科注册表 + 句柄缓存。
 class SubjectStore {
-  static final LinkedHashMap<String, SubjectDb> _handles = LinkedHashMap<String, SubjectDb>();
+  static final LinkedHashMap<String, SubjectDb> _handles =
+      LinkedHashMap<String, SubjectDb>();
   static bool _ready = false;
   static int _totalOpened = 0;
 
@@ -295,7 +311,8 @@ class SubjectStore {
     _ready = true;
     try {
       _installScopeObserver();
-      Db.scopePathResolver = (database) => _handleForDatabase(database)?.path ?? '';
+      Db.scopePathResolver = (database) =>
+          _handleForDatabase(database)?.path ?? '';
       if (!AppPaths.ready) AppPaths.init();
       if (!Db.ready) Db.init();
       ensureDefaultSubject();
@@ -328,7 +345,8 @@ class SubjectStore {
   static String? launchSubjectOverrideForTests;
 
   static String get launchSubjectRef =>
-      launchSubjectOverrideForTests ?? (Platform.environment['LOOP_SUBJECT'] ?? '');
+      launchSubjectOverrideForTests ??
+      (Platform.environment['LOOP_SUBJECT'] ?? '');
 
   /// 测试专用：真实临时目录 + 真实 SQLite（迁移类测试必须用真实文件，§15.1）。
   /// 可重复调用以模拟"重启"：句柄全部关闭，库文件保留。
@@ -365,7 +383,9 @@ class SubjectStore {
     if (existingRow != null) {
       final existing = SubjectRecord.fromRow(existingRow);
       if (!existing.isDefault) {
-        Db.globalRun('UPDATE subjects SET is_default=1 WHERE id=?', [existing.id]);
+        Db.globalRun('UPDATE subjects SET is_default=1 WHERE id=?', [
+          existing.id,
+        ]);
         return byId(existing.id)!;
       }
       return existing;
@@ -416,15 +436,20 @@ class SubjectStore {
             "CASE WHEN last_opened_at='' THEN 1 ELSE 0 END ASC, last_opened_at DESC, id ASC",
             ['active'],
           );
-    return [for (final row in rows) _repairIntegrity(SubjectRecord.fromRow(row))];
+    return [
+      for (final row in rows) _repairIntegrity(SubjectRecord.fromRow(row)),
+    ];
   }
 
   static List<SubjectRecord> listArchived() {
     init();
-    final rows = Db.globalRows('SELECT * FROM subjects WHERE status=? ORDER BY archived_at DESC', [
-      'archived',
-    ]);
-    return [for (final row in rows) _repairIntegrity(SubjectRecord.fromRow(row))];
+    final rows = Db.globalRows(
+      'SELECT * FROM subjects WHERE status=? ORDER BY archived_at DESC',
+      ['archived'],
+    );
+    return [
+      for (final row in rows) _repairIntegrity(SubjectRecord.fromRow(row)),
+    ];
   }
 
   static SubjectRecord? byKey(String key) {
@@ -466,7 +491,10 @@ class SubjectStore {
   // ------------------------------------------------------------ 生命周期
 
   static String normalizeName(String raw) {
-    final name = raw.replaceAll(RegExp(r'[\r\n\t]+'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final name = raw
+        .replaceAll(RegExp(r'[\r\n\t]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     if (name.isEmpty) throw SubjectError(400, '学科名不能为空');
     if (name.length > 40) throw SubjectError(400, '学科名过长（≤ 40 字符）');
     for (final rune in name.runes) {
@@ -476,7 +504,10 @@ class SubjectStore {
   }
 
   static void _assertNameFree(String name, {int? exceptId}) {
-    final row = Db.globalOne('SELECT id FROM subjects WHERE name = ? COLLATE NOCASE', [name]);
+    final row = Db.globalOne(
+      'SELECT id FROM subjects WHERE name = ? COLLATE NOCASE',
+      [name],
+    );
     if (row == null) return;
     if (exceptId != null && (row['id'] as num).toInt() == exceptId) return;
     throw SubjectError(409, '已存在同名学科：$name');
@@ -484,7 +515,8 @@ class SubjectStore {
 
   static String _generateKey() {
     for (var attempt = 0; attempt < 5; attempt++) {
-      final base = 's_${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+      final base =
+          's_${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
       final key = attempt == 0
           ? base
           : '$base${(DateTime.now().microsecond % 1296).toRadixString(36).padLeft(2, '0')}';
@@ -512,8 +544,12 @@ class SubjectStore {
     _assertNameFree(clean);
     if (description.length > 200) throw SubjectError(400, '简介过长（≤ 200 字符）');
     if (goal.length > 200) throw SubjectError(400, '目标过长（≤ 200 字符）');
-    if (!kSubjectLevelValues.contains(level)) throw SubjectError(400, '未知水平：$level');
-    if (dailyMinutes < 0 || dailyMinutes > 720) throw SubjectError(400, '每日时长需在 0–720 分钟');
+    if (!kSubjectLevelValues.contains(level)) {
+      throw SubjectError(400, '未知水平：$level');
+    }
+    if (dailyMinutes < 0 || dailyMinutes > 720) {
+      throw SubjectError(400, '每日时长需在 0–720 分钟');
+    }
 
     final key = _generateKey();
     final dir = AppPaths.subjectDir(key);
@@ -635,7 +671,8 @@ class SubjectStore {
           break;
         case 'exam_date':
           final text = value.toString().trim();
-          if (text.isNotEmpty && !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text)) {
+          if (text.isNotEmpty &&
+              !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text)) {
             throw SubjectError(400, '考试日期需为 YYYY-MM-DD');
           }
           updates['exam_date'] = text;
@@ -649,7 +686,9 @@ class SubjectStore {
           break;
         case 'level':
           final level = value.toString();
-          if (!kSubjectLevelValues.contains(level)) throw SubjectError(400, '未知水平：$level');
+          if (!kSubjectLevelValues.contains(level)) {
+            throw SubjectError(400, '未知水平：$level');
+          }
           updates['level'] = level;
           break;
         case 'sort_order':
@@ -664,7 +703,10 @@ class SubjectStore {
     if (updates.isEmpty) return record;
     updates['updated_at'] = Db.nowIso();
     final sets = updates.keys.map((key) => '$key=?').join(',');
-    Db.globalRun('UPDATE subjects SET $sets WHERE id=?', [...updates.values, id]);
+    Db.globalRun('UPDATE subjects SET $sets WHERE id=?', [
+      ...updates.values,
+      id,
+    ]);
     return byId(id)!;
   }
 
@@ -675,12 +717,10 @@ class SubjectStore {
     if (record.isDefault) throw SubjectError(409, '默认学科不可归档');
     if (record.archived) return record;
     final now = Db.nowIso();
-    Db.globalRun('UPDATE subjects SET status=?, archived_at=?, updated_at=? WHERE id=?', [
-      'archived',
-      now,
-      now,
-      id,
-    ]);
+    Db.globalRun(
+      'UPDATE subjects SET status=?, archived_at=?, updated_at=? WHERE id=?',
+      ['archived', now, now, id],
+    );
     close(record.key);
     if (activeKey() == record.key) setActive(kDefaultSubjectKey);
     return byId(id)!;
@@ -713,7 +753,9 @@ class SubjectStore {
     var trashedTo = '';
     if (dir.existsSync()) {
       final stamp = DateTime.now().millisecondsSinceEpoch;
-      final target = Directory(p.join(AppPaths.trashDir.path, '${record.key}-$stamp'));
+      final target = Directory(
+        p.join(AppPaths.trashDir.path, '${record.key}-$stamp'),
+      );
       target.createSync(recursive: true);
       trashedTo = target.path;
       _moveDirectory(dir, target);
@@ -767,11 +809,10 @@ class SubjectStore {
     if (record.archived) throw SubjectError(409, '已归档学科不能设为当前学科');
     Db.setSetting('active_subject', record.key);
     final now = Db.nowIso();
-    Db.globalRun('UPDATE subjects SET last_opened_at=?, updated_at=? WHERE id=?', [
-      now,
-      now,
-      record.id,
-    ]);
+    Db.globalRun(
+      'UPDATE subjects SET last_opened_at=?, updated_at=? WHERE id=?',
+      [now, now, record.id],
+    );
     return byId(record.id)!;
   }
 
@@ -815,10 +856,14 @@ class SubjectStore {
     database.execute('PRAGMA foreign_keys=ON');
     database.execute('PRAGMA busy_timeout=3000');
     final version = ensureSubjectSchema(database, key);
+    ensureOcrSchema(database);
     if (version > kSubjectSchemaVersion) {
       database.close();
       _markIntegrity(key, 'error');
-      throw SubjectError(503, '该学科数据由更新版本创建（schema $version > $kSubjectSchemaVersion）');
+      throw SubjectError(
+        503,
+        '该学科数据由更新版本创建（schema $version > $kSubjectSchemaVersion）',
+      );
     }
     final handle = SubjectDb(key: key, database: database, path: record.dbPath);
     _handles[key] = handle;
@@ -872,10 +917,14 @@ class SubjectStore {
   }
 
   /// 使用中的句柄数（诊断/断言）。
-  static int get inUseHandles => _handles.values.where((h) => h.inUse > 0).length;
+  static int get inUseHandles =>
+      _handles.values.where((h) => h.inUse > 0).length;
 
   /// 以 [database] 身份找到句柄（供 [Db.scopeObserver] 计数）。
-  static SubjectDb? _handleForDatabase(Database database, {bool includeClosed = false}) {
+  static SubjectDb? _handleForDatabase(
+    Database database, {
+    bool includeClosed = false,
+  }) {
     for (final handle in _handles.values) {
       if (identical(handle.database, database)) {
         if (handle.closed && !includeClosed) return null;
@@ -903,15 +952,23 @@ class SubjectStore {
     if (row == null) return;
     final current = (row['integrity'] ?? 'ok').toString();
     if (current == integrity) return;
-    Db.globalRun('UPDATE subjects SET integrity=? WHERE key=?', [integrity, key]);
+    Db.globalRun('UPDATE subjects SET integrity=? WHERE key=?', [
+      integrity,
+      key,
+    ]);
   }
 
   /// 轻量完整性校验：库文件缺失 → `missing`（**绝不自动重建**，§4.8）。
   static SubjectRecord _repairIntegrity(SubjectRecord record) {
     final exists = File(record.dbPath).existsSync();
-    final expected = exists ? (record.integrity == 'missing' ? 'ok' : record.integrity) : 'missing';
+    final expected = exists
+        ? (record.integrity == 'missing' ? 'ok' : record.integrity)
+        : 'missing';
     if (expected == record.integrity) return record;
-    Db.globalRun('UPDATE subjects SET integrity=? WHERE key=?', [expected, record.key]);
+    Db.globalRun('UPDATE subjects SET integrity=? WHERE key=?', [
+      expected,
+      record.key,
+    ]);
     return byKey(record.key)!;
   }
 
@@ -930,10 +987,10 @@ class SubjectStore {
       }
     }
     createSubjectDatabaseFiles(record.key);
-    Db.globalRun("UPDATE subjects SET integrity='ok', updated_at=? WHERE id=?", [
-      Db.nowIso(),
-      id,
-    ]);
+    Db.globalRun(
+      "UPDATE subjects SET integrity='ok', updated_at=? WHERE id=?",
+      [Db.nowIso(), id],
+    );
     return byId(id)!;
   }
 
@@ -1069,7 +1126,12 @@ class SubjectStore {
         source_path TEXT DEFAULT '',
         source_mtime INTEGER DEFAULT 0,
         source_size INTEGER DEFAULT 0,
-        relative_path TEXT DEFAULT ''
+        relative_path TEXT DEFAULT '',
+        ocr INTEGER DEFAULT 0,
+        ocr_model TEXT DEFAULT '',
+        ocr_status TEXT DEFAULT '',
+        ocr_failed_pages TEXT DEFAULT '',
+        ocr_at TEXT DEFAULT ''
       );
       CREATE TABLE IF NOT EXISTS material_folders(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1093,6 +1155,14 @@ class SubjectStore {
       );
       CREATE INDEX IF NOT EXISTS idx_chunks_mat ON chunks(material_id);
       CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(chunk_id UNINDEXED, tokens);
+      CREATE TABLE IF NOT EXISTS material_ocr_pages(
+        material_id INTEGER NOT NULL,
+        page INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        chars INTEGER DEFAULT 0,
+        error TEXT DEFAULT '',
+        PRIMARY KEY(material_id, page)
+      );
       CREATE TABLE IF NOT EXISTS tasks(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -1184,7 +1254,9 @@ class SubjectStore {
 
   static int readSchemaVersion(Database database) {
     try {
-      final rows = database.select("SELECT value FROM meta WHERE key='schema_version'");
+      final rows = database.select(
+        "SELECT value FROM meta WHERE key='schema_version'",
+      );
       if (rows.isEmpty) return 0;
       return int.tryParse((rows.first['value'] ?? '').toString()) ?? 0;
     } catch (_) {
@@ -1201,6 +1273,33 @@ class SubjectStore {
   }
 
   /// 打开时的按需迁移（§4.6）：返回迁移后的版本号。
+  /// 幂等补齐扫描件 OCR 字段；不提升 schema 版本，旧版 Flutter 仍可打开。
+  static void ensureOcrSchema(Database database) {
+    for (final sql in [
+      "ALTER TABLE materials ADD COLUMN ocr INTEGER DEFAULT 0",
+      "ALTER TABLE materials ADD COLUMN ocr_model TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_status TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_failed_pages TEXT DEFAULT ''",
+      "ALTER TABLE materials ADD COLUMN ocr_at TEXT DEFAULT ''",
+    ]) {
+      try {
+        database.execute(sql);
+      } catch (_) {}
+    }
+    try {
+      database.execute("""
+      CREATE TABLE IF NOT EXISTS material_ocr_pages(
+        material_id INTEGER NOT NULL,
+        page INTEGER NOT NULL,
+        status TEXT NOT NULL,
+        chars INTEGER DEFAULT 0,
+        error TEXT DEFAULT '',
+        PRIMARY KEY(material_id, page)
+      )
+    """);
+    } catch (_) {}
+  }
+
   static int ensureSubjectSchema(Database database, String key) {
     final version = readSchemaVersion(database);
     if (version == 0) {
@@ -1225,7 +1324,9 @@ class SubjectStore {
       // F-12：slug 是身份键（`name` 与之一致），frontmatter 自报的可读名
       // 单独放 display_name，只影响展示与注入文案。
       try {
-        database.execute("ALTER TABLE subject_skills ADD COLUMN display_name TEXT DEFAULT ''");
+        database.execute(
+          "ALTER TABLE subject_skills ADD COLUMN display_name TEXT DEFAULT ''",
+        );
       } catch (_) {}
     }
   }
