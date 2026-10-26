@@ -257,7 +257,7 @@ class UpdateService {
     scriptFile.writeAsStringSync(script);
     final backup = p.join(updatesDir, 'backup-${AppVersion.current}-${DateTime.now().millisecondsSinceEpoch}');
     final log = p.join(updatesDir, 'update.log');
-    final process = await Process.start(
+    await Process.start(
       'powershell.exe',
       [
         '-NoProfile',
@@ -272,7 +272,8 @@ class UpdateService {
       ],
       mode: ProcessStartMode.detached,
     );
-    // detached 进程不一定有输出；保留引用避免被过早回收。
-    unawaited(process.exitCode);
+    // 注意：detached 进程不能读取 exitCode，否则 Dart 抛
+    // Bad state: Process is detached。这里只负责拉起 updater.ps1；
+    // 脚本会等待父进程退出后再替换文件并重启 Loop。
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../state.dart';
 import '../theme.dart';
@@ -209,6 +210,14 @@ class _ProgressDialogState extends State<_ProgressDialog> {
     }
   }
 
+  /// 从 asset 直链推导 Release 页面，供自动更新失败时手动下载。
+  String get _manualUrl {
+    final url = widget.info.assetUrl;
+    final index = url.indexOf('/releases/download/');
+    if (index < 0) return url;
+    return '${url.substring(0, index)}/releases/tag/${widget.info.tag}';
+  }
+
   String _size(int bytes) {
     if (bytes > 1024 * 1024) return '${(bytes / 1024 / 1024).toStringAsFixed(1)} MB';
     if (bytes > 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
@@ -245,17 +254,37 @@ class _ProgressDialogState extends State<_ProgressDialog> {
                 _total > 0 ? '${_size(_received)} / ${_size(_total)}' : _size(_received),
                 style: TextStyle(fontSize: 11, color: pal.muted),
               ),
-            ] else
+            ] else ...[
               Text(_error!, style: TextStyle(fontSize: 12, height: 1.5, color: pal.danger)),
+              if (_error!.contains('Process is detached')) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '自动替换没能启动，请点下方按钮手动下载新版本压缩包，解压覆盖当前目录即可。',
+                  style: TextStyle(fontSize: 11.5, height: 1.5, color: pal.muted),
+                ),
+              ],
+            ],
             const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (_error != null)
+                if (_error != null) ...[
+                  TextButton.icon(
+                    onPressed: () async {
+                      final url = _manualUrl;
+                      try {
+                        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                      } catch (_) {}
+                    },
+                    icon: const Icon(Icons.download_rounded, size: 16),
+                    label: const Text('打开下载页'),
+                  ),
+                  const SizedBox(width: 6),
                   FilledButton(
                     onPressed: () => Navigator.pop(context, false),
                     child: const Text('关闭'),
-                  )
+                  ),
+                ]
                 else
                   TextButton(
                     onPressed: _done || _cancelled ? null : () => setState(() => _cancelled = true),
