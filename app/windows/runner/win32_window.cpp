@@ -146,8 +146,7 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
-  // WS_POPUP windows are hidden from the taskbar by default. Keep the app
-  // visible in the taskbar and alt-tab list.
+  // Keep the frameless window visible in the taskbar and alt-tab list.
   LONG_PTR ex_style = GetWindowLongPtr(window, GWL_EXSTYLE);
   ex_style |= WS_EX_APPWINDOW;
   ex_style &= ~WS_EX_TOOLWINDOW;
@@ -316,8 +315,9 @@ void Win32Window::UpdateTheme(HWND const window) {
                           &enable_dark_mode, sizeof(enable_dark_mode));
   }
 
-  // Windows 11 draws a 1px non-client border, which shows as a white arc
-  // on dark rounded windows. Remove the border and force rounded corners.
+  // The Flutter surface already has a rounded 18px panel. Let the native
+  // window region provide the exact same shape, instead of letting DWM draw
+  // a second, smaller rounded corner underneath it.
 #ifndef DWMWA_BORDER_COLOR
 #define DWMWA_BORDER_COLOR 34
 #endif
@@ -338,4 +338,6 @@ void Win32Window::UpdateTheme(HWND const window) {
   int corner_preference = DWMWCP_ROUND;
   DwmSetWindowAttribute(window, DWMWA_WINDOW_CORNER_PREFERENCE,
                         &corner_preference, sizeof(corner_preference));
+
 }
+

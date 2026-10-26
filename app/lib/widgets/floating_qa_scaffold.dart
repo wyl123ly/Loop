@@ -48,10 +48,10 @@ class FloatingQaScaffold extends StatelessWidget {
   final bool maximized;
 
   /// 普通窗口圆角，与 v0.4.0 一致。
-  static const double normalRadius = 18;
+  static const double normalRadius = 8;
 
   /// 浮窗圆角。
-  static const double floatingRadius = 16;
+  static const double floatingRadius = 8;
 
   @override
   Widget build(BuildContext context) {

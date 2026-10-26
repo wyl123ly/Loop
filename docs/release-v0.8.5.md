@@ -4,6 +4,7 @@
 - 主窗口创建样式改为无标题栏的 frameless：
   `WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN | WS_CLIPSIBLINGS`
 - 去掉 `WS_CAPTION` 的非客户区绘制，并在 `WM_NCCALCSIZE` 中让客户区覆盖整个窗口；消除 8px 原生非客户区边框在圆角外露出的浅色方块/白弧。
+- **顶层圆角半径统一为 8px**：Windows DWM 原生圆角固定约 8px，Flutter 面板原来的 18px 会与原生圆角形成两套弧线；`normalRadius` / `floatingRadius` / `minimalRadius` 均改为 8px（DPI 缩放由系统处理）。
 - 处理最大化：`WM_NCCALCSIZE` 在 `IsZoomed` 时把客户区 clamp 到显示器工作区；`WS_THICKFRAME` 保留原生缩放/贴靠。
 - 设置 `WS_EX_APPWINDOW`，保持任务栏/Alt-Tab 可见。
 - 注：曾尝试 `WS_POPUP`，但其 `SC_MAXIMIZE` 不生效，故最终采用无标题栏 + `WM_NCCALCSIZE` 方案。

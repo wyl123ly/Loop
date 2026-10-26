@@ -123,7 +123,7 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.5**。
 ## 版本改动
 
 ### v0.8.5 · 2026-10-26
-- 主窗口改为无标题栏 frameless：去掉 `WS_CAPTION`、保留 `WS_THICKFRAME`，并在 `WM_NCCALCSIZE` 中让客户区覆盖整个窗口；消除 8px 原生非客户区边框在圆角外露出的浅色方块/白弧。最大化时客户区限制在显示器工作区。
+- 主窗口改为无标题栏 frameless：去掉 `WS_CAPTION`、保留 `WS_THICKFRAME`，并在 `WM_NCCALCSIZE` 中让客户区覆盖整个窗口；顶层圆角统一为 **8px**，与 Windows 原生 DWM 圆角半径对齐，消除原生背景与 Flutter 面板两套圆角。最大化时客户区限制在显示器工作区。
 - 保留 `WS_EX_APPWINDOW` 以维持任务栏/Alt-Tab；DWM 圆角、边框透明与根层底色继续保留。
 - 浮窗/极简/回答窗、缩放/最大化/托盘行为需在真实窗口回归。
 

@@ -51,7 +51,7 @@ const double minimalMinWidth = 360;
 const double minimalMaxWidth = 560;
 
 /// 极简条圆角。
-const double minimalRadius = 12;
+const double minimalRadius = 8;
 
 /// 判定“拖到最小”的容差（逻辑像素）。
 const double minimalEnterTolerance = 2;
