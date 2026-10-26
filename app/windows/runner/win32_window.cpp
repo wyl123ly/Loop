@@ -135,7 +135,9 @@ bool Win32Window::Create(const std::wstring& title,
   double scale_factor = dpi / 96.0;
 
   HWND window = CreateWindow(
-      window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
+      window_class, title.c_str(),
+      WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN |
+          WS_CLIPSIBLINGS,
       Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
       Scale(size.width, scale_factor), Scale(size.height, scale_factor),
       nullptr, nullptr, GetModuleHandle(nullptr), this);
@@ -143,6 +145,15 @@ bool Win32Window::Create(const std::wstring& title,
   if (!window) {
     return false;
   }
+
+  // WS_POPUP windows are hidden from the taskbar by default. Keep the app
+  // visible in the taskbar and alt-tab list.
+  LONG_PTR ex_style = GetWindowLongPtr(window, GWL_EXSTYLE);
+  ex_style |= WS_EX_APPWINDOW;
+  ex_style &= ~WS_EX_TOOLWINDOW;
+  SetWindowLongPtr(window, GWL_EXSTYLE, ex_style);
+  SetWindowPos(window, nullptr, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
   UpdateTheme(window);
 
@@ -179,6 +190,25 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_NCCALCSIZE:
+      if (wparam == TRUE) {
+        // Frameless window: let the client cover the whole window so the
+        // Flutter root paints all the way to the DWM rounded edge. When
+        // maximized, clamp the client to the monitor work area.
+        auto* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
+        if (IsZoomed(hwnd)) {
+          MONITORINFO monitor_info{};
+          monitor_info.cbSize = sizeof(monitor_info);
+          if (GetMonitorInfo(
+                  MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST),
+                  &monitor_info)) {
+            params->rgrc[0] = monitor_info.rcWork;
+          }
+        }
+        return 0;
+      }
+      break;
+
     case WM_DESTROY:
       window_handle_ = nullptr;
       Destroy();
