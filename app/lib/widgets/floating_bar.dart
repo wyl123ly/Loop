@@ -265,7 +265,7 @@ class _BarButtonState extends State<_BarButton> {
   Widget build(BuildContext context) {
     final p = pal;
     final bg = widget.danger
-        ? (p.isDark ? const Color(0xFFC93B40) : p.danger)
+        ? (p.dangerInk)
         : p.hover;
     final iconColor = !widget.enabled
         ? p.faint

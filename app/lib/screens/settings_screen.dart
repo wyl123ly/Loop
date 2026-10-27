@@ -528,7 +528,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: const [
               Text('设置', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -537,7 +537,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+            padding: const EdgeInsets.fromLTRB(32, 24, 32, 40),
             children: [
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 680),

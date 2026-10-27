@@ -432,6 +432,9 @@ Future<void> _pumpTree(
   addTearDown(tester.view.resetDevicePixelRatio);
   final key = GlobalKey();
   _boundaryKey = key;
+  // 截图必须同时切换全局 palette，否则 dark 主题下 pal.* 仍是浅色，
+  // 生成“浅色卡片 + 浅色文字”的假截图。
+  LoopTheme.palette = dark ? LoopPalette.dark : LoopPalette.light;
   await tester.pumpWidget(
     RepaintBoundary(
       key: key,

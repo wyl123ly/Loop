@@ -50,10 +50,10 @@ class Sidebar extends StatelessWidget {
       builder: (context, _) {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: compact ? 76 : 250,
-          margin: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, compact ? 8 : 12, 14),
+          width: compact ? 76 : 248,
+          margin: EdgeInsets.fromLTRB(compact ? 10 : 16, 8, compact ? 8 : 12, 16),
           child: GlassPanel(
-            radius: compact ? 24 : 30,
+            radius: 24,
             blur: 26,
             padding: compact
                 ? const EdgeInsets.fromLTRB(8, 14, 8, 10)
@@ -147,12 +147,12 @@ class Sidebar extends StatelessWidget {
       height: 38,
       decoration: BoxDecoration(
         gradient: accentGradient,
-        borderRadius: BorderRadius.circular(13),
-        boxShadow: const [
-          BoxShadow(color: Color(0x337B8CFF), blurRadius: 16, offset: Offset(0, 6)),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
+        boxShadow: [
+          BoxShadow(color: pal.accent.withValues(alpha: 0.2), blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
-      child: const Icon(Icons.loop_rounded, color: Colors.white, size: 21),
+      child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 20),
     );
     if (compact) {
       return Padding(
@@ -182,7 +182,7 @@ class Sidebar extends StatelessWidget {
               children: [
                 Text('回路',
                     style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
+                        fontSize: 18, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
                 Text('Loop · 学习工作台',
                     style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
               ],
@@ -224,6 +224,7 @@ class Sidebar extends StatelessWidget {
   }
 
   Widget _newChatButton() {
+    final p = pal;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 4),
       child: Tooltip(
@@ -231,32 +232,38 @@ class Sidebar extends StatelessWidget {
         child: Material(
           key: const Key('sidebar-new-chat'),
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: () {
               onSelect(chatPageIndex);
               _state.newChat();
             },
             child: Ink(
-              height: compact ? 44 : 46,
+              height: 44,
               decoration: BoxDecoration(
-                gradient: accentGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x337B8CFF), blurRadius: 20, offset: Offset(0, 8)),
+                gradient: p.accentFillGradient,
+                borderRadius: BorderRadius.circular(LoopRadius.control),
+                boxShadow: [
+                  BoxShadow(
+                    color: p.accent.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
               child: compact
-                  ? const Icon(Icons.add_rounded, size: 21, color: Colors.white)
-                  : const Row(
+                  ? Icon(Icons.add_rounded, size: 20, color: p.onAccent)
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_rounded, size: 19, color: Colors.white),
-                        SizedBox(width: 5),
+                        Icon(Icons.add_rounded, size: 18, color: p.onAccent),
+                        const SizedBox(width: LoopSpace.x1),
                         Text('新对话',
                             style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                                fontSize: LoopType.body,
+                                fontWeight: FontWeight.w600,
+                                color: p.onAccent)),
                       ],
                     ),
             ),
@@ -304,14 +311,14 @@ class Sidebar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
       child: Material(
         color: selected ? pal.chip : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => onSelect(target),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               border: Border.all(
                 color: selected ? pal.glassBorder : Colors.transparent,
               ),
@@ -323,19 +330,19 @@ class Sidebar extends StatelessWidget {
                   height: 28,
                   decoration: BoxDecoration(
                     color: selected
-                        ? const Color(0xFF6C7BFF).withValues(alpha: 0.14)
+                        ? pal.accent.withValues(alpha: 0.14)
                         : pal.chip,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(LoopRadius.small),
                   ),
                   child: Icon(icon, size: 16, color: selected ? pal.accent : pal.muted),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: LoopSpace.x2),
                 Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
                       fontSize: 13.5,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected ? pal.ink : pal.muted,
                     ),
                   ),
@@ -404,9 +411,9 @@ class _HistoryTileState extends State<_HistoryTile> {
         padding: const EdgeInsets.only(bottom: 2),
         child: Material(
           color: selected ? pal.chip : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -421,7 +428,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: LoopType.secondary,
                         color: selected ? pal.ink : pal.muted,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                       ),
@@ -430,7 +437,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                   const SizedBox(width: 4),
                   if (_hover)
                     InkWell(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(LoopRadius.small),
                       onTap: widget.onDelete,
                       child: Padding(
                         padding: const EdgeInsets.all(3),
@@ -438,7 +445,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                       ),
                     )
                   else
-                    Text(_time, style: TextStyle(fontSize: 9.5, color: pal.faint)),
+                    Text(_time, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                 ],
               ),
             ),

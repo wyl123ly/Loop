@@ -62,7 +62,7 @@ class AgentPlanCard extends StatelessWidget {
   Widget _statusIcon(String status) {
     switch (status) {
       case 'done':
-        return const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF16A34A));
+        return Icon(Icons.check_circle_rounded, size: 14, color: pal.success);
       case 'in_progress':
         return SizedBox(
           width: 14,
@@ -70,7 +70,7 @@ class AgentPlanCard extends StatelessWidget {
           child: CircularProgressIndicator(strokeWidth: 1.8, color: pal.accent),
         );
       case 'failed':
-        return const Icon(Icons.error_outline_rounded, size: 14, color: Color(0xFFE5484D));
+        return Icon(Icons.error_outline_rounded, size: 14, color: pal.dangerInk);
       case 'skipped':
         return Icon(Icons.remove_circle_outline_rounded, size: 14, color: pal.faint);
       default:

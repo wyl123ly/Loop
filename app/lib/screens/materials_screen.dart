@@ -228,7 +228,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
               Text('资料', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -267,7 +267,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _importBanner() {
     final progress = _importTotal > 0 ? (_importDone / _importTotal).clamp(0.0, 1.0) : null;
     return Container(
-      margin: const EdgeInsets.fromLTRB(28, 0, 28, 10),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 10),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: panelDecoration(radius: 16),
       child: Column(
@@ -373,7 +373,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       }
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 12, 28, 40),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 40),
       children: children,
     );
   }

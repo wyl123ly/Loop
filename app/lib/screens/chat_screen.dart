@@ -1140,7 +1140,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget _header(BuildContext context) {
     return Container(
       height: 78,
-      padding: const EdgeInsets.fromLTRB(24, 18, 20, 4),
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
       // AC-07 断言 3：浮窗 360×420 下页头不得溢出——窄宽时省掉模型名徽标
       // （学科 chip 已按同一阈值退化为色点，见 SubjectChip）。
       child: LayoutBuilder(
@@ -1154,7 +1154,7 @@ class ChatScreenState extends State<ChatScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                      fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                 ),
               ),
               // §10.4：对话页是当前学科的作用域，页头必须显示学科名（窄宽退化为色点）。
@@ -1322,7 +1322,7 @@ class ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 10),
           const Text('今天想学点什么？',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const SizedBox(height: 6),
           Text(
             '发文字、贴截图或传 PDF，都可以问。',
@@ -1359,14 +1359,10 @@ class ChatScreenState extends State<ChatScreen> {
                     width: 54,
                     height: 54,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4F7CFF), Color(0xFF8B5CF6)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: accentFillGradient,
+                      borderRadius: BorderRadius.circular(LoopRadius.card),
                     ),
-                    child: const Icon(Icons.loop_rounded, color: Colors.white, size: 28),
+                    child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 28),
                   ),
                   const SizedBox(height: 16),
                   const Text('今天想学点什么？',
@@ -1604,7 +1600,7 @@ class ChatScreenState extends State<ChatScreen> {
                       message.attachments.isNotEmpty))
                 SelectableText(
                   message.content,
-                  style: const TextStyle(fontSize: 14.5, height: 1.6, color: Colors.white),
+                  style: TextStyle(fontSize: LoopType.reading, height: 1.6, color: pal.onAccent),
                 ),
             ],
           ),
@@ -1715,7 +1711,7 @@ class ChatScreenState extends State<ChatScreen> {
                         height: 10,
                         child: CircularProgressIndicator(strokeWidth: 1.6),
                       )
-                    : const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                    : Icon(Icons.check_circle_rounded, size: 12, color: pal.success),
                 SizedBox(width: 5),
                 Text(latest[name]!.label,
                     style: TextStyle(fontSize: 11.5, color: pal.ink)),
@@ -1892,7 +1888,7 @@ class ChatScreenState extends State<ChatScreen> {
                         ),
                         style: IconButton.styleFrom(
                           backgroundColor: _sending ? pal.danger : pal.accent,
-                          foregroundColor: Colors.white,
+                          foregroundColor: pal.onAccent,
                           minimumSize: Size.square(widget.compact ? 34 : 38),
                         ),
                       ),

@@ -191,7 +191,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       if ((subject?.level ?? '').isNotEmpty) _profileChip('水平', subject!.level),
     ];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 16, 18, 4),
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -296,7 +296,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 4, 18, 8),
+      padding: const EdgeInsets.fromLTRB(32, 4, 32, 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -308,7 +308,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   Widget _notice(String text, Color color) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(28, 0, 28, 8),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -345,7 +345,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     final recent = _recentTopics(topics);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 36),
       children: [
         Wrap(
           spacing: 12,
@@ -505,7 +505,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         .toList();
     if (topics.isEmpty) return _emptyState();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 36),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),

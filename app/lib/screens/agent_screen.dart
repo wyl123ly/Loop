@@ -105,7 +105,7 @@ class _AgentScreenState extends State<AgentScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
               Text('代理',
@@ -145,7 +145,7 @@ class _AgentScreenState extends State<AgentScreen> {
           child: _loading && _settings == null
               ? const Center(child: CircularProgressIndicator(strokeWidth: 2.4))
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(28, 4, 28, 40),
+                  padding: const EdgeInsets.fromLTRB(32, 4, 32, 40),
                   children: [
                     if (_tab == 0) _permissionsTab(),
                     if (_tab == 1) _mcpTab(),

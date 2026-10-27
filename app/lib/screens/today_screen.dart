@@ -126,7 +126,7 @@ class _TodayScreenState extends State<TodayScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
               Text('今日', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -168,7 +168,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
     final remaining = data.tasks.length;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 40),
       children: [
         _hero(data, remaining),
         const SizedBox(height: 16),
@@ -188,15 +188,17 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Widget _hero(TodayData data, int remaining) {
+    // hero 两主题都是中浅底：文字用深色，避免白字对比度不足。
+    final heroInk = pal.isDark ? pal.onPrimaryBtn : pal.ink;
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(LoopSpace.x6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: pal.hero,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(LoopRadius.card),
       ),
       child: Row(
         children: [
@@ -204,32 +206,37 @@ class _TodayScreenState extends State<TodayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('今天要做的事',
-                    style: TextStyle(fontSize: 12.5, color: Colors.white70)),
-                const SizedBox(height: 6),
+                Text('今天要做的事',
+                    style: TextStyle(fontSize: LoopType.secondary, color: heroInk)),
+                const SizedBox(height: LoopSpace.x2),
                 Text(
                   remaining == 0 ? '清空了，休息一下' : '$remaining 件待办',
-                  style: const TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: LoopType.display,
+                      fontWeight: FontWeight.w700,
+                      color: heroInk),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: LoopSpace.x1),
                 Text(
                   remaining == 0
                       ? '想到什么随时在对话里加'
                       : '今日已完成 ${data.doneToday} 件 · 共 ${data.openTotal} 件待办',
-                  style: const TextStyle(fontSize: 12.5, color: Colors.white70),
+                  style: TextStyle(
+                    fontSize: LoopType.secondary,
+                    color: heroInk.withValues(alpha: 0.78),
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(14),
+              color: heroInk.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
             ),
-            child: const Icon(Icons.task_alt_rounded, color: Colors.white, size: 24),
+            child: Icon(Icons.task_alt_rounded, color: heroInk, size: 22),
           ),
         ],
       ),

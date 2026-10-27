@@ -130,7 +130,7 @@ class _NotesScreenState extends State<NotesScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('删除'),
           ),
@@ -155,7 +155,7 @@ class _NotesScreenState extends State<NotesScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
               Text('笔记', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -311,7 +311,7 @@ class _NotesScreenState extends State<NotesScreen> {
                     onPressed: () => _delete(note),
                     icon: const Icon(Icons.delete_outline_rounded, size: 15),
                     label: const Text('删除'),
-                    style: TextButton.styleFrom(foregroundColor: const Color(0xFFB42318)),
+                    style: TextButton.styleFrom(foregroundColor: pal.dangerInk),
                   ),
                 ],
               ),

@@ -173,7 +173,7 @@ class _WindowButtonState extends State<_WindowButton> {
   Widget build(BuildContext context) {
     final p = pal;
     final bg = widget.danger
-        ? (p.isDark ? const Color(0xFFC93B40) : p.danger)
+        ? (p.dangerInk)
         : p.hover;
     return Tooltip(
       message: widget.tooltip,

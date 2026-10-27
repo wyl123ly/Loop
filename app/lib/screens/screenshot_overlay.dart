@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme.dart';
+
 /// 截图覆盖层的结果。
 ///
 /// - `done(bytes)`：用户完成框选，返回裁切后的 PNG；
@@ -222,7 +224,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: ratioMismatch ? const Color(0xFFFFB4AB) : Colors.white,
+                          color: ratioMismatch ? pal.dangerInk : Colors.white,
                           fontSize: compact ? 11.5 : 12.5,
                         ),
                       ),
@@ -271,7 +273,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                             key: const Key('screenshot-done'),
                             onPressed: canDone ? _confirm : null,
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF8E9BFF),
+                              backgroundColor: pal.accentInk,
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
                                 horizontal: compact ? 16 : 20,
@@ -289,7 +291,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                 if (_cropping)
                   const Positioned.fill(
                     child: IgnorePointer(
-                      child: ColoredBox(color: Color(0x33000000)),
+                      child: ColoredBox(color: Colors.black54),
                     ),
                   ),
               ],
@@ -329,13 +331,13 @@ class _SelectionPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTRB(rect.right, rect.top, size.width, rect.bottom), shade);
 
     final border = Paint()
-      ..color = const Color(0xFFB9C1FF)
+      ..color = pal.accentInk
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawRect(rect, border);
 
     final corner = Paint()
-      ..color = const Color(0xFFB9C1FF)
+      ..color = pal.accentInk
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     const len = 12.0;
