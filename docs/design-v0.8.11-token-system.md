@@ -14,7 +14,7 @@
 - dark `faint #6F6B7A → #86828F`、`onAccent → #15131A`
 - light `userBubble → #4F5CF0 / #8A5BD6`；用户气泡实际改用 `userBubbleGradient`
 - `warm` / `accent2` / `danger` / `faint` 不再承载文字：已迁移到 `warningInk` / `accentInk` / `dangerInk` / `muted`
-- 错误 SnackBar 背景改 `dangerInk`，文字 `onPrimaryBtn`（两主题 ≥5:1）
+- 错误 SnackBar 背景改 `dangerInk`，文字统一 `onPrimaryBtn`（两主题 ≥5:1；G6 守卫配对）
 
 ### 控件主题
 
@@ -39,7 +39,7 @@
 ### 测试与证据
 
 - 新增 `test/design_tokens_test.dart`：D1–D6 覆盖卡片/渐变/hero/错误 SnackBar 对比度
-- 新增 `test/design_guard_test.dart`：G1–G5 扫描字号/圆角/色值/间距/白字回退
+- 新增 `test/design_guard_test.dart`：G1–G6 扫描字号/圆角/色值/间距/白字回退
 - 修复 `subject_screenshots_test.dart`：补 `LoopTheme.palette` 切换、关闭 DEBUG banner、支持 `LOOP_SHOT_DIR`、补 Today/Notes
 - HEAD 证据：`docs/evidence/design-v0.8.11/screens/` 共 17 张（含 Today/Notes 双主题与 waitingApproval），`OVERFLOW.txt` = `no rendering overflow`
 
@@ -60,7 +60,7 @@
 | A11 截图回归 | PASS（17 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
 
 - `flutter analyze`：0 issues
-- 全量测试：**510 passed / 1 skipped**；`design_guard_test` G2 已覆盖 `p.` 别名
+- 全量测试：**511 passed / 1 skipped**；`design_guard_test` G2 已覆盖 `p.` 别名
 
 ## 3. 已知 gap
 

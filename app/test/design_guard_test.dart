@@ -80,6 +80,21 @@ void main() {
     }
   });
 
+  test('G6 dangerInk 底 SnackBar 必须配 onPrimaryBtn 前景', () {
+    final bad = <String>[];
+    for (final entry in texts.entries) {
+      final source = entry.value;
+      for (final match in RegExp(r'SnackBar\([\s\S]*?\)\);').allMatches(source)) {
+        final block = match.group(0)!;
+        if (block.contains('backgroundColor: pal.dangerInk') &&
+            !block.contains('onPrimaryBtn')) {
+          bad.add('${entry.key}: SnackBar 使用 dangerInk 但未配 onPrimaryBtn');
+        }
+      }
+    }
+    expect(bad, isEmpty, reason: bad.join('\n'));
+  });
+
   test('G5 Colors.white 只允许装饰/叠加层', () {
     const allow = {
       'lib/theme/palette.dart',

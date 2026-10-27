@@ -599,7 +599,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 setState(() {});
                                 if (!ok) {
                                   messenger.showSnackBar(SnackBar(
-                                    content: Text('流式设置保存失败，已恢复原状态'),
+                                    content: Text('流式设置保存失败，已恢复原状态',
+                                        style: TextStyle(color: pal.onPrimaryBtn)),
                                     backgroundColor: pal.dangerInk,
                                   ));
                                 }

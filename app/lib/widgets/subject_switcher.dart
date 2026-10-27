@@ -400,7 +400,7 @@ Future<void> showSubjectMenu(BuildContext anchorContext, {AppState? state}) asyn
         if (!ok) {
           if (!anchorContext.mounted) return;
           ScaffoldMessenger.of(anchorContext).showSnackBar(SnackBar(
-            content: Text('切换学科失败，请重试', style: TextStyle(color: pal.toastFg)),
+            content: Text('切换学科失败，请重试', style: TextStyle(color: pal.onPrimaryBtn)),
             backgroundColor: pal.dangerInk,
           ));
         }
