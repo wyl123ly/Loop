@@ -103,8 +103,8 @@ class _TodayScreenState extends State<TodayScreen> {
   void _snack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: 13)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(message, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -126,13 +126,13 @@ class _TodayScreenState extends State<TodayScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
-              Text('今日', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-              SizedBox(width: 10),
-              Text(_dateLabel, style: TextStyle(fontSize: 12.5, color: pal.muted)),
-              const SizedBox(width: 10),
+              Text('今日', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              SizedBox(width: 12),
+              Text(_dateLabel, style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
+              const SizedBox(width: 12),
               // §10.4：今日是当前学科的作用域，页头必须显示学科名。
               SubjectChip(state: _state),
               Spacer(),
@@ -156,7 +156,7 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -168,7 +168,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
     final remaining = data.tasks.length;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
       children: [
         _hero(data, remaining),
         const SizedBox(height: 16),
@@ -188,15 +188,17 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Widget _hero(TodayData data, int remaining) {
+    // hero 两主题都是中浅底：文字用深色，避免白字对比度不足。
+    final heroInk = pal.isDark ? pal.onPrimaryBtn : pal.ink;
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(LoopSpace.x6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: pal.hero,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(LoopRadius.card),
       ),
       child: Row(
         children: [
@@ -204,32 +206,37 @@ class _TodayScreenState extends State<TodayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('今天要做的事',
-                    style: TextStyle(fontSize: 12.5, color: Colors.white70)),
-                const SizedBox(height: 6),
+                Text('今天要做的事',
+                    style: TextStyle(fontSize: LoopType.secondary, color: heroInk)),
+                const SizedBox(height: LoopSpace.x2),
                 Text(
                   remaining == 0 ? '清空了，休息一下' : '$remaining 件待办',
-                  style: const TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.w700, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: LoopType.display,
+                      fontWeight: FontWeight.w700,
+                      color: heroInk),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: LoopSpace.x1),
                 Text(
                   remaining == 0
                       ? '想到什么随时在对话里加'
                       : '今日已完成 ${data.doneToday} 件 · 共 ${data.openTotal} 件待办',
-                  style: const TextStyle(fontSize: 12.5, color: Colors.white70),
+                  style: TextStyle(
+                    fontSize: LoopType.secondary,
+                    color: heroInk,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(14),
+              color: heroInk.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
             ),
-            child: const Icon(Icons.task_alt_rounded, color: Colors.white, size: 24),
+            child: Icon(Icons.task_alt_rounded, color: heroInk, size: 22),
           ),
         ],
       ),
@@ -238,38 +245,38 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Widget _tasksCard(TodayData data) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       decoration: panelDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text('待办', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('待办', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
               SizedBox(width: 8),
               Text('${data.tasks.length} 件',
-                  style: TextStyle(fontSize: 12, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (data.tasks.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Text('还没有待办。可以手动加，也可以在对话里说「帮我安排今天的学习」。',
-                  style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             ),
           for (final task in data.tasks) _taskRow(task, data),
           Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 6),
+            padding: const EdgeInsets.only(top: 4, bottom: 8),
             child: Row(
               children: [
                 Icon(Icons.add_rounded, size: 17, color: pal.muted),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _taskInput,
                     onSubmitted: (_) => _addTask(),
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: LoopType.body),
                     decoration: const InputDecoration(
                       hintText: '加一件事，回车确认',
                       filled: false,
@@ -295,7 +302,7 @@ class _TodayScreenState extends State<TodayScreen> {
         ? '未排期'
         : (task.due == data.date ? '今天' : (overdue ? '逾期 · ${task.due.substring(5)}' : task.due));
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           SizedBox(
@@ -311,7 +318,7 @@ class _TodayScreenState extends State<TodayScreen> {
             child: Text(
               task.title,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: LoopType.body,
                 color: task.done ? pal.muted : pal.ink,
                 decoration: task.done ? TextDecoration.lineThrough : null,
               ),
@@ -321,20 +328,20 @@ class _TodayScreenState extends State<TodayScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
-                color: overdue ? pal.danger : pal.faint,
+                fontSize: LoopType.caption,
+                color: overdue ? pal.dangerInk : pal.muted,
               ),
             ),
           if (task.estimateMin > 0)
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text('${task.estimateMin}min',
-                  style: TextStyle(fontSize: 11, color: pal.faint)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ),
           IconButton(
             tooltip: '删除',
             onPressed: () => _deleteTask(task),
-            icon: Icon(Icons.close_rounded, size: 14, color: pal.faint),
+            icon: Icon(Icons.close_rounded, size: 14, color: pal.muted),
             visualDensity: VisualDensity.compact,
           ),
         ],
@@ -350,16 +357,16 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 11.5, color: pal.muted)),
-            SizedBox(height: 6),
+            Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
+            SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(value,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                SizedBox(width: 3),
-                Text(unit, style: TextStyle(fontSize: 11, color: pal.muted)),
+                    style: const TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700)),
+                SizedBox(width: 4),
+                Text(unit, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               ],
             ),
           ],

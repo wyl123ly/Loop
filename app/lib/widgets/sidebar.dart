@@ -50,14 +50,14 @@ class Sidebar extends StatelessWidget {
       builder: (context, _) {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: compact ? 76 : 250,
-          margin: EdgeInsets.fromLTRB(compact ? 10 : 14, 8, compact ? 8 : 12, 14),
+          width: compact ? 76 : 248,
+          margin: EdgeInsets.fromLTRB(compact ? 12 : 16, 8, compact ? 8 : 12, 16),
           child: GlassPanel(
-            radius: compact ? 24 : 30,
+            radius: LoopRadius.panel,
             blur: 26,
             padding: compact
-                ? const EdgeInsets.fromLTRB(8, 14, 8, 10)
-                : const EdgeInsets.fromLTRB(12, 20, 12, 14),
+                ? const EdgeInsets.fromLTRB(8, 16, 8, 12)
+                : const EdgeInsets.fromLTRB(12, 20, 12, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -72,12 +72,12 @@ class Sidebar extends StatelessWidget {
                     _navItem(item.$1, item.$2, item.$3),
                   const Spacer(),
                   for (final item in _globalNav) ...[
-                    if (item.$1 == settingsPageIndex) const SizedBox(height: 6),
+                    if (item.$1 == settingsPageIndex) const SizedBox(height: 8),
                     _navItem(item.$1, item.$2, item.$3),
                   ],
                 ] else ...[
                   Expanded(child: _expandedList(context)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   for (final item in _globalNav)
                     _navItem(item.$1, item.$2, item.$3),
                 ],
@@ -96,20 +96,20 @@ class Sidebar extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         for (final item in _subjectNav) _navItem(item.$1, item.$2, item.$3),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
+          padding: const EdgeInsets.fromLTRB(12, 0, 8, 8),
           child: Text('最近对话',
               style: TextStyle(
-                  fontSize: 10,
+                  fontSize: LoopType.micro,
                   letterSpacing: 1.2,
-                  color: pal.faint,
+                  color: pal.muted,
                   fontWeight: FontWeight.w600)),
         ),
         if (items.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
-            child: Text('这个学科还没有对话', style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            child: Text('这个学科还没有对话', style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           )
         else
           for (final conversation in items)
@@ -147,12 +147,12 @@ class Sidebar extends StatelessWidget {
       height: 38,
       decoration: BoxDecoration(
         gradient: accentGradient,
-        borderRadius: BorderRadius.circular(13),
-        boxShadow: const [
-          BoxShadow(color: Color(0x337B8CFF), blurRadius: 16, offset: Offset(0, 6)),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
+        boxShadow: [
+          BoxShadow(color: pal.accent.withValues(alpha: 0.2), blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
-      child: const Icon(Icons.loop_rounded, color: Colors.white, size: 21),
+      child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 20),
     );
     if (compact) {
       return Padding(
@@ -171,20 +171,20 @@ class Sidebar extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 20),
       child: Row(
         children: [
           mark,
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('回路',
                     style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
+                        fontSize: LoopType.title, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
                 Text('Loop · 学习工作台',
-                    style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.4)),
               ],
             ),
           ),
@@ -199,9 +199,9 @@ class Sidebar extends StatelessWidget {
       message: expand ? '展开侧栏' : '收起侧栏',
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           onTap: onToggleCollapse,
           child: SizedBox(
             width: 24,
@@ -210,7 +210,7 @@ class Sidebar extends StatelessWidget {
               child: Text(
                 expand ? '›' : '‹',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: LoopType.display,
                   height: 1,
                   fontWeight: FontWeight.w500,
                   color: pal.muted,
@@ -224,6 +224,7 @@ class Sidebar extends StatelessWidget {
   }
 
   Widget _newChatButton() {
+    final p = pal;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 4),
       child: Tooltip(
@@ -231,32 +232,38 @@ class Sidebar extends StatelessWidget {
         child: Material(
           key: const Key('sidebar-new-chat'),
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: () {
               onSelect(chatPageIndex);
               _state.newChat();
             },
             child: Ink(
-              height: compact ? 44 : 46,
+              height: 44,
               decoration: BoxDecoration(
-                gradient: accentGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(color: Color(0x337B8CFF), blurRadius: 20, offset: Offset(0, 8)),
+                gradient: p.accentFillGradient,
+                borderRadius: BorderRadius.circular(LoopRadius.control),
+                boxShadow: [
+                  BoxShadow(
+                    color: p.accent.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
               child: compact
-                  ? const Icon(Icons.add_rounded, size: 21, color: Colors.white)
-                  : const Row(
+                  ? Icon(Icons.add_rounded, size: 20, color: p.onAccent)
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_rounded, size: 19, color: Colors.white),
-                        SizedBox(width: 5),
+                        Icon(Icons.add_rounded, size: 18, color: p.onAccent),
+                        const SizedBox(width: LoopSpace.x1),
                         Text('新对话',
                             style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                                fontSize: LoopType.body,
+                                fontWeight: FontWeight.w600,
+                                color: p.onAccent)),
                       ],
                     ),
             ),
@@ -272,19 +279,19 @@ class Sidebar extends StatelessWidget {
       // 紧凑态 7 个页签 + 学科切换器必须在 900×600 的侧栏高度内放下
       // （§10.5 不得 overflow）：纵向留白收到 1，单项 40。
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 1),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Tooltip(
           message: label,
           child: Material(
             color: selected ? pal.chip : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               onTap: () => onSelect(target),
               child: Container(
                 height: 38,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                   border: Border.all(
                     color: selected ? pal.glassBorder : Colors.transparent,
                   ),
@@ -301,17 +308,17 @@ class Sidebar extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
       child: Material(
         color: selected ? pal.chip : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => onSelect(target),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               border: Border.all(
                 color: selected ? pal.glassBorder : Colors.transparent,
               ),
@@ -323,19 +330,19 @@ class Sidebar extends StatelessWidget {
                   height: 28,
                   decoration: BoxDecoration(
                     color: selected
-                        ? const Color(0xFF6C7BFF).withValues(alpha: 0.14)
+                        ? pal.accent.withValues(alpha: 0.14)
                         : pal.chip,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(LoopRadius.small),
                   ),
                   child: Icon(icon, size: 16, color: selected ? pal.accent : pal.muted),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: LoopSpace.x2),
                 Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: LoopType.body,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected ? pal.ink : pal.muted,
                     ),
                   ),
@@ -401,27 +408,27 @@ class _HistoryTileState extends State<_HistoryTile> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.only(bottom: 4),
         child: Material(
           color: selected ? pal.chip : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Icon(Icons.chat_bubble_outline_rounded,
-                      size: 12, color: selected ? pal.accent : pal.faint),
-                  const SizedBox(width: 7),
+                      size: 12, color: selected ? pal.accent : pal.muted),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       conversation.title.isEmpty ? '新对话' : conversation.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: LoopType.secondary,
                         color: selected ? pal.ink : pal.muted,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                       ),
@@ -430,15 +437,15 @@ class _HistoryTileState extends State<_HistoryTile> {
                   const SizedBox(width: 4),
                   if (_hover)
                     InkWell(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(LoopRadius.small),
                       onTap: widget.onDelete,
                       child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: Icon(Icons.delete_outline_rounded, size: 13, color: pal.faint),
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Icons.delete_outline_rounded, size: 13, color: pal.muted),
                       ),
                     )
                   else
-                    Text(_time, style: TextStyle(fontSize: 9.5, color: pal.faint)),
+                    Text(_time, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                 ],
               ),
             ),

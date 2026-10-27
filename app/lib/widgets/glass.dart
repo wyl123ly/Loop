@@ -59,7 +59,7 @@ class GlassPanel extends StatelessWidget {
   const GlassPanel({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(18),
+    this.padding = const EdgeInsets.all(16),
     this.radius = 24,
     this.blur = 18,
     this.opacity,
@@ -124,7 +124,7 @@ class GlassPill extends StatelessWidget {
   const GlassPill({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
     this.radius = 999,
     this.color,
   });
@@ -155,7 +155,7 @@ class PageHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-    this.padding = const EdgeInsets.fromLTRB(32, 28, 28, 16),
+    this.padding = const EdgeInsets.fromLTRB(32, 32, 32, 16),
   });
 
   final String title;
@@ -174,16 +174,16 @@ class PageHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 26,
+              fontSize: LoopType.display,
               fontWeight: FontWeight.w700,
               color: p.ink,
-              letterSpacing: -0.6,
-              height: 1.1,
+              letterSpacing: -0.5,
+              height: 1.2,
             ),
           ),
           if (subtitle != null) ...[
             const SizedBox(width: 12),
-            Text(subtitle!, style: TextStyle(fontSize: 12.5, color: p.muted)),
+            Text(subtitle!, style: TextStyle(fontSize: LoopType.secondary, color: p.muted)),
           ],
           const Spacer(),
           ?trailing,
@@ -217,15 +217,15 @@ class GradientButton extends StatelessWidget {
       opacity: onPressed == null ? 0.5 : 1,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: onPressed,
           child: Ink(
             height: height,
             decoration: BoxDecoration(
-              gradient: gradient ?? p.accentGradient,
-              borderRadius: BorderRadius.circular(14),
+              gradient: gradient ?? p.accentFillGradient,
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               boxShadow: [
                 BoxShadow(
                   color: p.accent.withValues(alpha: 0.25),
@@ -240,14 +240,14 @@ class GradientButton extends StatelessWidget {
               children: [
                 if (icon != null) ...[
                   Icon(icon, size: 18, color: p.onAccent),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                 ],
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: LoopSpace.x5),
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: LoopType.body,
                       fontWeight: FontWeight.w600,
                       color: p.onAccent,
                     ),

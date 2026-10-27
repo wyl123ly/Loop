@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
+import '../theme.dart';
+
 /// 窗口形态。整个应用只有这两种形态；同一 Flutter 窗口内切换。
 enum LoopWindowMode { normal, floating }
 
@@ -93,7 +95,7 @@ const double answerCollapsedHeight = 36;
 const double answerGap = 8;
 
 /// 回答窗圆角。
-const double answerRadius = 14;
+const double answerRadius = LoopRadius.control;
 
 /// 回答窗非正文（header/问题/状态/padding）占用高度 = 36 + 18 + 22 + 16。
 const double answerChromeHeight = answerHeaderHeight + 18 + 22 + 16;

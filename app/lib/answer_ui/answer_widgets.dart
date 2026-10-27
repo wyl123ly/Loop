@@ -356,7 +356,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                                     _ErrorBanner(message: state.error!),
                                   if (state.plan.isNotEmpty)
                                     _PlanSection(plan: state.plan),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 8),
                                   _AnswerBody(state: state),
                                   if (state.refs.isNotEmpty)
                                     _RefsSection(refs: state.refs),
@@ -420,10 +420,10 @@ class AnswerHeader extends StatelessWidget {
       child: Row(
         children: [
           _StatusDot(state: state),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             '回答',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: p.ink),
+            style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w700, color: p.ink),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -443,7 +443,7 @@ class AnswerHeader extends StatelessWidget {
                     '${state.label}${_elapsedText(state.elapsedMs)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: p.muted),
+                    style: TextStyle(fontSize: LoopType.micro, color: p.muted),
                   ),
                 ),
               ),
@@ -484,10 +484,10 @@ class _StatusDot extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal;
     final color = switch (state.status) {
-      'error' => p.danger,
-      'waiting_approval' => p.warm,
-      'tool' => p.warm,
-      'stopped' => p.faint,
+      'error' => p.dangerInk,
+      'waiting_approval' => p.warningInk,
+      'tool' => p.warningInk,
+      'stopped' => p.muted,
       'thinking' || 'streaming' => p.accent,
       _ => p.accent,
     };
@@ -508,27 +508,27 @@ class _QuestionLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 1),
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             decoration: BoxDecoration(
               color: p.chip,
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
               border: Border.all(color: p.border),
             ),
-            child: Text('问', style: TextStyle(fontSize: 9.5, color: p.muted)),
+            child: Text('问', style: TextStyle(fontSize: LoopType.micro, color: p.muted)),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               question.trim(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12.5, height: 1.3, color: p.ink),
+              style: TextStyle(fontSize: LoopType.secondary, height: 1.4, color: p.ink),
             ),
           ),
         ],
@@ -547,28 +547,28 @@ class _StatusLine extends StatelessWidget {
     final p = pal;
     final label = state.resyncing ? '同步中…' : state.label;
     final color = switch (state.status) {
-      'error' => p.danger,
-      'stopped' => p.faint,
+      'error' => p.dangerInk,
+      'stopped' => p.muted,
       _ => p.muted,
     };
     return Padding(
       key: const Key('answer-status'),
-      padding: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           if (state.waitingApproval) ...[
-            Icon(Icons.shield_outlined, size: 12, color: p.warm),
+            Icon(Icons.shield_outlined, size: 12, color: p.warningInk),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 '需要审批，请回主窗口处理',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: p.warm),
+                style: TextStyle(fontSize: LoopType.caption, color: p.warningInk),
               ),
             ),
           ] else
-            Text(label, style: TextStyle(fontSize: 10.5, color: color)),
+            Text(label, style: TextStyle(fontSize: LoopType.micro, color: color)),
         ],
       ),
     );
@@ -587,21 +587,21 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       key: const Key('answer-error'),
       margin: const EdgeInsets.only(top: 4, bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: p.danger.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: p.danger.withValues(alpha: 0.35)),
+        color: p.dangerInk.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
+        border: Border.all(color: p.dangerInk.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded, size: 13, color: p.danger),
-          const SizedBox(width: 5),
+          Icon(Icons.error_outline_rounded, size: 13, color: p.dangerInk),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 11.5, height: 1.4, color: p.danger),
+              style: TextStyle(fontSize: LoopType.caption, height: 1.4, color: p.dangerInk),
             ),
           ),
         ],
@@ -620,10 +620,10 @@ class _PlanSection extends StatelessWidget {
     final p = pal;
     return Container(
       margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: p.chip,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         border: Border.all(color: p.border),
       ),
       child: Column(
@@ -631,12 +631,12 @@ class _PlanSection extends StatelessWidget {
         children: [
           Text(
             '执行计划',
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: p.muted),
+            style: TextStyle(fontSize: LoopType.micro, fontWeight: FontWeight.w600, color: p.muted),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           for (final item in plan.take(5))
             Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
                   Icon(
@@ -644,7 +644,7 @@ class _PlanSection extends StatelessWidget {
                         ? Icons.check_circle_outline_rounded
                         : Icons.radio_button_unchecked_rounded,
                     size: 11,
-                    color: item.status == 'done' ? p.accent : p.faint,
+                    color: item.status == 'done' ? p.accentInk : p.muted,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -652,7 +652,7 @@ class _PlanSection extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10.5, color: p.ink),
+                      style: TextStyle(fontSize: LoopType.micro, color: p.ink),
                     ),
                   ),
                 ],
@@ -678,13 +678,13 @@ class _AnswerBody extends StatelessWidget {
         children: [
           if (state.busy)
             Padding(
-              padding: const EdgeInsets.only(top: 2, right: 6),
+              padding: const EdgeInsets.only(top: 4, right: 8),
               child: Icon(Icons.hourglass_top_rounded, size: 12, color: p.accent),
             ),
           Expanded(
             child: Text(
               state.placeholder,
-              style: TextStyle(fontSize: 12.5, height: 1.5, color: p.muted),
+              style: TextStyle(fontSize: LoopType.secondary, height: 1.6, color: p.muted),
             ),
           ),
         ],
@@ -692,7 +692,7 @@ class _AnswerBody extends StatelessWidget {
     }
     return MarkdownText(
       state.answer,
-      baseStyle: TextStyle(fontSize: 13, height: 1.62, color: p.ink),
+      baseStyle: TextStyle(fontSize: LoopType.body, height: 1.6, color: p.ink),
     );
   }
 }
@@ -713,17 +713,17 @@ class _RefsSection extends StatelessWidget {
         children: [
           for (final ref in refs.take(6))
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: p.chip,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(LoopRadius.small),
                 border: Border.all(color: p.border),
               ),
               child: Text(
                 ref.page > 0 ? '${ref.name} p.${ref.page}' : ref.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 9.5, color: p.muted),
+                style: TextStyle(fontSize: LoopType.micro, color: p.muted),
               ),
             ),
         ],
@@ -745,12 +745,12 @@ class _ScrollBottomCapsule extends StatelessWidget {
       child: InkWell(
         key: const Key('answer-scroll-bottom'),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(LoopRadius.pill),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: p.cardSolid,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(LoopRadius.pill),
             border: Border.all(color: p.border),
             boxShadow: [BoxShadow(color: p.shadow, blurRadius: 10, offset: const Offset(0, 3))],
           ),
@@ -758,8 +758,8 @@ class _ScrollBottomCapsule extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.arrow_downward_rounded, size: 12, color: p.ink),
-              const SizedBox(width: 3),
-              Text('回到底部', style: TextStyle(fontSize: 10.5, color: p.ink)),
+              const SizedBox(width: 4),
+              Text('回到底部', style: TextStyle(fontSize: LoopType.micro, color: p.ink)),
             ],
           ),
         ),
@@ -804,7 +804,7 @@ class _HeaderButtonState extends State<_HeaderButton> {
             height: 28,
             decoration: BoxDecoration(
               color: _hover ? p.hover : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(widget.icon, size: 15, color: p.muted),
           ),

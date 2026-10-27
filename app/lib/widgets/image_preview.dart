@@ -31,11 +31,11 @@ class ImagePreview extends StatelessWidget {
         key: const Key('image-preview-box'),
         width: (size.width * 0.9).clamp(240.0, 1100.0),
         height: (size.height * 0.9).clamp(200.0, 820.0),
-        decoration: panelDecoration(color: pal.cardSolid, radius: compact ? 14 : 18),
+        decoration: panelDecoration(color: pal.cardSolid, radius: compact ? LoopRadius.control : LoopRadius.card),
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 4 : 10, 4, compact ? 4 : 8),
+              padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 4 : 12, 4, compact ? 4 : 8),
               child: Row(
                 children: [
                   Icon(Icons.image_outlined, size: compact ? 14 : 16, color: pal.muted),
@@ -45,7 +45,7 @@ class ImagePreview extends StatelessWidget {
                       title ?? '图片预览',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: compact ? 11.5 : 12.5, color: pal.ink),
+                      style: TextStyle(fontSize: compact ? LoopType.caption : LoopType.secondary, color: pal.ink),
                     ),
                   ),
                   IconButton(
@@ -60,7 +60,7 @@ class ImagePreview extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(compact ? 14 : 18),
+                  bottom: Radius.circular(compact ? LoopRadius.control : LoopRadius.card),
                 ),
                 child: Container(
                   color: Colors.black,
@@ -74,7 +74,7 @@ class ImagePreview extends StatelessWidget {
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
                           );
                         },
                         errorBuilder: (context, error, stack) => Center(
@@ -84,7 +84,7 @@ class ImagePreview extends StatelessWidget {
                               const Icon(Icons.broken_image_outlined, size: 36, color: Colors.white54),
                               const SizedBox(height: 8),
                               Text('图片加载失败',
-                                  style: TextStyle(fontSize: 12, color: pal.muted)),
+                                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
                             ],
                           ),
                         ),

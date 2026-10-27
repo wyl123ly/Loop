@@ -217,8 +217,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -228,13 +228,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
-              Text('资料', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-              SizedBox(width: 10),
-              Text('${_items.length} 份', style: TextStyle(fontSize: 12.5, color: pal.muted)),
-              const SizedBox(width: 10),
+              Text('资料', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              SizedBox(width: 12),
+              Text('${_items.length} 份', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
+              const SizedBox(width: 12),
               // §10.4：资料库属于当前学科，页头必须显示学科名（含上传/导入入口）。
               SubjectChip(state: _state),
               const Spacer(),
@@ -247,10 +247,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               FilledButton.icon(
                 onPressed: _uploading ? null : _upload,
                 icon: _uploading
-                    ? const SizedBox(
-                        width: 14,
+                    ? SizedBox(
+                        width: 16,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2.0, color: pal.onPrimaryBtn),
                       )
                     : const Icon(Icons.upload_file_rounded, size: 18),
                 label: Text(_uploading ? '解析中…' : '上传资料'),
@@ -267,9 +267,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _importBanner() {
     final progress = _importTotal > 0 ? (_importDone / _importTotal).clamp(0.0, 1.0) : null;
     return Container(
-      margin: const EdgeInsets.fromLTRB(28, 0, 28, 10),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 12),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -280,7 +280,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Expanded(
                 child: Text(
                   _importTotal > 0 ? '导入文件夹 $_importDone / $_importTotal' : '正在准备导入…',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink),
                 ),
               ),
               TextButton(onPressed: _cancelImport, child: const Text('取消')),
@@ -289,17 +289,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           if (progress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(LoopRadius.pill),
               child: LinearProgressIndicator(value: progress, minHeight: 5),
             ),
           ],
           if (_importCurrent.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 8),
               child: Text(_importCurrent,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ),
         ],
       ),
@@ -313,7 +313,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -325,12 +325,12 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_outlined, size: 40, color: pal.faint),
+            Icon(Icons.folder_outlined, size: 40, color: pal.muted),
             const SizedBox(height: 12),
-            const Text('还没有资料', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const Text('还没有资料', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             Text('上传 PDF / Word / Markdown，或导入一个文件夹。',
-                style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -364,16 +364,16 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     final loose = _items.where((item) => item.folderId == 0).toList();
     if (loose.isNotEmpty) {
       children.add(Padding(
-        padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
         child: Text('单独上传',
-            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: pal.muted)),
+            style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
       ));
       for (final item in loose) {
         children.add(_materialTile(item));
       }
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 12, 28, 40),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 48),
       children: children,
     );
   }
@@ -455,31 +455,31 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Widget _dirTile(_Dir dir, int depth, bool expanded, VoidCallback onTap) {
     return Padding(
-      padding: EdgeInsets.only(left: depth * 18.0, top: 1, bottom: 1),
+      padding: EdgeInsets.only(left: depth * 20, top: 4, bottom: 4),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
                 SizedBox(
-                  width: 15,
+                  width: 16,
                   child: Text(
                     expanded ? '▾' : '▸',
-                    style: TextStyle(fontSize: 14, height: 1, color: pal.muted),
+                    style: TextStyle(fontSize: LoopType.reading, height: 1, color: pal.muted),
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.folder_outlined, size: 15, color: pal.muted),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(dir.name,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: pal.muted)),
-                const SizedBox(width: 6),
-                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                    style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
+                const SizedBox(width: 8),
+                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
@@ -501,7 +501,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 8, bottom: 4),
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Row(
         children: [
           IconButton(
@@ -513,30 +513,30 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             },
             icon: Text(
               expanded ? '▾' : '▸',
-              style: TextStyle(fontSize: 17, height: 1, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.title, height: 1, color: pal.muted),
             ),
           ),
           Container(
             width: 34,
             height: 34,
-            decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(9)),
+            decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
             child: Icon(Icons.folder_outlined, size: 18, color: pal.accent),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(folder.name,
-                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: pal.ink)),
+                    style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
                 Text(folder.rootPath,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: pal.muted)),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
-          Text('$count 份', style: TextStyle(fontSize: 11, color: pal.muted)),
+          Text('$count 份', style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           TextButton(
             onPressed: () => _toggleAll(folder, files),
             style: TextButton.styleFrom(
@@ -544,7 +544,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
             child: Text(_hasExpanded(folder.id, files) ? '全部收起' : '全部展开',
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ),
           if (_deletingFolderId == folder.id)
             const Padding(
@@ -552,7 +552,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               child: SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2.0),
               ),
             )
           else ...[
@@ -566,7 +566,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             IconButton(
               tooltip: '删除整个文件夹',
               onPressed: () => _confirmDeleteFolder(folder),
-              icon: Icon(Icons.delete_outline_rounded, size: 18, color: pal.faint),
+              icon: Icon(Icons.delete_outline_rounded, size: 18, color: pal.muted),
             ),
           ],
         ],
@@ -576,25 +576,25 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Widget _materialTile(MaterialItem item, {int depth = 0}) {
     return Padding(
-      padding: EdgeInsets.only(left: depth * 18.0, bottom: 6),
+      padding: EdgeInsets.only(left: depth * 20, bottom: 8),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => _showPreview(item),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: panelDecoration(radius: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: panelDecoration(radius: LoopRadius.control),
             child: Row(
               children: [
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
                   child: Icon(_icon(item.kind), size: 17, color: pal.accent),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -602,11 +602,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                       Text(item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink)),
-                      const SizedBox(height: 2),
+                          style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
+                      const SizedBox(height: 4),
                       Text(
                         '${item.kind.toUpperCase()} · ${item.pages} 页 · ${_formatChars(item.chars)}',
-                        style: TextStyle(fontSize: 11, color: pal.muted),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                       ),
                     ],
                   ),
@@ -614,7 +614,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 IconButton(
                   tooltip: '删除',
                   onPressed: () => _confirmDelete(item),
-                  icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.faint),
+                  icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.muted),
                 ),
               ],
             ),
@@ -633,7 +633,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('删除'),
           ),
@@ -676,10 +676,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.name, style: const TextStyle(fontSize: 16)),
+            Text(item.name, style: const TextStyle(fontSize: LoopType.title)),
             const SizedBox(height: 4),
             Text('${item.pages} 页 · ${_formatChars(item.chars)}',
-                style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ],
         ),
         content: SizedBox(
@@ -689,17 +689,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             future: _state.api.materialPreview(item.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator(strokeWidth: 2.2));
+                return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
               }
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString(),
-                    style: TextStyle(fontSize: 12.5, color: pal.danger));
+                    style: TextStyle(fontSize: LoopType.secondary, color: pal.dangerInk));
               }
               final text = (snapshot.data?['text'] ?? '') as String;
               return SingleChildScrollView(
                 child: SelectableText(
                   text,
-                  style: TextStyle(fontSize: 13, height: 1.75, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.body, height: 1.75, color: pal.ink),
                 ),
               );
             },
@@ -721,7 +721,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('删除'),
           ),
@@ -783,37 +783,37 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text((_scan['name'] ?? '').toString(),
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
             Text((_scan['root'] ?? '').toString(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             const SizedBox(height: 12),
             Text(
               '共 $total 个文件，可导入 ${supported.length} 个，跳过 ${total - supported.length} 个 · ${_size(bytes)}',
-              style: TextStyle(fontSize: 12.5, color: pal.ink),
+              style: TextStyle(fontSize: LoopType.secondary, color: pal.ink),
             ),
             if (_scan['truncated'] == true)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: 8),
                 child: Text('文件很多，预览只显示前 1000 个。',
-                    style: TextStyle(fontSize: 11, color: pal.warm)),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.warningInk)),
               ),
             if (_scanning)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: LinearProgressIndicator(minHeight: 2),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('包含子文件夹', style: TextStyle(fontSize: 13)),
+              title: const Text('包含子文件夹', style: TextStyle(fontSize: LoopType.body)),
               value: _recursive,
               onChanged: _scanning ? null : _rescan,
             ),
             Row(
               children: [
-                Text('重复文件', style: TextStyle(fontSize: 13, color: pal.ink)),
+                Text('重复文件', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
                 const Spacer(),
                 SegmentedButton<String>(
                   segments: const [
@@ -828,11 +828,11 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
             ),
             const SizedBox(height: 8),
             Text('只支持 PDF/DOCX/PPTX/TXT/MD；文件数量不限制，单个文件 ≤30MB。',
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             if (supported.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text('将导入：',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
               const SizedBox(height: 4),
               SizedBox(
                 height: 120,
@@ -844,10 +844,10 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
                         Text('· ${file['relative']}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11.5, color: pal.ink)),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.ink)),
                       if (supported.length > 8)
                         Text('… 还有 ${supported.length - 8} 个',
-                            style: TextStyle(fontSize: 11, color: pal.muted)),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     ],
                   ),
                 ),

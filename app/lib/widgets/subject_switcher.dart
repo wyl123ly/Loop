@@ -75,11 +75,11 @@ Color subjectTokenColor(String token) {
     case 'warm':
     case 'amber':
     case 'orange':
-      return pal.warm;
+      return pal.warningInk;
     case 'violet':
     case 'purple':
     case 'accent2':
-      return pal.accent2;
+      return pal.accentInk;
     case 'slate':
     case 'gray':
     case 'grey':
@@ -88,7 +88,7 @@ Color subjectTokenColor(String token) {
       return pal.ink;
     case 'rose':
     case 'red':
-      return pal.danger;
+      return pal.dangerInk;
     case 'accent':
     case 'blue':
     case 'indigo':
@@ -136,7 +136,7 @@ class SubjectAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: color.withValues(alpha: selected ? 0.22 : 0.13),
-        borderRadius: BorderRadius.circular(size * 0.32),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(
           color: color.withValues(alpha: selected ? 0.75 : 0.42),
         ),
@@ -190,15 +190,15 @@ class SubjectSwitcher extends StatelessWidget {
           final canSwitch = enabled && !busy;
           if (compact) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Tooltip(
                 message: busy ? '回答中，停止后再切换学科' : '学科：$name（点击切换）',
                 child: Material(
                   key: const Key('subject-switcher'),
                   color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(LoopRadius.control),
                     onTap: canSwitch
                         ? () => showSubjectMenu(context, state: _state)
                         : null,
@@ -222,22 +222,22 @@ class SubjectSwitcher extends StatelessWidget {
             );
           }
           return Padding(
-            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
             child: Material(
               key: const Key('subject-switcher'),
               color: pal.chip,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               child: Tooltip(
                 message: busy ? '回答中，停止后再切换学科' : '切换学科',
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                   onTap: canSwitch
                       ? () => showSubjectMenu(context, state: _state)
                       : null,
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(LoopRadius.control),
                       border: Border.all(color: pal.glassBorder),
                     ),
                     child: Row(
@@ -262,7 +262,7 @@ class SubjectSwitcher extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12.5,
+                                  fontSize: LoopType.secondary,
                                   fontWeight: FontWeight.w700,
                                   color: canSwitch ? pal.ink : pal.muted,
                                   height: 1.2,
@@ -275,9 +275,9 @@ class SubjectSwitcher extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 9.5,
+                                  fontSize: LoopType.micro,
                                   color: pal.muted,
-                                  height: 1.3,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -324,17 +324,17 @@ class SubjectChip extends StatelessWidget {
             child: Material(
               key: const Key('subject-chip'),
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(LoopRadius.panel),
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(LoopRadius.panel),
                 onTap: busy
                     ? null
                     : () => showSubjectMenu(context, state: _state),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: narrow ? 7 : 9, vertical: 5),
+                  padding: EdgeInsets.symmetric(horizontal: narrow ? 8 : 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: pal.chip,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(LoopRadius.panel),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -346,14 +346,14 @@ class SubjectChip extends StatelessWidget {
                         selected: true,
                       ),
                       if (!narrow) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 120),
                           child: Text(
                             name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11.5, color: pal.ink),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.ink),
                           ),
                         ),
                       ],
@@ -400,8 +400,8 @@ Future<void> showSubjectMenu(BuildContext anchorContext, {AppState? state}) asyn
         if (!ok) {
           if (!anchorContext.mounted) return;
           ScaffoldMessenger.of(anchorContext).showSnackBar(SnackBar(
-            content: Text('切换学科失败，请重试', style: TextStyle(color: pal.toastFg)),
-            backgroundColor: pal.danger,
+            content: Text('切换学科失败，请重试', style: TextStyle(color: pal.onPrimaryBtn)),
+            backgroundColor: pal.dangerInk,
           ));
         }
         return;
@@ -471,7 +471,7 @@ Future<_MenuChoice?> _openMenu(
       height: 34,
       child: Text(
         '当前：$activeName',
-        style: TextStyle(fontSize: 11, color: pal.muted, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: LoopType.caption, color: pal.muted, fontWeight: FontWeight.w600),
       ),
     ),
     for (final subject in active)
@@ -489,14 +489,14 @@ Future<_MenuChoice?> _openMenu(
                 size: 20,
                 selected: subject.key == st.activeKey,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   subject.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: LoopType.body,
                     color: pal.ink,
                     fontWeight: subject.key == st.activeKey
                         ? FontWeight.w700
@@ -509,7 +509,7 @@ Future<_MenuChoice?> _openMenu(
                   padding: const EdgeInsets.only(left: 4),
                   child: Tooltip(
                     message: '找不到这个学科的数据文件',
-                    child: Icon(Icons.warning_amber_rounded, size: 14, color: pal.warm),
+                    child: Icon(Icons.warning_amber_rounded, size: 14, color: pal.warningInk),
                   ),
                 ),
               if (subject.key == st.activeKey)
@@ -532,7 +532,7 @@ Future<_MenuChoice?> _openMenu(
             activeName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: pal.ink, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: LoopType.body, color: pal.ink, fontWeight: FontWeight.w700),
           ),
         ),
       ),
@@ -545,7 +545,7 @@ Future<_MenuChoice?> _openMenu(
           width: 208,
           child: Text(
             '查看归档（${archived.length}）',
-            style: TextStyle(fontSize: 12, color: pal.muted),
+            style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
           ),
         ),
       ),
@@ -564,16 +564,16 @@ Future<_MenuChoice?> _openMenu(
                   colorToken: subject.color,
                   size: 20,
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     subject.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: pal.muted),
+                    style: TextStyle(fontSize: LoopType.body, color: pal.muted),
                   ),
                 ),
-                Text('已归档', style: TextStyle(fontSize: 10, color: pal.faint)),
+                Text('已归档', style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
@@ -584,7 +584,7 @@ Future<_MenuChoice?> _openMenu(
         height: 38,
         child: SizedBox(
           width: 208,
-          child: Text('收起归档', style: TextStyle(fontSize: 12, color: pal.muted)),
+          child: Text('收起归档', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
         ),
       ),
     ],
@@ -599,7 +599,7 @@ Future<_MenuChoice?> _openMenu(
           children: [
             Icon(Icons.add_rounded, size: 17, color: pal.accent),
             const SizedBox(width: 8),
-            Text('＋ 新建学科…', style: TextStyle(fontSize: 13, color: pal.ink)),
+            Text('＋ 新建学科…', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
           ],
         ),
       ),
@@ -614,7 +614,7 @@ Future<_MenuChoice?> _openMenu(
           children: [
             Icon(Icons.tune_rounded, size: 16, color: pal.muted),
             const SizedBox(width: 8),
-            Text('管理学科…', style: TextStyle(fontSize: 13, color: pal.ink)),
+            Text('管理学科…', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
           ],
         ),
       ),
@@ -626,7 +626,7 @@ Future<_MenuChoice?> _openMenu(
     position: position,
     items: items,
     color: pal.cardSolid,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(LoopRadius.control)),
     clipBehavior: Clip.antiAlias,
   );
 }
@@ -708,13 +708,13 @@ class _NewSubjectDialogState extends State<_NewSubjectDialog> {
               decoration: const InputDecoration(hintText: '学科名（必填），如：线性代数'),
               onSubmitted: (_) => _saving ? null : _save(),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-new-goal'),
               controller: _goal,
               decoration: const InputDecoration(hintText: '学习目标（可选），如：考研数学一'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-new-exam'),
               controller: _exam,
@@ -722,14 +722,14 @@ class _NewSubjectDialogState extends State<_NewSubjectDialog> {
             ),
             if (_error != null)
               Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(_error!, style: TextStyle(fontSize: 12, color: pal.danger)),
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(_error!, style: TextStyle(fontSize: LoopType.secondary, color: pal.dangerInk)),
               ),
             Padding(
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
                 '每个学科有独立的对话、资料、进度与技能，互不串数据。',
-                style: TextStyle(fontSize: 11, color: pal.muted),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
             ),
           ],

@@ -73,7 +73,7 @@ class MarkdownText extends StatelessWidget {
       // 分割线
       if (RegExp(r'^(-{3,}|\*{3,}|_{3,})$').hasMatch(trimmed)) {
         widgets.add(const Padding(
-          padding: EdgeInsets.symmetric(vertical: 10),
+          padding: EdgeInsets.symmetric(vertical: 12),
           child: Divider(height: 1),
         ));
         i++;
@@ -85,9 +85,14 @@ class MarkdownText extends StatelessWidget {
       if (heading != null) {
         final level = heading.group(1)!.length;
         final content = heading.group(2)!;
-        final size = switch (level) { 1 => 20.0, 2 => 17.5, 3 => 16.0, _ => 15.0 };
+        final size = switch (level) {
+          1 => LoopType.display,
+          2 => LoopType.title,
+          3 => LoopType.title,
+          _ => LoopType.reading,
+        };
         widgets.add(Padding(
-          padding: EdgeInsets.only(top: i == 0 ? 0 : 14, bottom: 6),
+          padding: EdgeInsets.only(top: i == 0 ? 0 : 16, bottom: 8),
           child: Text.rich(
             TextSpan(
               children: _inline(context, content, style),
@@ -123,7 +128,7 @@ class MarkdownText extends StatelessWidget {
           i++;
         }
         widgets.add(Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
+          margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: pal.accent, width: 3)),
@@ -204,7 +209,7 @@ class MarkdownText extends StatelessWidget {
             child: SizedBox(
               width: tableWidth,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 child: Table(
                   border: TableBorder.all(color: pal.border, width: 1),
                   defaultColumnWidth: const FlexColumnWidth(),
@@ -214,10 +219,10 @@ class MarkdownText extends StatelessWidget {
                       children: List.generate(columns, (index) {
                         final text = index < header.length ? header[index] : '';
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           child: Text.rich(TextSpan(
                             children: _inline(context, text, style),
-                            style: style.copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                            style: style.copyWith(fontWeight: FontWeight.w600, fontSize: LoopType.body),
                           )),
                         );
                       }),
@@ -227,10 +232,10 @@ class MarkdownText extends StatelessWidget {
                         children: List.generate(columns, (index) {
                           final text = index < row.length ? row[index] : '';
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             child: Text.rich(TextSpan(
                               children: _inline(context, text, style),
-                              style: style.copyWith(fontSize: 13),
+                              style: style.copyWith(fontSize: LoopType.body),
                             )),
                           );
                         }),
@@ -247,13 +252,13 @@ class MarkdownText extends StatelessWidget {
 
   Widget _listRow(BuildContext context, String marker, String content, TextStyle style, int index) {
     return Padding(
-      padding: EdgeInsets.only(top: index == 0 ? 2 : 4, left: 2),
+      padding: EdgeInsets.only(top: index == 0 ? 4 : 4, left: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: marker == '•' ? 18 : 26,
-            child: Text(marker, style: style.copyWith(color: pal.muted, height: 1.65)),
+            child: Text(marker, style: style.copyWith(color: pal.muted, height: 1.6)),
           ),
           Expanded(
             child: Text.rich(
@@ -269,10 +274,10 @@ class MarkdownText extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: pal.codeBg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(color: pal.border),
       ),
       child: SingleChildScrollView(
@@ -281,8 +286,8 @@ class MarkdownText extends StatelessWidget {
           code,
           style: TextStyle(
             fontFamily: 'monospace',
-            fontSize: 12.8,
-            height: 1.55,
+            fontSize: LoopType.secondary,
+            height: 1.6,
             color: pal.ink,
           ),
         ),
@@ -293,14 +298,14 @@ class MarkdownText extends StatelessWidget {
   Widget _blockMath(String tex, TextStyle style) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       // 宽公式在 360 浮窗里允许横向滚动，避免撑破气泡。
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Math.tex(
           tex.trim(),
           mathStyle: MathStyle.display,
-          textStyle: style.copyWith(fontSize: 17),
+          textStyle: style.copyWith(fontSize: LoopType.title),
           onErrorFallback: (error) => Text(
             '\$\$${tex.trim()}\$\$',
             style: style.copyWith(fontFamily: 'monospace', color: pal.muted),
@@ -315,18 +320,18 @@ class MarkdownText extends StatelessWidget {
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: pal.codeBg,
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           border: Border.all(color: pal.accent.withValues(alpha: 0.22), width: 0.8),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontFamily: ascii ? 'monospace' : 'NotoSC',
-            fontSize: 12.8,
-            height: 1.35,
+            fontSize: LoopType.secondary,
+            height: 1.4,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.1,
             color: pal.codeFg,
@@ -370,7 +375,7 @@ class MarkdownText extends StatelessWidget {
             child: Math.tex(
               tex,
               mathStyle: MathStyle.text,
-              textStyle: style.copyWith(fontSize: (style.fontSize ?? 14.5) * 0.98),
+              textStyle: style.copyWith(fontSize: (style.fontSize ?? LoopType.reading)),
               onErrorFallback: (error) => Text('\$$tex\$', style: style),
             ),
           ));

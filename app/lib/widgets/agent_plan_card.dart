@@ -14,40 +14,40 @@ class AgentPlanCard extends StatelessWidget {
     final done = plan.where((item) => item.status == 'done').length;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: panelDecoration(radius: 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.checklist_rounded, size: 15, color: pal.accent),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text('执行计划',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: pal.ink)),
+                  style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink)),
               const Spacer(),
               Text('$done/${plan.length}',
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ],
           ),
           const SizedBox(height: 8),
           for (final item in plan)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2.5),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _statusIcon(item.status),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       item.title,
                       style: TextStyle(
-                        fontSize: 12,
-                        height: 1.45,
-                        color: item.status == 'skipped' ? pal.faint : pal.ink,
+                        fontSize: LoopType.secondary,
+                        height: 1.4,
+                        color: item.status == 'skipped' ? pal.muted : pal.ink,
                         decoration: item.status == 'done' ? TextDecoration.lineThrough : null,
-                        decorationColor: pal.faint,
+                        decorationColor: pal.muted,
                       ),
                     ),
                   ),
@@ -62,19 +62,19 @@ class AgentPlanCard extends StatelessWidget {
   Widget _statusIcon(String status) {
     switch (status) {
       case 'done':
-        return const Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF16A34A));
+        return Icon(Icons.check_circle_rounded, size: 14, color: pal.success);
       case 'in_progress':
         return SizedBox(
-          width: 14,
+          width: 16,
           height: 14,
-          child: CircularProgressIndicator(strokeWidth: 1.8, color: pal.accent),
+          child: CircularProgressIndicator(strokeWidth: 2.0, color: pal.accent),
         );
       case 'failed':
-        return const Icon(Icons.error_outline_rounded, size: 14, color: Color(0xFFE5484D));
+        return Icon(Icons.error_outline_rounded, size: 14, color: pal.dangerInk);
       case 'skipped':
-        return Icon(Icons.remove_circle_outline_rounded, size: 14, color: pal.faint);
+        return Icon(Icons.remove_circle_outline_rounded, size: 14, color: pal.muted);
       default:
-        return Icon(Icons.circle_outlined, size: 14, color: pal.faint);
+        return Icon(Icons.circle_outlined, size: 14, color: pal.muted);
     }
   }
 }

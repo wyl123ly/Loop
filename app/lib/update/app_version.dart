@@ -1,6 +1,6 @@
 /// 应用版本与语义版本比较（不依赖 Flutter，后端与界面共用）。
 class AppVersion {
-  static const current = '0.8.10';
+  static const current = '0.8.11';
   static const repo = 'wyl123ly/Loop';
   static const assetName = 'Loop-Desktop-win64.zip';
 

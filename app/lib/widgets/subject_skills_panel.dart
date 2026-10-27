@@ -147,8 +147,8 @@ class SkillsPanelState extends State<SkillsPanel> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: 13)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }
@@ -391,7 +391,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           ),
           FilledButton(
             key: const Key('skill-remove-confirm'),
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('移除'),
           ),
@@ -533,20 +533,20 @@ class SkillsPanelState extends State<SkillsPanel> {
               children: [
                 Text(
                   verdict.explanation,
-                  style: TextStyle(fontSize: 12.5, color: pal.ink, height: 1.6),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.ink, height: 1.6),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   'Loop 侧仍会做 zip 防护与逐文件 sha256 校验，且永不执行包内脚本，'
                   '但这不构成对内容的安全性判断。',
-                  style: TextStyle(fontSize: 11.5, color: pal.muted, height: 1.6),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                 ),
                 CheckboxListTile(
                   key: const Key('skill-suspicious-understood'),
                   contentPadding: EdgeInsets.zero,
                   value: understood,
                   onChanged: (value) => setLocal(() => understood = value ?? false),
-                  title: const Text('我了解风险，仍然安装', style: TextStyle(fontSize: 12.5)),
+                  title: const Text('我了解风险，仍然安装', style: TextStyle(fontSize: LoopType.secondary)),
                 ),
               ],
             ),
@@ -558,7 +558,7 @@ class SkillsPanelState extends State<SkillsPanel> {
             ),
             FilledButton(
               key: const Key('skill-suspicious-force'),
-              style: FilledButton.styleFrom(backgroundColor: pal.danger),
+              style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
               onPressed: understood ? () => Navigator.of(context).pop(true) : null,
               child: Text('仍然安装「$name」'),
             ),
@@ -591,20 +591,20 @@ class SkillsPanelState extends State<SkillsPanel> {
         child: Material(
           key: key,
           color: selected ? pal.chip : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: () => setState(() => _tab = value),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(color: selected ? pal.glassBorder : pal.border),
               ),
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: LoopType.body,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? pal.ink : pal.muted,
                 ),
@@ -616,7 +616,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 10, 28, 6),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 8),
       child: Row(
         children: [
           // Expanded（不是 Flexible+Spacer）：窄窗下 tab 条拿到全部剩余宽度，
@@ -645,21 +645,21 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _offlineBanner() {
     return Container(
       key: const Key('skills-offline-banner'),
-      margin: const EdgeInsets.fromLTRB(28, 4, 28, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      margin: const EdgeInsets.fromLTRB(32, 4, 32, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: pal.chip,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(color: pal.glassBorder),
       ),
       child: Row(
         children: [
-          Icon(Icons.cloud_off_rounded, size: 15, color: pal.warm),
+          Icon(Icons.cloud_off_rounded, size: 15, color: pal.warningInk),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               '当前离线，已安装技能仍可使用；浏览与安装已暂时不可用。',
-              style: TextStyle(fontSize: 11.5, color: pal.ink),
+              style: TextStyle(fontSize: LoopType.caption, color: pal.ink),
             ),
           ),
         ],
@@ -676,7 +676,7 @@ class SkillsPanelState extends State<SkillsPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _loadLibrary, child: const Text('重试')),
           ],
@@ -688,10 +688,10 @@ class SkillsPanelState extends State<SkillsPanel> {
     if (skills.isEmpty) return _emptyInstalled();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 32),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         _policyNote(library?.policy),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         for (final skill in skills) _installedCard(skill),
         const SizedBox(height: 12),
         Wrap(
@@ -703,9 +703,9 @@ class SkillsPanelState extends State<SkillsPanel> {
               onPressed: _readOnly || _batchChecking ? null : _checkAllUpdates,
               icon: _batchChecking
                   ? const SizedBox(
-                      width: 14,
+                      width: 16,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
                     )
                   : const Icon(Icons.refresh_rounded, size: 17),
               label: Text(_batchChecking ? '检查中…' : '检查更新（全部）'),
@@ -725,8 +725,8 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _policyNote(SkillPolicyInfo? policy) {
     final note = policy?.verifyNote ?? '';
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
-      decoration: softDecoration(radius: 14),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: softDecoration(radius: LoopRadius.control),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -737,7 +737,7 @@ class SkillsPanelState extends State<SkillsPanel> {
               Expanded(
                 child: Text(
                   '教学技能是文档：Loop 只把它们作为提示词素材读取，不会执行包里的任何脚本。',
-                  style: TextStyle(fontSize: 11.5, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.ink),
                 ),
               ),
             ],
@@ -746,7 +746,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           Text(
             '不自动更新：版本变化只会提示，安装/升级/回退都由你点击触发。'
             '${note.isEmpty ? '' : '（$note）'}',
-            style: TextStyle(fontSize: 10.5, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
           ),
         ],
       ),
@@ -757,19 +757,19 @@ class SkillsPanelState extends State<SkillsPanel> {
     final label = _library?.hubLabel ?? 'EduHub';
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.extension_outlined, size: 38, color: pal.faint),
+            Icon(Icons.extension_outlined, size: 38, color: pal.muted),
             const SizedBox(height: 12),
             const Text('本学科还没有教学技能',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             Text(
               '从 $label 按需挑选，安装后只在本学科生效；也可以随时停用或移除。',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.5, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -791,8 +791,8 @@ class SkillsPanelState extends State<SkillsPanel> {
     return Container(
       key: Key('skill-card-${skill.slug}'),
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
-      decoration: panelDecoration(radius: 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -804,11 +804,11 @@ class SkillsPanelState extends State<SkillsPanel> {
                 height: 34,
                 decoration: BoxDecoration(
                   color: pal.chip,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                 ),
                 child: Icon(Icons.auto_stories_outlined, size: 18, color: pal.accent),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -821,35 +821,35 @@ class SkillsPanelState extends State<SkillsPanel> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 13.5,
+                              fontSize: LoopType.body,
                               fontWeight: FontWeight.w700,
                               color: pal.ink,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(skill.version,
-                            style: TextStyle(fontSize: 11, color: pal.muted)),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                         if (update.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          _badge('有新版本 $update', pal.warm),
+                          _badge('有新版本 $update', pal.warningInk),
                         ],
                       ],
                     ),
                     if (skill.description.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           skill.description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11.5, color: pal.muted, height: 1.5),
+                          style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                         ),
                       ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _verdictBadge(skill.verdict),
                         _badge(skill.enabled ? '本学科已启用' : '本学科已停用',
@@ -857,9 +857,9 @@ class SkillsPanelState extends State<SkillsPanel> {
                         if (skill.hasScripts)
                           Tooltip(
                             message: 'Loop 不会运行这些脚本',
-                            child: _badge('含脚本(未执行)', pal.warm),
+                            child: _badge('含脚本(未执行)', pal.warningInk),
                           ),
-                        if (skill.suspicious) _badge('registry 未认可', pal.danger),
+                        if (skill.suspicious) _badge('registry 未认可', pal.dangerInk),
                         _badge(skill.pinned ? '已锁定版本' : skill.licenseLabel, pal.muted),
                       ],
                     ),
@@ -868,20 +868,20 @@ class SkillsPanelState extends State<SkillsPanel> {
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           '上次检查：$update 可用；不会自动安装。',
-                          style: TextStyle(fontSize: 10.5, color: pal.muted),
+                          style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                         ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               if (busy)
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   child: SizedBox(
-                    width: 15,
+                    width: 16,
                     height: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2.0),
                   ),
                 )
               else
@@ -914,7 +914,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                   PopupMenuItem(
                     key: Key('skill-detail-${skill.slug}'),
                     value: const _SkillAction('detail'),
-                    child: Text('查看 SKILL.md / 详情', style: TextStyle(fontSize: 13, color: pal.ink)),
+                    child: Text('查看 SKILL.md / 详情', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
                   ),
                   PopupMenuItem(
                     key: Key('skill-check-update-${skill.slug}'),
@@ -922,7 +922,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                     enabled: !checking,
                     child: Text(
                       checking ? '检查更新中…' : '检查更新（手动）',
-                      style: TextStyle(fontSize: 13, color: pal.ink),
+                      style: TextStyle(fontSize: LoopType.body, color: pal.ink),
                     ),
                   ),
                   PopupMenuItem(
@@ -932,8 +932,8 @@ class SkillsPanelState extends State<SkillsPanel> {
                     child: Text(
                       update.isEmpty ? '更新（先检查更新）' : '更新到 $update',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: update.isEmpty ? pal.faint : pal.ink,
+                        fontSize: LoopType.body,
+                        color: update.isEmpty ? pal.muted : pal.ink,
                       ),
                     ),
                   ),
@@ -942,7 +942,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                     value: const _SkillAction('pin'),
                     child: Text(
                       skill.pinned ? '解除版本锁定' : '锁定版本（不提示更新）',
-                      style: TextStyle(fontSize: 13, color: pal.ink),
+                      style: TextStyle(fontSize: LoopType.body, color: pal.ink),
                     ),
                   ),
                   PopupMenuItem(
@@ -954,15 +954,15 @@ class SkillsPanelState extends State<SkillsPanel> {
                           ? '回退到上一版 ${skill.previousVersion}'.trim()
                           : '回退（没有上一版）',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: skill.canRollback ? pal.ink : pal.faint,
+                        fontSize: LoopType.body,
+                        color: skill.canRollback ? pal.ink : pal.muted,
                       ),
                     ),
                   ),
                   PopupMenuItem(
                     key: Key('skill-remove-${skill.slug}'),
                     value: const _SkillAction('remove'),
-                    child: Text('移除', style: TextStyle(fontSize: 13, color: pal.danger)),
+                    child: Text('移除', style: TextStyle(fontSize: LoopType.body, color: pal.dangerInk)),
                   ),
                 ],
                 icon: Icon(Icons.more_horiz_rounded, size: 18, color: pal.muted),
@@ -976,15 +976,15 @@ class SkillsPanelState extends State<SkillsPanel> {
 
   Widget _badge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(LoopRadius.pill),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 10.5, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: LoopType.micro, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -993,8 +993,8 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _verdictBadge(SkillVerdictInfo verdict) {
     final color = switch (verdict.status) {
       'ok' => pal.muted,
-      'suspicious' => pal.danger,
-      _ => pal.warm,
+      'suspicious' => pal.dangerInk,
+      _ => pal.warningInk,
     };
     return Tooltip(
       message: verdict.explanation,
@@ -1010,7 +1010,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(28, 6, 28, 8),
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
           child: Row(
             children: [
               Expanded(
@@ -1031,11 +1031,11 @@ class SkillsPanelState extends State<SkillsPanel> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(28, 0, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
           child: Text(
             '按需浏览：请求只带关键词，由你点击触发；不发送学科名或资料内容，也不自动更新。'
             '只接 ${_library?.hubLabel ?? 'EduHub'}（后端白名单固定）。',
-            style: TextStyle(fontSize: 10.5, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
           ),
         ),
         Expanded(child: _hubResults()),
@@ -1051,16 +1051,16 @@ class SkillsPanelState extends State<SkillsPanel> {
     if (catalog == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.travel_explore_rounded, size: 36, color: pal.faint),
-              const SizedBox(height: 10),
+              Icon(Icons.travel_explore_rounded, size: 36, color: pal.muted),
+              const SizedBox(height: 12),
               Text(
                 _searched ? '没有结果，换个关键词试试。' : '输入关键词，或直接点「搜索」浏览列表。',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12.5, color: pal.muted),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
               ),
             ],
           ),
@@ -1071,19 +1071,19 @@ class SkillsPanelState extends State<SkillsPanel> {
       return Center(
         child: Text(
           _searched ? '没有结果，换个关键词试试。' : '列表为空。',
-          style: TextStyle(fontSize: 12.5, color: pal.muted),
+          style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
         ),
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 4, 28, 32),
+      padding: const EdgeInsets.fromLTRB(32, 4, 32, 32),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             '${catalog.skills.length} 个结果 · ${catalog.hub}'
             '${catalog.query.isEmpty ? '' : ' · 关键词「${catalog.query}」'}',
-            style: TextStyle(fontSize: 11, color: pal.muted),
+            style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
           ),
         ),
         for (final item in catalog.skills) _hubCard(item),
@@ -1097,7 +1097,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       key: Key('hub-card-${item.slug}'),
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1113,14 +1113,14 @@ class SkillsPanelState extends State<SkillsPanel> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: LoopType.body,
                           fontWeight: FontWeight.w700,
                           color: pal.ink,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(item.version, style: TextStyle(fontSize: 11, color: pal.muted)),
+                    const SizedBox(width: 8),
+                    Text(item.version, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     if (item.installed) ...[
                       const SizedBox(width: 8),
                       _badge('本学科已安装', pal.accent),
@@ -1129,21 +1129,21 @@ class SkillsPanelState extends State<SkillsPanel> {
                 ),
                 if (item.summary.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       item.summary,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11.5, color: pal.muted, height: 1.5),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     '${item.owner.isEmpty ? '发布者未知' : item.owner} · 下载 ${item.downloads}（弱信号）',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: pal.faint),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                   ),
                 ),
               ],
@@ -1152,11 +1152,11 @@ class SkillsPanelState extends State<SkillsPanel> {
           const SizedBox(width: 8),
           if (busy)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: SizedBox(
-                width: 15,
+                width: 16,
                 height: 15,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2.0),
               ),
             )
           else
@@ -1260,12 +1260,12 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.title, style: const TextStyle(fontSize: 16)),
+          Text(widget.title, style: const TextStyle(fontSize: LoopType.title)),
           const SizedBox(height: 4),
           Text(
             '${widget.version} · ${widget.hub}'
             '${widget.previousVersion.isEmpty ? '' : ' · 上一版 ${widget.previousVersion}'}',
-            style: TextStyle(fontSize: 11.5, color: pal.muted),
+            style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
           ),
         ],
       ),
@@ -1280,7 +1280,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                 if (widget.description.isNotEmpty)
                   Text(
                     widget.description,
-                    style: TextStyle(fontSize: 12.5, color: pal.ink, height: 1.6),
+                    style: TextStyle(fontSize: LoopType.secondary, color: pal.ink, height: 1.6),
                   ),
                 const SizedBox(height: 12),
                 _row('发布者', widget.owner.isEmpty ? '未提供（来源不可追溯）' : widget.owner),
@@ -1293,33 +1293,33 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                 if (widget.hasScripts) _row('脚本', '包含脚本文件，Loop 不会执行'),
                 if (verdict.summary.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'registry security.summary 原文：${verdict.summary}',
-                      style: TextStyle(fontSize: 11, color: pal.muted, height: 1.5),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     '说明：verify 只是 registry 侧的静态扫描参考信号，包没有签名，'
                     'Loop 不把它当作安全保证；真正的防线是导入管线（zip 防护 + 逐文件 sha256）'
                     '与「永不执行」。',
-                    style: TextStyle(fontSize: 10.5, color: pal.faint, height: 1.5),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
                   ),
                 ),
                 if (widget.content.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text('SKILL.md',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: pal.muted)),
+                      style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
                   const SizedBox(height: 4),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    decoration: softDecoration(radius: 12),
+                    decoration: softDecoration(radius: LoopRadius.control),
                     child: SelectableText(
                       widget.content,
-                      style: TextStyle(fontSize: 11.5, color: pal.ink, height: 1.6),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6),
                     ),
                   ),
                 ],
@@ -1338,24 +1338,24 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                       child: LinearProgressIndicator(minHeight: 2),
                     )
                   else if (_loadError != null)
-                    Text(_loadError!, style: TextStyle(fontSize: 11.5, color: pal.danger))
+                    Text(_loadError!, style: TextStyle(fontSize: LoopType.caption, color: pal.dangerInk))
                   else
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
-                      decoration: softDecoration(radius: 12),
+                      decoration: softDecoration(radius: LoopRadius.control),
                       child: SelectableText(
                         (_loaded ?? '').isEmpty ? '（正文为空）' : _loaded!,
-                        style: TextStyle(fontSize: 11.5, color: pal.ink, height: 1.6),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6),
                       ),
                     ),
                 ],
                 if (widget.disabledNote.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.only(top: 12),
                     child: Text(
                       widget.disabledNote,
-                      style: TextStyle(fontSize: 11, color: pal.muted),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                     ),
                   ),
               ],
@@ -1386,10 +1386,10 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
         children: [
           SizedBox(
             width: 96,
-            child: Text(label, style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            child: Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ),
           Expanded(
-            child: Text(value, style: TextStyle(fontSize: 11.5, color: pal.ink, height: 1.5)),
+            child: Text(value, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6)),
           ),
         ],
       ),

@@ -144,8 +144,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: 13)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }
@@ -162,9 +162,9 @@ class _SubjectScreenState extends State<SubjectScreen> {
       children: [
         _header(subject),
         _tabBar(),
-        if (_readOnly) _notice('学科已归档（只读）：可以查看资料与进度，写操作会被拒绝。', pal.warm),
+        if (_readOnly) _notice('学科已归档（只读）：可以查看资料与进度，写操作会被拒绝。', pal.warningInk),
         if (subject != null && subject.integrity != 'ok')
-          _notice('找不到这个学科的数据文件，界面只显示注册信息。可重建空库或移除记录。', pal.danger),
+          _notice('找不到这个学科的数据文件，界面只显示注册信息。可重建空库或移除记录。', pal.dangerInk),
         Expanded(
           child: _tab == 2
               ? SkillsPanel(
@@ -191,7 +191,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       if ((subject?.level ?? '').isNotEmpty) _profileChip('水平', subject!.level),
     ];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 16, 18, 4),
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -208,7 +208,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: LoopType.display,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.5,
                           color: pal.ink,
@@ -229,8 +229,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 ),
                 if (chips.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Wrap(spacing: 6, runSpacing: 6, children: chips),
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Wrap(spacing: 8, runSpacing: 8, children: chips),
                   ),
               ],
             ),
@@ -248,17 +248,17 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   Widget _profileChip(String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: pal.chip,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(LoopRadius.pill),
         border: Border.all(color: pal.glassBorder),
       ),
       child: Text(
         '$label · $value',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 11, color: pal.muted),
+        style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
       ),
     );
   }
@@ -271,20 +271,20 @@ class _SubjectScreenState extends State<SubjectScreen> {
         child: Material(
           key: Key('subject-tab-$index'),
           color: selected ? pal.chip : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           child: InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: () => setState(() => _tab = index),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(color: selected ? pal.glassBorder : pal.border),
               ),
               child: Text(
                 _tabLabels[index],
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: LoopType.body,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? pal.ink : pal.muted,
                 ),
@@ -296,7 +296,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 4, 18, 8),
+      padding: const EdgeInsets.fromLTRB(32, 4, 32, 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -308,11 +308,11 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   Widget _notice(String text, Color color) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(28, 0, 28, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(color: color.withValues(alpha: 0.32)),
       ),
       child: Row(
@@ -320,7 +320,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           Icon(Icons.info_outline_rounded, size: 15, color: color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: TextStyle(fontSize: 11.5, color: pal.ink, height: 1.5)),
+            child: Text(text, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6)),
           ),
         ],
       ),
@@ -345,7 +345,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     final recent = _recentTopics(topics);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         Wrap(
           spacing: 12,
@@ -353,14 +353,14 @@ class _SubjectScreenState extends State<SubjectScreen> {
           children: [
             _metricCard('覆盖度', _percent(summary['coverage']), '知识点 + 资料', pal.accent),
             _metricCard('掌握度均值', _percent(summary['mastery_avg']), '${_int(summary['studied_topics'])} 个在学习',
-                pal.accent2),
-            _metricCard('已掌握', '${_int(summary['mastered'])}', '个知识点', pal.warm),
+                pal.accentInk),
+            _metricCard('已掌握', '${_int(summary['mastered'])}', '个知识点', pal.warningInk),
             _metricCard('连续学习', '${_int(summary['streak_days'])}', '天', pal.accent),
-            _metricCard('近 7 天', '${_int(summary['minutes_7d'])}', '分钟', pal.accent2),
-            _metricCard('待复习', '${_int(summary['review_due'])}', '个知识点', pal.warm),
+            _metricCard('近 7 天', '${_int(summary['minutes_7d'])}', '分钟', pal.accentInk),
+            _metricCard('待复习', '${_int(summary['review_due'])}', '个知识点', pal.warningInk),
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         _sectionTitle('待复习', due.isEmpty ? '' : '最多显示 5 个'),
         if (due.isEmpty)
           _hint('暂时没有到期的复习。新学的知识点会按掌握度自动排期。')
@@ -382,14 +382,14 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _metricCard(String label, String value, String unit, Color color) {
     return Container(
       width: 148,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: panelDecoration(radius: 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: pal.muted)),
-          const SizedBox(height: 6),
+          Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -400,7 +400,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: LoopType.display,
                     fontWeight: FontWeight.w700,
                     color: color,
                     letterSpacing: -0.6,
@@ -408,7 +408,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 ),
               ),
               const SizedBox(width: 4),
-              Text(unit, style: TextStyle(fontSize: 10, color: pal.faint)),
+              Text(unit, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
             ],
           ),
         ],
@@ -423,10 +423,10 @@ class _SubjectScreenState extends State<SubjectScreen> {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text(title, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: pal.ink)),
+          Text(title, style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w700, color: pal.ink)),
           if (hint.isNotEmpty) ...[
             const SizedBox(width: 8),
-            Text(hint, style: TextStyle(fontSize: 10.5, color: pal.faint)),
+            Text(hint, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
           ],
         ],
       ),
@@ -436,16 +436,16 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _hint(String text) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: softDecoration(radius: 14),
-      child: Text(text, style: TextStyle(fontSize: 11.5, color: pal.muted, height: 1.6)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: softDecoration(radius: LoopRadius.control),
+      child: Text(text, style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6)),
     );
   }
 
   Widget _countsRow(Map<String, dynamic> summary) {
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 12,
+      runSpacing: 12,
       children: [
         _profileChip('资料', '${_int(summary['materials_total'])} 份'),
         _profileChip('已学资料', '${_int(summary['materials_studied'])} 份'),
@@ -505,7 +505,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         .toList();
     if (topics.isEmpty) return _emptyState();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -515,7 +515,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 child: Text(
                   '${topics.length} 个知识点 · 掌握度与状态可以手工纠正（重算不会覆盖手工值）',
                   maxLines: 2,
-                  style: TextStyle(fontSize: 11, color: pal.muted, height: 1.5),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                 ),
               ),
               const SizedBox(width: 8),
@@ -538,7 +538,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       key: Key('subject-topic-${topic.id}'),
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Row(
         children: [
           Expanded(
@@ -554,7 +554,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: LoopType.body,
                           fontWeight: FontWeight.w600,
                           color: pal.ink,
                         ),
@@ -570,12 +570,12 @@ class _SubjectScreenState extends State<SubjectScreen> {
                   ' · 证据 ${topic.evidenceCount}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10.5, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           _masteryBar(topic.mastery),
           IconButton(
             tooltip: '编辑掌握度/状态',
@@ -585,7 +585,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           IconButton(
             tooltip: '删除知识点',
             onPressed: _readOnly ? null : () => _deleteTopic(topic),
-            icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.faint),
+            icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.muted),
           ),
         ],
       ),
@@ -595,8 +595,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _topicShell(TopicItem topic, {required Widget trailing, required String meta}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
-      decoration: panelDecoration(radius: 14),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      decoration: panelDecoration(radius: LoopRadius.control),
       child: Row(
         children: [
           Expanded(
@@ -608,14 +608,14 @@ class _SubjectScreenState extends State<SubjectScreen> {
                   topic.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   meta,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10.5, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                 ),
               ],
             ),
@@ -632,8 +632,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
     final color = value >= 0.9
         ? pal.accent
         : value >= 0.4
-            ? pal.accent2
-            : pal.warm;
+            ? pal.accentInk
+            : pal.warningInk;
     return SizedBox(
       width: 86,
       child: Column(
@@ -641,10 +641,10 @@ class _SubjectScreenState extends State<SubjectScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('${(value * 100).round()}%',
-              style: TextStyle(fontSize: 11, color: pal.ink, fontWeight: FontWeight.w600)),
+              style: TextStyle(fontSize: LoopType.caption, color: pal.ink, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(LoopRadius.pill),
             child: LinearProgressIndicator(
               value: value,
               minHeight: 5,
@@ -660,38 +660,38 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _statusBadge(String status) {
     final (label, color) = switch (status) {
       'mastered' => ('已掌握', pal.accent),
-      'review_due' => ('待复习', pal.warm),
+      'review_due' => ('待复习', pal.warningInk),
       'new' => ('新', pal.muted),
-      'archived' => ('已归档', pal.faint),
-      _ => ('学习中', pal.accent2),
+      'archived' => ('已归档', pal.muted),
+      _ => ('学习中', pal.accentInk),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(LoopRadius.pill),
         border: Border.all(color: color.withValues(alpha: 0.34)),
       ),
       child: Text(label,
-          style: TextStyle(fontSize: 10.5, color: color, fontWeight: FontWeight.w600)),
+          style: TextStyle(fontSize: LoopType.micro, color: color, fontWeight: FontWeight.w600)),
     );
   }
 
   Widget _emptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.insights_outlined, size: 38, color: pal.faint),
+            Icon(Icons.insights_outlined, size: 38, color: pal.muted),
             const SizedBox(height: 12),
-            const Text('还没有学习记录', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const Text('还没有学习记录', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
             Text(
               '在对话里问一个问题，AI 会开始记录这个学科的进度。',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.5, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -709,11 +709,11 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _errorView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error ?? '加载失败', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+            Text(_error ?? '加载失败', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -764,7 +764,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           ),
           FilledButton(
             key: const Key('subject-topic-delete-confirm'),
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('删除'),
           ),
@@ -825,27 +825,27 @@ class _SubjectScreenState extends State<SubjectScreen> {
       key: const Key('subject-manage-menu'),
       tooltip: '学科管理',
       color: pal.cardSolid,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(LoopRadius.control)),
       onSelected: (value) => _handleManage(value, subject),
       itemBuilder: (context) => [
         PopupMenuItem(
           key: const Key('subject-manage-rename'),
           value: 'rename',
           enabled: subject != null,
-          child: Text('改名…', style: TextStyle(fontSize: 13, color: pal.ink)),
+          child: Text('改名…', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
         ),
         PopupMenuItem(
           key: const Key('subject-manage-profile'),
           value: 'profile',
           enabled: subject != null,
-          child: Text('编辑目标 / 考试日 / 每日时长…', style: TextStyle(fontSize: 13, color: pal.ink)),
+          child: Text('编辑目标 / 考试日 / 每日时长…', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
         ),
         const PopupMenuDivider(),
         if (subject?.archived == true)
           PopupMenuItem(
             key: const Key('subject-manage-restore'),
             value: 'restore',
-            child: Text('恢复学科', style: TextStyle(fontSize: 13, color: pal.ink)),
+            child: Text('恢复学科', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
           )
         else
           PopupMenuItem(
@@ -855,8 +855,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
             child: Text(
               subject?.isDefault == true ? '归档（默认学科不支持）' : '归档学科',
               style: TextStyle(
-                fontSize: 13,
-                color: subject?.isDefault == true ? pal.faint : pal.ink,
+                fontSize: LoopType.body,
+                color: subject?.isDefault == true ? pal.muted : pal.ink,
               ),
             ),
           ),
@@ -867,8 +867,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
           child: Text(
             subject?.archived == true ? '删除学科（移入回收站）' : '删除（先归档）',
             style: TextStyle(
-              fontSize: 13,
-              color: subject?.archived == true ? pal.danger : pal.faint,
+              fontSize: LoopType.body,
+              color: subject?.archived == true ? pal.dangerInk : pal.muted,
             ),
           ),
         ),
@@ -877,12 +877,12 @@ class _SubjectScreenState extends State<SubjectScreen> {
           PopupMenuItem(
             key: const Key('subject-manage-rebuild'),
             value: 'rebuild',
-            child: Text('重建空库', style: TextStyle(fontSize: 13, color: pal.ink)),
+            child: Text('重建空库', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
           ),
           PopupMenuItem(
             key: const Key('subject-manage-unregister'),
             value: 'unregister',
-            child: Text('移除记录', style: TextStyle(fontSize: 13, color: pal.danger)),
+            child: Text('移除记录', style: TextStyle(fontSize: LoopType.body, color: pal.dangerInk)),
           ),
         ],
       ],
@@ -1074,7 +1074,7 @@ class _TopicEditorDialogState extends State<_TopicEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.topic.name, style: const TextStyle(fontSize: 16)),
+      title: Text(widget.topic.name, style: const TextStyle(fontSize: LoopType.title)),
       content: SizedBox(
         width: 380,
         child: Column(
@@ -1082,33 +1082,33 @@ class _TopicEditorDialogState extends State<_TopicEditorDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('掌握度 ${(_mastery * 100).round()}%',
-                style: TextStyle(fontSize: 12.5, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.ink)),
             Slider(
               key: const Key('subject-topic-mastery'),
               value: _mastery,
               divisions: 20,
               onChanged: (value) => setState(() => _mastery = value),
             ),
-            const SizedBox(height: 6),
-            Text('状态', style: TextStyle(fontSize: 12.5, color: pal.ink)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
+            Text('状态', style: TextStyle(fontSize: LoopType.secondary, color: pal.ink)),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final status in _statuses)
                   ChoiceChip(
                     key: Key('subject-topic-status-$status'),
-                    label: Text(_statusLabel(status), style: const TextStyle(fontSize: 12)),
+                    label: Text(_statusLabel(status), style: const TextStyle(fontSize: LoopType.secondary)),
                     selected: _status == status,
                     onSelected: (_) => setState(() => _status = status),
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               '手工值会被标记，重新计算进度时整条跳过。',
-              style: TextStyle(fontSize: 11, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
             ),
           ],
         ),
@@ -1194,7 +1194,7 @@ class _PromptDialogState extends State<_PromptDialog> {
         FilledButton(
           key: widget.confirmKey,
           style: widget.danger
-              ? FilledButton.styleFrom(backgroundColor: pal.danger)
+              ? FilledButton.styleFrom(backgroundColor: pal.dangerInk)
               : null,
           onPressed: () => Navigator.of(context).pop(_controller.text),
           child: Text(widget.confirmLabel),
@@ -1243,20 +1243,20 @@ class _ProfileDialogState extends State<_ProfileDialog> {
               controller: _goal,
               decoration: const InputDecoration(hintText: '学习目标'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-exam'),
               controller: _exam,
               decoration: const InputDecoration(hintText: '考试日（如 2026-06-07）'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-minutes'),
               controller: _minutes,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(hintText: '每日目标时长（分钟）'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-level'),
               controller: _level,

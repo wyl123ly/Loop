@@ -69,7 +69,7 @@ class TitleBar extends StatelessWidget {
               onPanStart: (_) => WindowController.instance.startDragging(),
               onDoubleTap: () => WindowController.instance.toggleMaximize(),
               child: Padding(
-                padding: const EdgeInsets.only(left: 18),
+                padding: const EdgeInsets.only(left: 20),
                 child: Row(
                   children: [
                     Container(
@@ -77,7 +77,7 @@ class TitleBar extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         gradient: p.accentGradient,
-                        borderRadius: BorderRadius.circular(7),
+                        borderRadius: BorderRadius.circular(LoopRadius.small),
                       ),
                       child: Icon(Icons.loop_rounded, color: p.onAccent, size: 13),
                     ),
@@ -85,14 +85,14 @@ class TitleBar extends StatelessWidget {
                     Text(
                       '回路',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: LoopType.secondary,
                         fontWeight: FontWeight.w700,
                         color: p.ink,
                         letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Text(pageTitle, style: TextStyle(fontSize: 11, color: p.muted)),
+                    const SizedBox(width: 12),
+                    Text(pageTitle, style: TextStyle(fontSize: LoopType.caption, color: p.muted)),
                   ],
                 ),
               ),
@@ -173,7 +173,7 @@ class _WindowButtonState extends State<_WindowButton> {
   Widget build(BuildContext context) {
     final p = pal;
     final bg = widget.danger
-        ? (p.isDark ? const Color(0xFFC93B40) : p.danger)
+        ? (p.dangerInk)
         : p.hover;
     return Tooltip(
       message: widget.tooltip,
@@ -188,17 +188,17 @@ class _WindowButtonState extends State<_WindowButton> {
             duration: const Duration(milliseconds: 140),
             width: 42,
             height: 30,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(
               widget.icon,
               size: widget.iconSize,
               color: widget.enabled
-                  ? (_hover && widget.danger ? Colors.white : p.ink)
-                  : p.faint,
+                  ? (_hover && widget.danger ? p.onAccent : p.ink)
+                  : p.muted,
             ),
           ),
         ),

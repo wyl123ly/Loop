@@ -148,7 +148,7 @@ class _MinimalBarState extends State<MinimalBar> {
               height: minimalInputHeight,
               decoration: BoxDecoration(
                 color: p.glassFill,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(
                   color: sending ? p.accent : p.glassBorder,
                   width: sending ? 1.4 : 1,
@@ -165,7 +165,7 @@ class _MinimalBarState extends State<MinimalBar> {
                       margin: const EdgeInsets.only(left: 4),
                       decoration: BoxDecoration(
                         color: p.accent,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(LoopRadius.small),
                       ),
                     ),
                   if (attachments > 0) _AttachmentBadge(
@@ -195,12 +195,12 @@ class _MinimalBarState extends State<MinimalBar> {
                         maxLines: 1,
                         minLines: 1,
                         textInputAction: TextInputAction.none,
-                        style: TextStyle(fontSize: 13.5, height: 1.3, color: p.ink),
+                        style: TextStyle(fontSize: LoopType.body, height: 1.4, color: p.ink),
                         cursorColor: p.accent,
                         inputFormatters: const [_SingleLineFormatter()],
                         decoration: InputDecoration(
                           hintText: hint,
-                          hintStyle: TextStyle(fontSize: 13, color: p.faint),
+                          hintStyle: TextStyle(fontSize: LoopType.body, color: p.muted),
                           filled: false,
                           isDense: true,
                           border: InputBorder.none,
@@ -234,10 +234,10 @@ class _MinimalBarState extends State<MinimalBar> {
                         size: 16,
                       ),
                       style: IconButton.styleFrom(
-                        backgroundColor: sending ? p.danger : p.accent,
-                        foregroundColor: Colors.white,
+                        backgroundColor: sending ? p.dangerInk : p.accent,
+                        foregroundColor: pal.onAccent,
                         disabledBackgroundColor: p.chip,
-                        disabledForegroundColor: p.faint,
+                        disabledForegroundColor: p.muted,
                         minimumSize: const Size.square(30),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: EdgeInsets.zero,
@@ -245,7 +245,7 @@ class _MinimalBarState extends State<MinimalBar> {
                     ),
                     ),
                   ),
-                  const SizedBox(width: 3),
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
@@ -267,7 +267,7 @@ class _MinimalBarState extends State<MinimalBar> {
             onTap: onBack,
             onHover: _setHoverTip,
           ),
-            const SizedBox(width: 2),
+            const SizedBox(width: 4),
           ],
         ),
           if (_hoverTip != null)
@@ -336,7 +336,7 @@ class _DragHandle extends StatelessWidget {
                 height: 18,
                 decoration: BoxDecoration(
                   gradient: p.accentGradient,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(LoopRadius.small),
                 ),
                 child: Icon(Icons.loop_rounded, size: 11, color: p.onAccent),
               ),
@@ -372,13 +372,13 @@ class _AttachmentBadge extends StatelessWidget {
         child: Container(
         key: const Key('minimal-attachment-badge'),
         height: 20,
-        margin: const EdgeInsets.only(left: 4, right: 2),
+        margin: const EdgeInsets.only(left: 4, right: 4),
         padding: url == null
             ? const EdgeInsets.symmetric(horizontal: 4)
             : EdgeInsets.zero,
         decoration: BoxDecoration(
           color: p.chip,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           border: Border.all(color: p.border),
         ),
         child: Row(
@@ -386,7 +386,7 @@ class _AttachmentBadge extends StatelessWidget {
           children: [
             if (url != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(5),
+                borderRadius: BorderRadius.circular(LoopRadius.small),
                 child: Image.network(
                   url,
                   width: 20,
@@ -401,12 +401,12 @@ class _AttachmentBadge extends StatelessWidget {
               )
             else
               Icon(Icons.attach_file_rounded, size: 11, color: p.muted),
-            if (url != null) const SizedBox(width: 2),
+            if (url != null) const SizedBox(width: 4),
             Text(
               '×$count',
-              style: TextStyle(fontSize: 9.5, color: p.muted, height: 1.1),
+              style: TextStyle(fontSize: LoopType.micro, color: p.muted, height: 1.2),
             ),
-            if (url == null) const SizedBox(width: 1),
+            if (url == null) const SizedBox(width: 4),
           ],
         ),
       ),
@@ -425,10 +425,10 @@ class _MinimalHoverLabel extends StatelessWidget {
     final p = pal;
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: p.toastBg,
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         border: Border.all(color: p.border),
         boxShadow: [
           BoxShadow(
@@ -443,7 +443,7 @@ class _MinimalHoverLabel extends StatelessWidget {
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.visible,
-        style: TextStyle(fontSize: 10.5, height: 1.25, color: p.toastFg),
+        style: TextStyle(fontSize: LoopType.micro, height: 1.2, color: p.toastFg),
       ),
     );
   }
@@ -475,7 +475,7 @@ class _MinimalIconButtonState extends State<_MinimalIconButton> {
   @override
   Widget build(BuildContext context) {
     final p = pal;
-    final color = widget.enabled ? p.ink : p.faint;
+    final color = widget.enabled ? p.ink : p.muted;
     return Semantics(
       label: widget.tooltip,
       button: true,
@@ -497,7 +497,7 @@ class _MinimalIconButtonState extends State<_MinimalIconButton> {
             height: minimalButtonSize,
             decoration: BoxDecoration(
               color: _hover ? p.hover : Colors.transparent,
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(widget.icon, size: 16, color: color),
           ),

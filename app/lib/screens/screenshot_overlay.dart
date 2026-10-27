@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme.dart';
+
 /// 截图覆盖层的结果。
 ///
 /// - `done(bytes)`：用户完成框选，返回裁切后的 PNG；
@@ -208,12 +210,12 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                   child: Center(
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 10 : 14,
-                        vertical: compact ? 6 : 8,
+                        horizontal: compact ? 12 : 16,
+                        vertical: compact ? 8 : 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.62),
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(LoopRadius.pill),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Text(
@@ -222,8 +224,8 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: ratioMismatch ? const Color(0xFFFFB4AB) : Colors.white,
-                          fontSize: compact ? 11.5 : 12.5,
+                          color: ratioMismatch ? pal.dangerInk : Colors.white,
+                          fontSize: compact ? LoopType.caption : LoopType.secondary,
                         ),
                       ),
                     ),
@@ -237,11 +239,11 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: compact ? 4 : 8,
-                        vertical: compact ? 4 : 6,
+                        vertical: compact ? 4 : 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.72),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(LoopRadius.card),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Row(
@@ -271,11 +273,11 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                             key: const Key('screenshot-done'),
                             onPressed: canDone ? _confirm : null,
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF8E9BFF),
+                              backgroundColor: pal.accentInk,
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
                                 horizontal: compact ? 16 : 20,
-                                vertical: compact ? 10 : 14,
+                                vertical: compact ? 12 : 16,
                               ),
                             ),
                             child: Text(_cropping ? '处理中…' : '完成'),
@@ -289,7 +291,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                 if (_cropping)
                   const Positioned.fill(
                     child: IgnorePointer(
-                      child: ColoredBox(color: Color(0x33000000)),
+                      child: ColoredBox(color: Colors.black54),
                     ),
                   ),
               ],
@@ -302,7 +304,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
 
   ButtonStyle _textStyle(bool compact) {
     return TextButton.styleFrom(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 8 : 10),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 8 : 12),
       minimumSize: Size(compact ? 44 : 52, compact ? 34 : 38),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
@@ -329,13 +331,13 @@ class _SelectionPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTRB(rect.right, rect.top, size.width, rect.bottom), shade);
 
     final border = Paint()
-      ..color = const Color(0xFFB9C1FF)
+      ..color = pal.accentInk
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawRect(rect, border);
 
     final corner = Paint()
-      ..color = const Color(0xFFB9C1FF)
+      ..color = pal.accentInk
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     const len = 12.0;
@@ -353,7 +355,7 @@ class _SelectionPainter extends CustomPainter {
     final painter = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+        style: const TextStyle(color: Colors.white, fontSize: LoopType.caption, fontWeight: FontWeight.w600),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -364,7 +366,7 @@ class _SelectionPainter extends CustomPainter {
       painter.height + 6,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(labelRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(labelRect, const Radius.circular(LoopRadius.small)),
       Paint()..color = Colors.black.withValues(alpha: 0.7),
     );
     painter.paint(canvas, labelRect.topLeft + const Offset(6, 3));

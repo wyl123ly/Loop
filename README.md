@@ -1,6 +1,6 @@
 # Loop 回路
 
-Windows 桌面 AI 学习工作台，当前版本 **v0.8.10**。
+Windows 桌面 AI 学习工作台，当前版本 **v0.8.11**。
 学科、对话、资料、待办、笔记和 Agent 都在本机运行，数据存在本地 SQLite（**每学科一个独立数据库**），
 模型使用 DeepSeek 等 OpenAI 兼容供应商。
 
@@ -131,6 +131,13 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.10**。
 - exe 未代码签名，首次运行可能出现 SmartScreen 提示。
 
 ## 版本改动
+
+### v0.8.11 · 2026-10-27
+- 设计 token 收口：新增 `accentInk/accentFill/dangerInk/success/warningInk`；浅色 muted/faint 提深，深色 onAccent 改近黑，用户气泡/今日 hero/错误 SnackBar 全部达到 AA 对比度。
+- 字号收敛为 7 级、圆角 5 档、行高 4 档、进度圈描边 2 档；`EdgeInsets`、≤24 的 `SizedBox`、`spacing/runSpacing` 全部对齐 4px 网格。
+- 七个页头统一 24/w700/−0.5 与内容左轴 32；对话标题桌面 18、窄窗 13.5，改善浮窗截断。
+- 默认控件统一走 accent（进度圈/开关/复选/滑杆），主按钮保持墨色；补充 D1–D6 对比度测试与 G1–G7 token 守卫。
+- 17 张双主题截图无 overflow；全量 **512 passed / 1 skipped**，`flutter analyze` 0 issues。
 
 ### v0.8.10 · 2026-10-26
 - 修复主题切换卡顿：MaterialApp 只监听外观/启动两个低频信号，会话、学科、流式输出等高频通知不再重建整棵应用。

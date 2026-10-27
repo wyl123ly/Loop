@@ -102,7 +102,7 @@ class FloatingBar extends StatelessWidget {
         return Container(
           key: const Key('floating-bar'),
           height: _barHeight,
-          padding: EdgeInsets.only(left: compact ? 10 : 14, right: 6),
+          padding: EdgeInsets.only(left: compact ? 12 : 16, right: 8),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: p.glassBorder)),
           ),
@@ -124,7 +124,7 @@ class FloatingBar extends StatelessWidget {
                           height: compact ? 18 : 20,
                           decoration: BoxDecoration(
                             gradient: p.accentGradient,
-                            borderRadius: BorderRadius.circular(7),
+                            borderRadius: BorderRadius.circular(LoopRadius.small),
                           ),
                           child: Icon(
                             Icons.loop_rounded,
@@ -136,7 +136,7 @@ class FloatingBar extends StatelessWidget {
                         Text(
                           '回路',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: LoopType.secondary,
                             fontWeight: FontWeight.w700,
                             color: p.ink,
                             letterSpacing: 0.2,
@@ -145,24 +145,24 @@ class FloatingBar extends StatelessWidget {
                         if (!compact) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: p.chip,
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(LoopRadius.small),
                               border: Border.all(color: p.border),
                             ),
                             child: Text(
                               '浮窗',
-                              style: TextStyle(fontSize: 9.5, color: p.muted),
+                              style: TextStyle(fontSize: LoopType.micro, color: p.muted),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11, color: p.muted),
+                              style: TextStyle(fontSize: LoopType.caption, color: p.muted),
                             ),
                           ),
                         ] else
@@ -265,12 +265,12 @@ class _BarButtonState extends State<_BarButton> {
   Widget build(BuildContext context) {
     final p = pal;
     final bg = widget.danger
-        ? (p.isDark ? const Color(0xFFC93B40) : p.danger)
+        ? (p.dangerInk)
         : p.hover;
     final iconColor = !widget.enabled
-        ? p.faint
+        ? p.muted
         : widget.danger
-            ? (_hover ? Colors.white : p.muted)
+            ? (_hover ? p.onAccent : p.muted)
             : (widget.active ? p.accent : p.ink);
     return Tooltip(
       message: widget.tooltip,
@@ -286,10 +286,10 @@ class _BarButtonState extends State<_BarButton> {
             duration: const Duration(milliseconds: 120),
             width: widget.width,
             height: widget.height,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(widget.icon, size: 16, color: iconColor),
           ),

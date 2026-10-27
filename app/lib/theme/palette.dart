@@ -16,8 +16,13 @@ class LoopPalette {
     required this.border,
     required this.accent,
     required this.accent2,
+    required this.accentInk,
+    required this.accentFill,
     required this.warm,
     required this.danger,
+    required this.dangerInk,
+    required this.success,
+    required this.warningInk,
     required this.chip,
     required this.hover,
     required this.primaryBtn,
@@ -50,8 +55,25 @@ class LoopPalette {
   final Color border;
   final Color accent;
   final Color accent2;
+
+  /// accent 色相用于**文字**时的安全色（≥4.5:1）。
+  final Color accentInk;
+
+  /// 承载文字的渐变面；装饰用 [accentGradient] 保持不变。
+  final List<Color> accentFill;
+
   final Color warm;
   final Color danger;
+
+  /// danger 色相用于**文字/白字底**时的安全色（≥4.5:1）。
+  final Color dangerInk;
+
+  /// 成功态文字/图标色（≥4.5:1）。
+  final Color success;
+
+  /// 警告文字色（≥4.5:1）。
+  final Color warningInk;
+
   final Color chip;
   final Color hover;
   final Color primaryBtn;
@@ -78,6 +100,12 @@ class LoopPalette {
         end: Alignment.bottomRight,
       );
 
+  LinearGradient get accentFillGradient => LinearGradient(
+        colors: accentFill,
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
+
   LinearGradient get userBubbleGradient => LinearGradient(
         colors: userBubble,
         begin: Alignment.topLeft,
@@ -95,8 +123,8 @@ class LoopPalette {
     bgTop: Color(0xFFF8F3EC),
     bgBottom: Color(0xFFF0EDF9),
     ink: Color(0xFF1F1D24),
-    muted: Color(0xFF7B7884),
-    faint: Color(0xFFA9A5B2),
+    muted: Color(0xFF6B6878),
+    faint: Color(0xFF8A8695),
     glassFill: Color(0x8CFFFFFF),
     glassBorder: Color(0xCCFFFFFF),
     cardFill: Color(0x94FFFFFF),
@@ -104,8 +132,13 @@ class LoopPalette {
     border: Color(0x66FFFFFF),
     accent: Color(0xFF6C7BFF),
     accent2: Color(0xFFC08CFF),
+    accentInk: Color(0xFF4F5CF0),
+    accentFill: [Color(0xFF4F5CF0), Color(0xFF7C4DE0)],
     warm: Color(0xFFF2A46F),
     danger: Color(0xFFE5484D),
+    dangerInk: Color(0xFFC03035),
+    success: Color(0xFF0F7A38),
+    warningInk: Color(0xFF8A5A1F),
     chip: Color(0x8CFFFFFF),
     hover: Color(0x14FFFFFF),
     primaryBtn: Color(0xFF1F1D24),
@@ -121,7 +154,7 @@ class LoopPalette {
     orb2: Color(0x5A9BA8FF),
     orb3: Color(0x4AD3A6FF),
     orb4: Color(0x40FFE0A8),
-    userBubble: [Color(0xFF7B8CFF), Color(0xFFB98CFF)],
+    userBubble: [Color(0xFF4F5CF0), Color(0xFF8A5BD6)],
     hero: [Color(0xFFF2B58C), Color(0xFFB79CFF)],
   );
 
@@ -131,7 +164,7 @@ class LoopPalette {
     bgBottom: Color(0xFF171326),
     ink: Color(0xFFF2EFE8),
     muted: Color(0xFFA7A3B3),
-    faint: Color(0xFF6F6B7A),
+    faint: Color(0xFF86828F),
     glassFill: Color(0x14FFFFFF),
     glassBorder: Color(0x24FFFFFF),
     cardFill: Color(0x12FFFFFF),
@@ -139,13 +172,18 @@ class LoopPalette {
     border: Color(0x1FFFFFFF),
     accent: Color(0xFF9AA8FF),
     accent2: Color(0xFFC9A2FF),
+    accentInk: Color(0xFF9AA8FF),
+    accentFill: [Color(0xFF9AA8FF), Color(0xFFC9A2FF)],
     warm: Color(0xFFF0B58C),
     danger: Color(0xFFFF6B70),
+    dangerInk: Color(0xFFFF6B70),
+    success: Color(0xFF6EE7A0),
+    warningInk: Color(0xFFF0B58C),
     chip: Color(0x14FFFFFF),
     hover: Color(0x1FFFFFFF),
     primaryBtn: Color(0xFFF2EFE8),
     onPrimaryBtn: Color(0xFF15131A),
-    onAccent: Colors.white,
+    onAccent: Color(0xFF15131A),
     toastBg: Color(0xFF2B2836),
     toastFg: Color(0xFFF7F4EC),
     shadow: Color(0x73000000),
@@ -157,7 +195,7 @@ class LoopPalette {
     orb3: Color(0x29B07CFF),
     orb4: Color(0x1FFFC97A),
     userBubble: [Color(0xFF6F7BFF), Color(0xFFA57CFF)],
-    hero: [Color(0xFFC9855F), Color(0xFF8A6BD6)],
+    hero: [Color(0xFFC9855F), Color(0xFFA98CF0)],
   );
 }
 

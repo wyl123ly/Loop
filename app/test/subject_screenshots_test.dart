@@ -15,6 +15,9 @@ import 'package:loop/models.dart';
 import 'package:loop/screens/chat_screen.dart';
 import 'package:loop/screens/materials_screen.dart';
 import 'package:loop/screens/settings_screen.dart';
+import 'package:loop/screens/today_screen.dart';
+import 'package:loop/screens/notes_screen.dart';
+import 'package:loop/answer_ui/answer_widgets.dart';
 import 'package:loop/screens/subject_screen.dart';
 import 'package:loop/state.dart';
 import 'package:loop/theme.dart';
@@ -22,7 +25,10 @@ import 'package:loop/widgets/sidebar.dart';
 import 'package:loop/widgets/subject_skills_panel.dart';
 
 // 测试进程 cwd = app/，证据目录在仓库根的 docs/ 下。
-const _screenDir = '../docs/evidence/subject-v0.8.0/screens';
+final String _screenDir = () {
+  final custom = Platform.environment['LOOP_SHOT_DIR']?.trim() ?? '';
+  return custom.isEmpty ? '../docs/evidence/subject-v0.8.0/screens' : custom;
+}();
 
 /// 极简假后端：只提供截图需要的静态数据。
 class _ShotApi extends LoopApi {
@@ -432,11 +438,15 @@ Future<void> _pumpTree(
   addTearDown(tester.view.resetDevicePixelRatio);
   final key = GlobalKey();
   _boundaryKey = key;
+  // 截图必须同时切换全局 palette，否则 dark 主题下 pal.* 仍是浅色，
+  // 生成“浅色卡片 + 浅色文字”的假截图。
+  LoopTheme.palette = dark ? LoopPalette.dark : LoopPalette.light;
   await tester.pumpWidget(
     RepaintBoundary(
       key: key,
       child: MaterialApp(
         theme: _shotTheme(dark),
+        debugShowCheckedModeBanner: false,
         home: Scaffold(body: Builder(builder: (_) => pageBuilder())),
       ),
     ),
@@ -629,8 +639,40 @@ void main() {
       },
     );
 
+    final customDir = (Platform.environment['LOOP_SHOT_DIR'] ?? '').trim().isNotEmpty;
+    if (customDir) {
+      await _shot(tester, TodayScreen(active: true, state: state),
+          name: '13-today-light-1440.png', size: wide, dark: false);
+      await _shot(tester, TodayScreen(active: true, state: state),
+          name: '14-today-dark-1440.png', size: wide);
+      await _shot(tester, NotesScreen(active: true, state: state),
+          name: '15-notes-light-1440.png', size: wide, dark: false);
+      await _shot(tester, NotesScreen(active: true, state: state),
+          name: '16-notes-dark-1440.png', size: wide);
+      await _shot(
+        tester,
+        AnswerPanel(
+          state: const AnswerViewState(
+            question: '帮我把这段证明整理成三步。',
+            answer: '第一步：写出特征方程。\n第二步：求特征值。\n第三步：代入特征向量。',
+            status: 'waiting_approval',
+            approvalRequired: true,
+            hasSnapshot: true,
+            dark: false,
+          ),
+          onClose: () {},
+          onCollapse: () {},
+          onExpand: () {},
+        ),
+        name: '17-floating-answer-light.png',
+        size: const Size(460, 360),
+        dark: false,
+      );
+    }
+
     final dir = Directory(_screenDir);
-    // 16 张 PNG = 12 张 AC-07 主图 + 4 张 t8 真机图（real-*），全部要求两两互异。
+    // 默认：12 张 AC-07 主图 + 4 张 t8 真机图（real-*）。
+    // LOOP_SHOT_DIR：16 张主图（12 + today/notes 各 2）。
     final files = dir
         .listSync()
         .whereType<File>()
@@ -639,8 +681,9 @@ void main() {
     final main = files
         .where((f) => !f.uri.pathSegments.last.startsWith('real-'))
         .toList();
-    expect(main.length, 12, reason: 'AC-07 要求 12 张主图');
-    expect(files.length, 16, reason: '12 张主图 + 4 张真机图 = 16 张');
+    expect(main.length, customDir ? 17 : 12,
+        reason: customDir ? '设计证据要求 16 张主图' : 'AC-07 要求 12 张主图');
+    expect(files.length, customDir ? 17 : 16, reason: '默认 16 张；设计证据 17 张');
     for (final file in files) {
       expect(file.lengthSync(), greaterThan(1000), reason: '${file.path} 内容过小');
     }
@@ -653,7 +696,7 @@ void main() {
           reason: '$path 与 ${digests[digest]} 像素完全相同（sha256 相同）');
       digests[digest] = path;
     }
-    expect(digests.length, 16, reason: '16 张 PNG sha256 必须两两互异');
+    expect(digests.length, files.length, reason: '所有 PNG sha256 必须两两互异');
     File('$_screenDir/OVERFLOW.txt').writeAsStringSync(
       _overflows.isEmpty ? 'no rendering overflow\n' : '${_overflows.join('\n')}\n',
     );
