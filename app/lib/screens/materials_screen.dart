@@ -217,8 +217,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -247,10 +247,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               FilledButton.icon(
                 onPressed: _uploading ? null : _upload,
                 icon: _uploading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: pal.onPrimaryBtn),
                       )
                     : const Icon(Icons.upload_file_rounded, size: 18),
                 label: Text(_uploading ? '解析中…' : '上传资料'),
@@ -325,7 +325,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_outlined, size: 40, color: pal.faint),
+            Icon(Icons.folder_outlined, size: 40, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有资料', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -479,7 +479,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 Text(dir.name,
                     style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
                 const SizedBox(width: 6),
-                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
@@ -566,7 +566,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             IconButton(
               tooltip: '删除整个文件夹',
               onPressed: () => _confirmDeleteFolder(folder),
-              icon: Icon(Icons.delete_outline_rounded, size: 18, color: pal.faint),
+              icon: Icon(Icons.delete_outline_rounded, size: 18, color: pal.muted),
             ),
           ],
         ],
@@ -614,7 +614,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 IconButton(
                   tooltip: '删除',
                   onPressed: () => _confirmDelete(item),
-                  icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.faint),
+                  icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.muted),
                 ),
               ],
             ),
@@ -633,7 +633,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('删除'),
           ),
@@ -693,7 +693,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               }
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString(),
-                    style: TextStyle(fontSize: LoopType.secondary, color: pal.danger));
+                    style: TextStyle(fontSize: LoopType.secondary, color: pal.dangerInk));
               }
               final text = (snapshot.data?['text'] ?? '') as String;
               return SingleChildScrollView(
@@ -721,7 +721,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('删除'),
           ),
@@ -797,7 +797,7 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text('文件很多，预览只显示前 1000 个。',
-                    style: TextStyle(fontSize: LoopType.caption, color: pal.warm)),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.warningInk)),
               ),
             if (_scanning)
               Padding(

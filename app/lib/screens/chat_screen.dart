@@ -480,8 +480,8 @@ class ChatScreenState extends State<ChatScreen> {
   void _snack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(message, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }
@@ -861,7 +861,7 @@ class ChatScreenState extends State<ChatScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.shield_outlined, size: 16, color: pal.warm),
+              Icon(Icons.shield_outlined, size: 16, color: pal.warningInk),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1153,8 +1153,11 @@ class ChatScreenState extends State<ChatScreen> {
                   _title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                  style: TextStyle(
+                    fontSize: narrow ? LoopType.body : LoopType.title,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: narrow ? -0.1 : -0.3,
+                  ),
                 ),
               ),
               // §10.4：对话页是当前学科的作用域，页头必须显示学科名（窄宽退化为色点）。
@@ -1379,7 +1382,7 @@ class ChatScreenState extends State<ChatScreen> {
                     Text(
                       '这个学科还没有对话。问一个问题就开始。',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: LoopType.secondary, color: pal.faint),
+                      style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
                     ),
                   ],
                   const SizedBox(height: 22),
@@ -1470,7 +1473,7 @@ class ChatScreenState extends State<ChatScreen> {
                   errorBuilder: (context, error, stack) => Icon(
                     Icons.broken_image_outlined,
                     size: 20,
-                    color: pal.faint,
+                    color: pal.muted,
                   ),
                 ),
               ),
@@ -1522,8 +1525,8 @@ class ChatScreenState extends State<ChatScreen> {
                 errorBuilder: (context, error, stack) => Container(
                   width: 138,
                   height: 104,
-                  color: Colors.white.withValues(alpha: 0.14),
-                  child: const Icon(Icons.broken_image_outlined, color: Colors.white70),
+                  color: pal.onAccent.withValues(alpha: 0.14),
+                  child: Icon(Icons.broken_image_outlined, color: pal.onAccent),
                 ),
               ),
             ),
@@ -1543,20 +1546,20 @@ class ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: pal.onAccent.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.description_outlined, size: 13, color: Colors.white70),
+                Icon(Icons.description_outlined, size: 13, color: pal.onAccent),
                 const SizedBox(width: 5),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 220),
                   child: Text(
                     item.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: LoopType.caption, color: Colors.white),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.onAccent),
                   ),
                 ),
               ],
@@ -1575,7 +1578,7 @@ class ChatScreenState extends State<ChatScreen> {
           margin: EdgeInsets.only(bottom: 16, left: widget.compact ? 20 : 48),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            gradient: accentGradient,
+            gradient: pal.userBubbleGradient,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(LoopRadius.control),
               topRight: Radius.circular(LoopRadius.small),
@@ -1673,7 +1676,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: Text(
                 '${message.tokensIn} in · ${message.tokensOut} out'
                 '${message.cost > 0 ? ' · ¥${(message.cost * 7.2).toStringAsFixed(4)}' : ''}',
-                style: TextStyle(fontSize: LoopType.micro, color: pal.faint),
+                style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
               ),
             ),
         ],
@@ -1902,7 +1905,7 @@ class ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
                     'Enter 发送 · Shift + Enter 换行 · 每个对话独立上下文',
-                    style: TextStyle(fontSize: LoopType.caption, color: pal.faint),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                   ),
                 ),
               ],

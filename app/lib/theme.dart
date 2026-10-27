@@ -67,7 +67,7 @@ ThemeData loopTheme(LoopPalette p) {
       surface: p.cardSolid,
       onSurface: p.ink,
       error: p.dangerInk,
-      onError: Colors.white,
+      onError: p.onAccent,
     ),
     scaffoldBackgroundColor: p.bgTop,
     splashFactory: InkSparkle.splashFactory,

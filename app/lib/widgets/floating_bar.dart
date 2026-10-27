@@ -270,7 +270,7 @@ class _BarButtonState extends State<_BarButton> {
     final iconColor = !widget.enabled
         ? p.faint
         : widget.danger
-            ? (_hover ? Colors.white : p.muted)
+            ? (_hover ? p.onAccent : p.muted)
             : (widget.active ? p.accent : p.ink);
     return Tooltip(
       message: widget.tooltip,

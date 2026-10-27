@@ -197,7 +197,7 @@ class _WindowButtonState extends State<_WindowButton> {
               widget.icon,
               size: widget.iconSize,
               color: widget.enabled
-                  ? (_hover && widget.danger ? Colors.white : p.ink)
+                  ? (_hover && widget.danger ? p.onAccent : p.ink)
                   : p.faint,
             ),
           ),

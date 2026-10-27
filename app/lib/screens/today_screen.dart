@@ -103,8 +103,8 @@ class _TodayScreenState extends State<TodayScreen> {
   void _snack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(message, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -223,7 +223,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       : '今日已完成 ${data.doneToday} 件 · 共 ${data.openTotal} 件待办',
                   style: TextStyle(
                     fontSize: LoopType.secondary,
-                    color: heroInk.withValues(alpha: 0.78),
+                    color: heroInk,
                   ),
                 ),
               ],
@@ -336,12 +336,12 @@ class _TodayScreenState extends State<TodayScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text('${task.estimateMin}min',
-                  style: TextStyle(fontSize: LoopType.caption, color: pal.faint)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ),
           IconButton(
             tooltip: '删除',
             onPressed: () => _deleteTask(task),
-            icon: Icon(Icons.close_rounded, size: 14, color: pal.faint),
+            icon: Icon(Icons.close_rounded, size: 14, color: pal.muted),
             visualDensity: VisualDensity.compact,
           ),
         ],

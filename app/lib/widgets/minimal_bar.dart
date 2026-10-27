@@ -235,7 +235,7 @@ class _MinimalBarState extends State<MinimalBar> {
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: sending ? p.danger : p.accent,
-                        foregroundColor: Colors.white,
+                        foregroundColor: pal.onAccent,
                         disabledBackgroundColor: p.chip,
                         disabledForegroundColor: p.faint,
                         minimumSize: const Size.square(30),

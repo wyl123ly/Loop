@@ -197,7 +197,7 @@ class _NotesScreenState extends State<NotesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.menu_book_outlined, size: 40, color: pal.faint),
+            Icon(Icons.menu_book_outlined, size: 40, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有笔记', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -251,10 +251,10 @@ class _NotesScreenState extends State<NotesScreen> {
                     Row(
                       children: [
                         Text(_fmt(note.createdAt),
-                            style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                            style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                         const Spacer(),
                         Text('${note.body.length} 字',
-                            style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                            style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                       ],
                     ),
                   ],
@@ -292,7 +292,7 @@ class _NotesScreenState extends State<NotesScreen> {
                   if (note.sourceRef.isNotEmpty) ...[
                     const SizedBox(width: 10),
                     Text(_sourceLabel(note.sourceRef),
-                        style: TextStyle(fontSize: LoopType.caption, color: pal.faint)),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                   ],
                   const Spacer(),
                   TextButton.icon(

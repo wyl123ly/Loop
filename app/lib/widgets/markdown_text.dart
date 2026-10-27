@@ -85,7 +85,12 @@ class MarkdownText extends StatelessWidget {
       if (heading != null) {
         final level = heading.group(1)!.length;
         final content = heading.group(2)!;
-        final size = switch (level) { 1 => 20.0, 2 => 17.5, 3 => 16.0, _ => 15.0 };
+        final size = switch (level) {
+          1 => LoopType.display,
+          2 => LoopType.title,
+          3 => LoopType.title,
+          _ => LoopType.reading,
+        };
         widgets.add(Padding(
           padding: EdgeInsets.only(top: i == 0 ? 0 : 16, bottom: 8),
           child: Text.rich(
@@ -370,7 +375,7 @@ class MarkdownText extends StatelessWidget {
             child: Math.tex(
               tex,
               mathStyle: MathStyle.text,
-              textStyle: style.copyWith(fontSize: (style.fontSize ?? 14.5) * 0.98),
+              textStyle: style.copyWith(fontSize: (style.fontSize ?? LoopType.reading)),
               onErrorFallback: (error) => Text('\$$tex\$', style: style),
             ),
           ));

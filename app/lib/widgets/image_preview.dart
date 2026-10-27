@@ -31,7 +31,7 @@ class ImagePreview extends StatelessWidget {
         key: const Key('image-preview-box'),
         width: (size.width * 0.9).clamp(240.0, 1100.0),
         height: (size.height * 0.9).clamp(200.0, 820.0),
-        decoration: panelDecoration(color: pal.cardSolid, radius: compact ? 14 : 18),
+        decoration: panelDecoration(color: pal.cardSolid, radius: compact ? LoopRadius.control : LoopRadius.card),
         child: Column(
           children: [
             Padding(
@@ -60,7 +60,7 @@ class ImagePreview extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(compact ? 14 : 18),
+                  bottom: Radius.circular(compact ? LoopRadius.control : LoopRadius.card),
                 ),
                 child: Container(
                   color: Colors.black,

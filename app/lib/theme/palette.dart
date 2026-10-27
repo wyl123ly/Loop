@@ -195,7 +195,7 @@ class LoopPalette {
     orb3: Color(0x29B07CFF),
     orb4: Color(0x1FFFC97A),
     userBubble: [Color(0xFF6F7BFF), Color(0xFFA57CFF)],
-    hero: [Color(0xFFC9855F), Color(0xFF8A6BD6)],
+    hero: [Color(0xFFC9855F), Color(0xFFA98CF0)],
   );
 }
 

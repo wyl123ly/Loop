@@ -148,7 +148,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }
@@ -391,7 +391,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           ),
           FilledButton(
             key: const Key('skill-remove-confirm'),
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('移除'),
           ),
@@ -558,7 +558,7 @@ class SkillsPanelState extends State<SkillsPanel> {
             ),
             FilledButton(
               key: const Key('skill-suspicious-force'),
-              style: FilledButton.styleFrom(backgroundColor: pal.danger),
+              style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
               onPressed: understood ? () => Navigator.of(context).pop(true) : null,
               child: Text('仍然安装「$name」'),
             ),
@@ -654,7 +654,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       ),
       child: Row(
         children: [
-          Icon(Icons.cloud_off_rounded, size: 15, color: pal.warm),
+          Icon(Icons.cloud_off_rounded, size: 15, color: pal.warningInk),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -761,7 +761,7 @@ class SkillsPanelState extends State<SkillsPanel> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.extension_outlined, size: 38, color: pal.faint),
+            Icon(Icons.extension_outlined, size: 38, color: pal.muted),
             const SizedBox(height: 12),
             const Text('本学科还没有教学技能',
                 style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
@@ -832,7 +832,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                             style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                         if (update.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          _badge('有新版本 $update', pal.warm),
+                          _badge('有新版本 $update', pal.warningInk),
                         ],
                       ],
                     ),
@@ -857,7 +857,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                         if (skill.hasScripts)
                           Tooltip(
                             message: 'Loop 不会运行这些脚本',
-                            child: _badge('含脚本(未执行)', pal.warm),
+                            child: _badge('含脚本(未执行)', pal.warningInk),
                           ),
                         if (skill.suspicious) _badge('registry 未认可', pal.danger),
                         _badge(skill.pinned ? '已锁定版本' : skill.licenseLabel, pal.muted),
@@ -962,7 +962,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                   PopupMenuItem(
                     key: Key('skill-remove-${skill.slug}'),
                     value: const _SkillAction('remove'),
-                    child: Text('移除', style: TextStyle(fontSize: LoopType.body, color: pal.danger)),
+                    child: Text('移除', style: TextStyle(fontSize: LoopType.body, color: pal.dangerInk)),
                   ),
                 ],
                 icon: Icon(Icons.more_horiz_rounded, size: 18, color: pal.muted),
@@ -994,7 +994,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     final color = switch (verdict.status) {
       'ok' => pal.muted,
       'suspicious' => pal.danger,
-      _ => pal.warm,
+      _ => pal.warningInk,
     };
     return Tooltip(
       message: verdict.explanation,
@@ -1055,7 +1055,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.travel_explore_rounded, size: 36, color: pal.faint),
+              Icon(Icons.travel_explore_rounded, size: 36, color: pal.muted),
               const SizedBox(height: 10),
               Text(
                 _searched ? '没有结果，换个关键词试试。' : '输入关键词，或直接点「搜索」浏览列表。',
@@ -1143,7 +1143,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                     '${item.owner.isEmpty ? '发布者未知' : item.owner} · 下载 ${item.downloads}（弱信号）',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: LoopType.micro, color: pal.faint),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                   ),
                 ),
               ],
@@ -1305,7 +1305,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                     '说明：verify 只是 registry 侧的静态扫描参考信号，包没有签名，'
                     'Loop 不把它当作安全保证；真正的防线是导入管线（zip 防护 + 逐文件 sha256）'
                     '与「永不执行」。',
-                    style: TextStyle(fontSize: LoopType.micro, color: pal.faint, height: 1.5),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.5),
                   ),
                 ),
                 if (widget.content.isNotEmpty) ...[
@@ -1338,7 +1338,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                       child: LinearProgressIndicator(minHeight: 2),
                     )
                   else if (_loadError != null)
-                    Text(_loadError!, style: TextStyle(fontSize: LoopType.caption, color: pal.danger))
+                    Text(_loadError!, style: TextStyle(fontSize: LoopType.caption, color: pal.dangerInk))
                   else
                     Container(
                       width: double.infinity,

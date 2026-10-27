@@ -75,11 +75,11 @@ Color subjectTokenColor(String token) {
     case 'warm':
     case 'amber':
     case 'orange':
-      return pal.warm;
+      return pal.warningInk;
     case 'violet':
     case 'purple':
     case 'accent2':
-      return pal.accent2;
+      return pal.accentInk;
     case 'slate':
     case 'gray':
     case 'grey':
@@ -136,7 +136,7 @@ class SubjectAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: color.withValues(alpha: selected ? 0.22 : 0.13),
-        borderRadius: BorderRadius.circular(size * 0.32),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(
           color: color.withValues(alpha: selected ? 0.75 : 0.42),
         ),
@@ -401,7 +401,7 @@ Future<void> showSubjectMenu(BuildContext anchorContext, {AppState? state}) asyn
           if (!anchorContext.mounted) return;
           ScaffoldMessenger.of(anchorContext).showSnackBar(SnackBar(
             content: Text('切换学科失败，请重试', style: TextStyle(color: pal.toastFg)),
-            backgroundColor: pal.danger,
+            backgroundColor: pal.dangerInk,
           ));
         }
         return;
@@ -509,7 +509,7 @@ Future<_MenuChoice?> _openMenu(
                   padding: const EdgeInsets.only(left: 4),
                   child: Tooltip(
                     message: '找不到这个学科的数据文件',
-                    child: Icon(Icons.warning_amber_rounded, size: 14, color: pal.warm),
+                    child: Icon(Icons.warning_amber_rounded, size: 14, color: pal.warningInk),
                   ),
                 ),
               if (subject.key == st.activeKey)
@@ -573,7 +573,7 @@ Future<_MenuChoice?> _openMenu(
                     style: TextStyle(fontSize: LoopType.body, color: pal.muted),
                   ),
                 ),
-                Text('已归档', style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                Text('已归档', style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
@@ -723,7 +723,7 @@ class _NewSubjectDialogState extends State<_NewSubjectDialog> {
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(_error!, style: TextStyle(fontSize: LoopType.secondary, color: pal.danger)),
+                child: Text(_error!, style: TextStyle(fontSize: LoopType.secondary, color: pal.dangerInk)),
               ),
             Padding(
               padding: const EdgeInsets.only(top: 12),

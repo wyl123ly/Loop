@@ -145,7 +145,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }
@@ -162,7 +162,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       children: [
         _header(subject),
         _tabBar(),
-        if (_readOnly) _notice('学科已归档（只读）：可以查看资料与进度，写操作会被拒绝。', pal.warm),
+        if (_readOnly) _notice('学科已归档（只读）：可以查看资料与进度，写操作会被拒绝。', pal.warningInk),
         if (subject != null && subject.integrity != 'ok')
           _notice('找不到这个学科的数据文件，界面只显示注册信息。可重建空库或移除记录。', pal.danger),
         Expanded(
@@ -353,11 +353,11 @@ class _SubjectScreenState extends State<SubjectScreen> {
           children: [
             _metricCard('覆盖度', _percent(summary['coverage']), '知识点 + 资料', pal.accent),
             _metricCard('掌握度均值', _percent(summary['mastery_avg']), '${_int(summary['studied_topics'])} 个在学习',
-                pal.accent2),
-            _metricCard('已掌握', '${_int(summary['mastered'])}', '个知识点', pal.warm),
+                pal.accentInk),
+            _metricCard('已掌握', '${_int(summary['mastered'])}', '个知识点', pal.warningInk),
             _metricCard('连续学习', '${_int(summary['streak_days'])}', '天', pal.accent),
-            _metricCard('近 7 天', '${_int(summary['minutes_7d'])}', '分钟', pal.accent2),
-            _metricCard('待复习', '${_int(summary['review_due'])}', '个知识点', pal.warm),
+            _metricCard('近 7 天', '${_int(summary['minutes_7d'])}', '分钟', pal.accentInk),
+            _metricCard('待复习', '${_int(summary['review_due'])}', '个知识点', pal.warningInk),
           ],
         ),
         const SizedBox(height: 22),
@@ -408,7 +408,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 ),
               ),
               const SizedBox(width: 4),
-              Text(unit, style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+              Text(unit, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
             ],
           ),
         ],
@@ -426,7 +426,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           Text(title, style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w700, color: pal.ink)),
           if (hint.isNotEmpty) ...[
             const SizedBox(width: 8),
-            Text(hint, style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+            Text(hint, style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
           ],
         ],
       ),
@@ -585,7 +585,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           IconButton(
             tooltip: '删除知识点',
             onPressed: _readOnly ? null : () => _deleteTopic(topic),
-            icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.faint),
+            icon: Icon(Icons.delete_outline_rounded, size: 17, color: pal.muted),
           ),
         ],
       ),
@@ -632,8 +632,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
     final color = value >= 0.9
         ? pal.accent
         : value >= 0.4
-            ? pal.accent2
-            : pal.warm;
+            ? pal.accentInk
+            : pal.warningInk;
     return SizedBox(
       width: 86,
       child: Column(
@@ -660,10 +660,10 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _statusBadge(String status) {
     final (label, color) = switch (status) {
       'mastered' => ('已掌握', pal.accent),
-      'review_due' => ('待复习', pal.warm),
+      'review_due' => ('待复习', pal.warningInk),
       'new' => ('新', pal.muted),
       'archived' => ('已归档', pal.faint),
-      _ => ('学习中', pal.accent2),
+      _ => ('学习中', pal.accentInk),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -684,7 +684,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.insights_outlined, size: 38, color: pal.faint),
+            Icon(Icons.insights_outlined, size: 38, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有学习记录', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -764,7 +764,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           ),
           FilledButton(
             key: const Key('subject-topic-delete-confirm'),
-            style: FilledButton.styleFrom(backgroundColor: pal.danger),
+            style: FilledButton.styleFrom(backgroundColor: pal.dangerInk),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('删除'),
           ),
@@ -882,7 +882,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           PopupMenuItem(
             key: const Key('subject-manage-unregister'),
             value: 'unregister',
-            child: Text('移除记录', style: TextStyle(fontSize: LoopType.body, color: pal.danger)),
+            child: Text('移除记录', style: TextStyle(fontSize: LoopType.body, color: pal.dangerInk)),
           ),
         ],
       ],
@@ -1194,7 +1194,7 @@ class _PromptDialogState extends State<_PromptDialog> {
         FilledButton(
           key: widget.confirmKey,
           style: widget.danger
-              ? FilledButton.styleFrom(backgroundColor: pal.danger)
+              ? FilledButton.styleFrom(backgroundColor: pal.dangerInk)
               : null,
           onPressed: () => Navigator.of(context).pop(_controller.text),
           child: Text(widget.confirmLabel),

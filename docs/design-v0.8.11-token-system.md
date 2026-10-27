@@ -1,78 +1,100 @@
-# Loop v0.8.11 设计 token 实施记录（验收候选）
+# Loop v0.8.11 设计 token 实施记录（复验候选）
 
 > 分支：`design/v0.8.11-token-system`（未合并 `main`）
-> 基线：v0.8.10 / `c137ece` 开始，当前 `0.8.11+32`
+> 版本：`0.8.11+32`
+> 设计基线：v0.8.10 / `0095d77`；首轮 token 提交 `c137ece`
 > 目标：只收敛 token，不改极光、玻璃、暖纸色与布局骨架。
 
 ## 1. 已完成
 
-### 颜色（P0）
+### 颜色
 
-- `palette.dart` 新增：`accentInk`、`accentFill`、`dangerInk`、`success`、`warningInk`
-- light `muted #7B7884 → #6B6878`；light `faint #A9A5B2 → #8A8695`
-- dark `faint #6F6B7A → #86828F`；dark `onAccent → #15131A`
-- light `userBubble → #4F5CF0 / #8A5BD6`
-- `GradientButton` 改用 `accentFillGradient`；侧栏「新对话」同步
+- `palette.dart` 新增 `accentInk`、`accentFill`、`dangerInk`、`success`、`warningInk`
+- light `muted #7B7884 → #6B6878`、`faint #A9A5B2 → #8A8695`
+- dark `faint #6F6B7A → #86828F`、`onAccent → #15131A`
+- light `userBubble → #4F5CF0 / #8A5BD6`；用户气泡实际改用 `userBubbleGradient`
+- `warm` / `accent2` / `danger` / `faint` 不再承载文字：已迁移到 `warningInk` / `accentInk` / `dangerInk` / `muted`
+- 错误 SnackBar 背景改 `dangerInk`，文字 `onPrimaryBtn`（两主题 ≥5:1）
 
-### 控件主题（P0）
+### 控件主题
 
-- `colorScheme.primary` 从 `primaryBtn` 改为 `accent`，`FilledButton` 仍显式用 `primaryBtn`
-- 新增 `progressIndicatorTheme`、`switchTheme`、`checkboxTheme`、`sliderTheme`，默认控件统一 accent
-- 输入框/按钮/弹窗/菜单圆角与字号按 token 收敛
+- `colorScheme.primary = accent`；`FilledButton` 仍显式用 `primaryBtn`
+- 新增 `progressIndicatorTheme` / `switchTheme` / `checkboxTheme` / `sliderTheme`
+- 输入框、按钮、弹窗、菜单字号与圆角收敛
 
-### 排版 / 圆角 / 间距（P1）
+### 排版 / 圆角 / 间距
 
-- 字号：全部字面量映射到 7 级 `LoopType`；剩余动态值为 `fontSize: size`、`size * 0.46`
-- 圆角：全部 `BorderRadius/Radius.circular` 映射到 5 档 `LoopRadius`
-- 间距：516 个 `EdgeInsets` 数值全部落在 `{0,4,8,12,16,20,24,32,48}`（审计 0 离网格）
-- 页头：今日/资料/设置/代理/学科/对话统一为 24/w700/−0.5，内容左轴统一 32
+- 字号：字面量清零，全部走 7 级 `LoopType`；Markdown 标题也改用 token
+- 圆角：字面量清零，全部走 5 档 `LoopRadius`；`answerRadius` / 图片预览 / 学科切换器动态半径已收口
+- 间距：516 个 `EdgeInsets` 数值全部落在 4px 网格（守卫测试）
+- 页头：今日/资料/设置/代理/学科/对话统一 24/w700/−0.5，内容左轴 32
+- 对话标题：桌面 18/w700/−0.3，窄窗 13.5/w700/−0.1（不再在 360 浮窗里截成 8 字）
 
-### 可读性（P0）
+### 可读性
 
-- 今日 hero 卡白字改为深色 `heroInk`（light `ink` / dark `onPrimaryBtn`）
-- 用户气泡与发送按钮文字使用 `onAccent`，深色为近黑
-- 17 处 palette 外硬编码色清零；`screenshot_overlay` 仅保留截图上可读性豁免
+- 今日 hero：主/副行均改 `heroInk`（dark `#15131A`），dark 紫端提亮到 `#A98CF0`
+- 4 处硬编码白（上传/检查更新 spinner、极简条发送、浮窗关闭 hover）改 `onPrimaryBtn/onAccent`
+- 17 处 palette 外硬编码色清零
 
-### 截图 harness 修复
+### 测试与证据
 
-- 原 `subject_screenshots_test.dart` 只切 `MaterialApp.theme`，未切全局 `LoopTheme.palette`，导致 dark 截图是「浅卡片 + 浅文字」的假图。已补 `LoopTheme.palette = ...`。
+- 新增 `test/design_tokens_test.dart`：D1–D6 覆盖卡片/渐变/hero/错误 SnackBar 对比度
+- 新增 `test/design_guard_test.dart`：G1–G5 扫描字号/圆角/色值/间距/白字回退
+- 修复 `subject_screenshots_test.dart`：补 `LoopTheme.palette` 切换、关闭 DEBUG banner、支持 `LOOP_SHOT_DIR`、补 Today/Notes
+- HEAD 证据：`docs/evidence/design-v0.8.11/screens/` 共 16 张（含 Today/Notes 双主题），`OVERFLOW.txt` = `no rendering overflow`
 
-## 2. 实测结果
+## 2. 验收结果
 
 | 判据 | 结果 |
 | --- | --- |
-| A1 文字对比度 | `design_tokens_test` D1/D2/D3 全绿 |
-| A2 非文本对比度 | accent/onAccent、dangerInk 均 ≥3:1 |
-| A3 字号档位 | 字面量只剩 7 个 `LoopType`；动态值 2 处 |
-| A4 行高档位 | 仍有多档，未完全收口（见 gap） |
-| A5 字重 | 仅 w400/w500/w600/w700 |
-| A6 圆角档位 | 5 档；无数字字面量 |
-| A7 间距网格 | 516 个值，0 离网格 |
-| A8 对齐轴 | 七个页面内容左轴 32 |
-| A9 越权色 | palette 外 `Color(0x…)` = 0 |
-| A10 进度圈 | 主题统一 accent；局部 `strokeWidth` 未全部收口 |
-| A11 截图回归 | 12 张截图生成无 overflow；见 evidence |
+| A1 文字对比度 | PASS（token + 真实用法迁移；D1–D3/D6） |
+| A2 非文本对比度 | PASS（accent/dangerInk ≥3:1） |
+| A3 字号档位 | PASS（守卫 G1：无数字字面量；动态值均来源于 token） |
+| A4 行高档位 | PARTIAL（未全量收敛，见 gap） |
+| A5 字重 | PASS（仅 w400/w500/w600/w700） |
+| A6 圆角档位 | PASS（守卫 G1：无数字字面量） |
+| A7 间距网格 | PARTIAL（`EdgeInsets` 100% 网格；`SizedBox`/runSpacing 未全量） |
+| A8 对齐轴 | PARTIAL（七个页头 32；聊天消息列表仍 24） |
+| A9 越权色 | PASS（palette 外 `Color(0x…)` = 0；`Colors.white` 仅叠加/截图豁免） |
+| A10 进度圈 | PARTIAL（颜色统一；`strokeWidth` 仍多档） |
+| A11 截图回归 | PASS（16 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
 
 - `flutter analyze`：0 issues
-- 全量测试：**504 passed / 1 skipped**
-- 截图：`docs/evidence/design-v0.8.11/screens/`（chat light/dark、sidebar、subject、skills、materials、settings、narrow、compact、floating）
+- 全量测试：**510 passed / 1 skipped**
 
-## 3. 已知 gap（验收时请重点看）
+## 3. 已知 gap
 
-1. **行高仍有多档**：`height:` 未做全量 7 档收敛。
-2. **A10 进度圈**：`strokeWidth` 仍有 1.8/2.2 等值；颜色已由主题兜底。
-3. **P2 未做**：空态统一组件、图标尺寸 4 档、玻璃高光羽化、标题栏页名去重、主题切换 120ms 过渡、触控目标复查。
-4. **今日/笔记页未在现有截图 harness 内**：现有 harness 只覆盖 chat/materials/settings/sidebar/subject/skills；今日 hero 的修改已由 token 测试与代码评审覆盖，但没有新截图证据。
-5. **未做真机截图对比**：所有截图为 widget 测试渲染，字体使用系统 CJK 替代；最终观感需真机复核。
+1. 行高仍有 1.0–1.75 多档；建议后续收 4 档 `1.2/1.4/1.6/1.75`。
+2. 进度圈 `strokeWidth` 仍 1.6/1.8/2/2.2/2.4；建议 2.0/2.4 两档。
+3. `SizedBox`、`runSpacing` 的 6/10/14/18/22 等未全量收敛；A7 当前只覆盖 EdgeInsets。
+4. 聊天消息列表左轴 24，未与页头 32 对齐（居中 880 列设计取舍）。
+5. P2 未做：空态统一组件、图标尺寸 4 档、玻璃高光羽化、标题栏页名去重、主题切换 120ms、触控目标。
+6. 截图仍为 widget 渲染，非真机；CJK 字体使用系统替代。
+7. 未做 golden/pixel diff；截图只做“生成 + 无 overflow + 唯一哈希”。
 
-## 4. 验证入口
+## 4. 复跑
 
 ```powershell
 cd D:\DSH_Workspace\Prog2_app\app
 $env:PATH="D:\DSH_Workspace\Prog2_app\.tools\flutter\bin;$env:PATH"
 flutter analyze
-flutter test test/design_tokens_test.dart
+flutter test test/design_tokens_test.dart test/design_guard_test.dart
+$env:LOOP_SHOT_DIR='../docs/evidence/design-v0.8.11/screens'
 flutter test test/subject_screenshots_test.dart
 ```
 
-截图输出：`D:\DSH_Workspace\Prog2_app\docs\evidence\design-v0.8.11\screens\`
+## 5. 变更清单（关键）
+
+- `app/lib/theme/palette.dart`
+- `app/lib/theme.dart`
+- `app/lib/widgets/glass.dart`
+- `app/lib/widgets/sidebar.dart`
+- `app/lib/screens/chat_screen.dart`
+- `app/lib/screens/today_screen.dart`
+- `app/lib/screens/subject_screen.dart`
+- `app/lib/screens/materials_screen.dart`
+- `app/lib/screens/settings_screen.dart`
+- `app/lib/widgets/subject_skills_panel.dart`
+- 其余 screens/widgets 的 token 替换
+- `app/test/design_tokens_test.dart`、`app/test/design_guard_test.dart`
+- `app/test/subject_screenshots_test.dart`

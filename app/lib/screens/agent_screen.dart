@@ -94,8 +94,8 @@ class _AgentScreenState extends State<AgentScreen> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -285,7 +285,7 @@ class _AgentScreenState extends State<AgentScreen> {
           decoration: panelDecoration(),
           child: Row(
             children: [
-              Icon(Icons.shield_outlined, size: 18, color: pal.warm),
+              Icon(Icons.shield_outlined, size: 18, color: pal.warningInk),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -535,7 +535,7 @@ class _AgentScreenState extends State<AgentScreen> {
                     const Spacer(),
                     Text(
                       job.lastStatus.isEmpty ? '未运行' : job.lastStatus,
-                      style: TextStyle(fontSize: LoopType.micro, color: pal.faint),
+                      style: TextStyle(fontSize: LoopType.micro, color: pal.muted),
                     ),
                   ],
                 ),
@@ -605,10 +605,10 @@ class _AgentScreenState extends State<AgentScreen> {
                                   fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink)),
                           const SizedBox(width: 8),
                           Text('${item.durationMs}ms',
-                              style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                              style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                           const Spacer(),
                           Text(item.createdAt.length > 16 ? item.createdAt.substring(11, 16) : '',
-                              style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
+                              style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                         ],
                       ),
                       const SizedBox(height: 2),

@@ -100,5 +100,22 @@ void main() {
       expect(dark.colorScheme.primary, LoopPalette.dark.accent);
       expect(dark.progressIndicatorTheme.color, LoopPalette.dark.accent);
     });
+
+    test('D6 hero 与错误 SnackBar 在真实前后景上达到 AA', () {
+      final light = LoopPalette.light;
+      for (final bg in light.hero) {
+        expect(_contrast(light.ink, bg), greaterThanOrEqualTo(4.5),
+            reason: 'light hero $bg');
+      }
+      final dark = LoopPalette.dark;
+      for (final bg in dark.hero) {
+        expect(_contrast(dark.onPrimaryBtn, bg), greaterThanOrEqualTo(4.5),
+            reason: 'dark hero $bg');
+      }
+      for (final p in [light, dark]) {
+        expect(_contrast(p.onPrimaryBtn, p.dangerInk), greaterThanOrEqualTo(4.5),
+            reason: '${p.brightness} error snackbar');
+      }
+    });
   });
 }

@@ -103,7 +103,7 @@ class Sidebar extends StatelessWidget {
               style: TextStyle(
                   fontSize: LoopType.micro,
                   letterSpacing: 1.2,
-                  color: pal.faint,
+                  color: pal.muted,
                   fontWeight: FontWeight.w600)),
         ),
         if (items.isEmpty)
@@ -441,7 +441,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                       onTap: widget.onDelete,
                       child: Padding(
                         padding: const EdgeInsets.all(4),
-                        child: Icon(Icons.delete_outline_rounded, size: 13, color: pal.faint),
+                        child: Icon(Icons.delete_outline_rounded, size: 13, color: pal.muted),
                       ),
                     )
                   else

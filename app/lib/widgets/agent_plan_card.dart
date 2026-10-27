@@ -72,9 +72,9 @@ class AgentPlanCard extends StatelessWidget {
       case 'failed':
         return Icon(Icons.error_outline_rounded, size: 14, color: pal.dangerInk);
       case 'skipped':
-        return Icon(Icons.remove_circle_outline_rounded, size: 14, color: pal.faint);
+        return Icon(Icons.remove_circle_outline_rounded, size: 14, color: pal.muted);
       default:
-        return Icon(Icons.circle_outlined, size: 14, color: pal.faint);
+        return Icon(Icons.circle_outlined, size: 14, color: pal.muted);
     }
   }
 }

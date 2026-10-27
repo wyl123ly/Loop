@@ -577,8 +577,8 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     _lastSnackMessage = message;
     _lastSnackAt = now;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
-      backgroundColor: isError ? pal.danger : pal.toastBg,
+      content: Text(message, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
+      backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
   }

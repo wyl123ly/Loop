@@ -61,7 +61,7 @@ Future<void> checkForUpdates(BuildContext context, {required bool manual}) async
     }
     messenger.showSnackBar(SnackBar(
       content: Text(error.toString(), style: TextStyle(color: pal.toastFg)),
-      backgroundColor: pal.danger,
+      backgroundColor: pal.dangerInk,
     ));
   }
 }
@@ -255,7 +255,7 @@ class _ProgressDialogState extends State<_ProgressDialog> {
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
             ] else ...[
-              Text(_error!, style: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: pal.danger)),
+              Text(_error!, style: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: pal.dangerInk)),
               if (_error!.contains('Process is detached')) ...[
                 const SizedBox(height: 6),
                 Text(

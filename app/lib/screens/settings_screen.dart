@@ -178,8 +178,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message,
-          style: TextStyle(color: error ? Colors.white : pal.toastFg)),
-      backgroundColor: error ? pal.danger : pal.toastBg,
+          style: TextStyle(color: error ? pal.onPrimaryBtn : pal.toastFg)),
+      backgroundColor: error ? pal.dangerInk : pal.toastBg,
     ));
   }
 
@@ -395,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (overview.running)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('迁移进行中…', style: TextStyle(fontSize: LoopType.secondary, color: pal.warm)),
+                child: Text('迁移进行中…', style: TextStyle(fontSize: LoopType.secondary, color: pal.warningInk)),
               ),
             if (overview.countsLabel.isNotEmpty)
               Padding(
@@ -419,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     for (final item in overview.fileErrors.take(5))
                       Text(
                         '· ${item['table']}#${item['id']} ${item['reason']}',
-                        style: TextStyle(fontSize: LoopType.caption, color: pal.warm, height: 1.5),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.warningInk, height: 1.5),
                       ),
                   ],
                 ),
@@ -430,7 +430,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   '上次迁移未完成：${overview.lastError.isEmpty ? (overview.report['error'] ?? '未知原因') : overview.lastError}',
                   key: const Key('migration-error-line'),
-                  style: TextStyle(fontSize: LoopType.secondary, color: pal.danger),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.dangerInk),
                 ),
               ),
             if (!overview.noticeSeen && overview.appliedAt.isNotEmpty)
@@ -600,7 +600,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (!ok) {
                                   messenger.showSnackBar(SnackBar(
                                     content: Text('流式设置保存失败，已恢复原状态'),
-                                    backgroundColor: pal.danger,
+                                    backgroundColor: pal.dangerInk,
                                   ));
                                 }
                               },
@@ -877,10 +877,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               FilledButton.icon(
                                 onPressed: _checkingUpdate ? null : _checkUpdates,
                                 icon: _checkingUpdate
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 14,
                                         height: 14,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: pal.onPrimaryBtn),
                                       )
                                     : const Icon(Icons.system_update_alt_rounded, size: 16),
                                 label: Text(_checkingUpdate ? '检查中…' : '检查更新'),
