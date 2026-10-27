@@ -35,7 +35,7 @@ class ImagePreview extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 4 : 10, 4, compact ? 4 : 8),
+              padding: EdgeInsets.fromLTRB(compact ? 12 : 16, compact ? 4 : 12, 4, compact ? 4 : 8),
               child: Row(
                 children: [
                   Icon(Icons.image_outlined, size: compact ? 14 : 16, color: pal.muted),
@@ -45,7 +45,7 @@ class ImagePreview extends StatelessWidget {
                       title ?? '图片预览',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: compact ? 11.5 : 12.5, color: pal.ink),
+                      style: TextStyle(fontSize: compact ? LoopType.caption : LoopType.secondary, color: pal.ink),
                     ),
                   ),
                   IconButton(

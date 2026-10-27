@@ -155,7 +155,7 @@ class _NotesScreenState extends State<NotesScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
               Text('笔记', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -224,7 +224,7 @@ class _NotesScreenState extends State<NotesScreen> {
         final note = _items[index];
         final selected = note.id == _selectedId;
         return Padding(
-          padding: const EdgeInsets.only(bottom: 2),
+          padding: const EdgeInsets.only(bottom: 4),
           child: Material(
             color: selected ? pal.chip : Colors.transparent,
             borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -232,7 +232,7 @@ class _NotesScreenState extends State<NotesScreen> {
               borderRadius: BorderRadius.circular(LoopRadius.control),
               onTap: () => setState(() => _selectedId = note.id),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -278,7 +278,7 @@ class _NotesScreenState extends State<NotesScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(32, 24, 24, 14),
+          padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -321,7 +321,7 @@ class _NotesScreenState extends State<NotesScreen> {
         Divider(height: 1),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(32, 20, 32, 40),
+            padding: const EdgeInsets.fromLTRB(32, 20, 32, 48),
             child: MarkdownText(
               note.body,
               baseStyle: TextStyle(fontSize: LoopType.reading, height: 1.75, color: pal.ink),

@@ -228,7 +228,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
               Text('资料', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -267,7 +267,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
   Widget _importBanner() {
     final progress = _importTotal > 0 ? (_importDone / _importTotal).clamp(0.0, 1.0) : null;
     return Container(
-      margin: const EdgeInsets.fromLTRB(32, 0, 32, 10),
+      margin: const EdgeInsets.fromLTRB(32, 0, 32, 12),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
@@ -295,7 +295,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           ],
           if (_importCurrent.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 8),
               child: Text(_importCurrent,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -364,7 +364,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     final loose = _items.where((item) => item.folderId == 0).toList();
     if (loose.isNotEmpty) {
       children.add(Padding(
-        padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
         child: Text('单独上传',
             style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
       ));
@@ -373,7 +373,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       }
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 40),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 48),
       children: children,
     );
   }
@@ -455,7 +455,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Widget _dirTile(_Dir dir, int depth, bool expanded, VoidCallback onTap) {
     return Padding(
-      padding: EdgeInsets.only(left: depth * 18.0, top: 1, bottom: 1),
+      padding: EdgeInsets.only(left: depth * 20, top: 4, bottom: 4),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -463,7 +463,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           borderRadius: BorderRadius.circular(LoopRadius.small),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
                 SizedBox(
@@ -576,7 +576,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   Widget _materialTile(MaterialItem item, {int depth = 0}) {
     return Padding(
-      padding: EdgeInsets.only(left: depth * 18.0, bottom: 6),
+      padding: EdgeInsets.only(left: depth * 20, bottom: 8),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -584,7 +584,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => _showPreview(item),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: panelDecoration(radius: LoopRadius.control),
             child: Row(
               children: [
@@ -795,7 +795,7 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
             ),
             if (_scan['truncated'] == true)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: 8),
                 child: Text('文件很多，预览只显示前 1000 个。',
                     style: TextStyle(fontSize: LoopType.caption, color: pal.warm)),
               ),

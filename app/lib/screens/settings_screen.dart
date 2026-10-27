@@ -364,7 +364,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final settings = _state.settings;
     return Container(
       key: const Key('settings-data-migration'),
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       decoration: panelDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,14 +405,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             if (overview.filesLabel.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(overview.filesLabel,
                     key: const Key('migration-files-line'),
                     style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               ),
             if (overview.fileErrors.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -426,7 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             if (overview.failed)
               Padding(
-                padding: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '上次迁移未完成：${overview.lastError.isEmpty ? (overview.report['error'] ?? '未知原因') : overview.lastError}',
                   key: const Key('migration-error-line'),
@@ -436,8 +436,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (!overview.noticeSeen && overview.appliedAt.isNotEmpty)
               Container(
                 key: const Key('migration-notice'),
-                margin: const EdgeInsets.only(top: 10),
-                padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
                 decoration: softDecoration(radius: LoopRadius.control),
                 child: Row(
                   children: [
@@ -528,7 +528,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: const [
               Text('设置', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -537,7 +537,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(32, 24, 32, 40),
+            padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
             children: [
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 680),
@@ -545,7 +545,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +574,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +611,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,7 +624,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const SizedBox(width: 8),
                               Container(
                                 padding:
-                                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: pal.chip,
                                   borderRadius: BorderRadius.circular(LoopRadius.panel),
@@ -829,7 +829,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (_testResult != null) ...[
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: pal.chip,
                                 borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -850,7 +850,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _dataAndMigrationCard(),
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -922,7 +922,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,7 +943,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(22),
+                      padding: const EdgeInsets.all(24),
                       decoration: panelDecoration(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

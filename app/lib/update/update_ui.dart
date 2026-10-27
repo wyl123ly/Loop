@@ -75,10 +75,10 @@ class _UpdateAvailableDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
       child: Container(
         width: 580,
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         decoration: panelDecoration(color: pal.cardSolid, radius: LoopRadius.panel),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -230,7 +230,7 @@ class _ProgressDialogState extends State<_ProgressDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         width: 460,
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         decoration: panelDecoration(color: pal.cardSolid, radius: LoopRadius.panel),
         child: Column(
           mainAxisSize: MainAxisSize.min,

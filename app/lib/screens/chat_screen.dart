@@ -585,7 +585,7 @@ class ChatScreenState extends State<ChatScreen> {
                   color: pal.accent.withValues(alpha: 0.10),
                   alignment: Alignment.center,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: pal.glassFill,
                       borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -853,8 +853,8 @@ class ChatScreenState extends State<ChatScreen> {
     final args = const JsonEncoder.withIndent('  ').convert(data['args'] ?? {});
     final clipped = args.length > 900 ? '${args.substring(0, 900)}\n…' : args;
     return Container(
-      margin: EdgeInsets.fromLTRB(widget.compact ? 12 : 24, 6, widget.compact ? 12 : 24, 0),
-      padding: EdgeInsets.fromLTRB(widget.compact ? 12 : 16, 12, widget.compact ? 12 : 16, 10),
+      margin: EdgeInsets.fromLTRB(widget.compact ? 12 : 24, 8, widget.compact ? 12 : 24, 0),
+      padding: EdgeInsets.fromLTRB(widget.compact ? 12 : 16, 12, widget.compact ? 12 : 16, 12),
       decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1122,7 +1122,7 @@ class ChatScreenState extends State<ChatScreen> {
         ],
       ],
       child: GlassPill(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1164,7 +1164,7 @@ class ChatScreenState extends State<ChatScreen> {
               if (!narrow) ...[
                 const SizedBox(width: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: pal.chip,
                     borderRadius: BorderRadius.circular(LoopRadius.panel),
@@ -1222,7 +1222,7 @@ class ChatScreenState extends State<ChatScreen> {
                 borderRadius: BorderRadius.circular(LoopRadius.pill),
                 onTap: _scrollToBottomNow,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1414,7 +1414,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget _attachmentTile(_Attachment item) {
     if (!item.isImage) {
       return Container(
-        padding: const EdgeInsets.only(left: 8, right: 2),
+        padding: const EdgeInsets.only(left: 8, right: 4),
         decoration: BoxDecoration(
           color: pal.chip,
           borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -1541,7 +1541,7 @@ class ChatScreenState extends State<ChatScreen> {
       children: [
         for (final item in files)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -1572,8 +1572,8 @@ class ChatScreenState extends State<ChatScreen> {
         alignment: Alignment.centerRight,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 620),
-          margin: EdgeInsets.only(bottom: 14, left: widget.compact ? 20 : 48),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          margin: EdgeInsets.only(bottom: 16, left: widget.compact ? 20 : 48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             gradient: accentGradient,
             borderRadius: const BorderRadius.only(
@@ -1615,12 +1615,12 @@ class ChatScreenState extends State<ChatScreen> {
     }
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.only(bottom: 20),
       padding: EdgeInsets.fromLTRB(
-        widget.compact ? 12 : 18,
+        widget.compact ? 12 : 20,
         widget.compact ? 12 : 16,
-        widget.compact ? 12 : 18,
-        widget.compact ? 10 : 12,
+        widget.compact ? 12 : 20,
+        widget.compact ? 12 : 12,
       ),
       decoration: panelDecoration(),
       child: Column(
@@ -1669,7 +1669,7 @@ class ChatScreenState extends State<ChatScreen> {
           ],
           if (!empty && message.tokensIn + message.tokensOut > 0)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 8),
               child: Text(
                 '${message.tokensIn} in · ${message.tokensOut} out'
                 '${message.cost > 0 ? ' · ¥${(message.cost * 7.2).toStringAsFixed(4)}' : ''}',
@@ -1696,7 +1696,7 @@ class ChatScreenState extends State<ChatScreen> {
       children: [
         for (final name in order)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: pal.chip,
               borderRadius: BorderRadius.circular(LoopRadius.panel),
@@ -1762,7 +1762,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget _composer(BuildContext context) {
     final pad = widget.compact
-        ? const EdgeInsets.fromLTRB(12, 8, 12, 10)
+        ? const EdgeInsets.fromLTRB(12, 8, 12, 12)
         : const EdgeInsets.fromLTRB(24, 12, 24, 16);
     final hint = widget.compact
         ? '问点什么，或贴截图…'
@@ -1804,7 +1804,7 @@ class ChatScreenState extends State<ChatScreen> {
                   borderRadius: BorderRadius.circular(LoopRadius.control),
                   border: Border.all(color: pal.border),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -1870,7 +1870,7 @@ class ChatScreenState extends State<ChatScreen> {
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),

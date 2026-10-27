@@ -102,7 +102,7 @@ class FloatingBar extends StatelessWidget {
         return Container(
           key: const Key('floating-bar'),
           height: _barHeight,
-          padding: EdgeInsets.only(left: compact ? 10 : 14, right: 6),
+          padding: EdgeInsets.only(left: compact ? 12 : 16, right: 8),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: p.glassBorder)),
           ),
@@ -145,7 +145,7 @@ class FloatingBar extends StatelessWidget {
                         if (!compact) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: p.chip,
                               borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -286,7 +286,7 @@ class _BarButtonState extends State<_BarButton> {
             duration: const Duration(milliseconds: 120),
             width: widget.width,
             height: widget.height,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
               borderRadius: BorderRadius.circular(LoopRadius.small),

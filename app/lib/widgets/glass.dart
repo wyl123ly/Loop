@@ -155,7 +155,7 @@ class PageHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-    this.padding = const EdgeInsets.fromLTRB(32, 28, 28, 16),
+    this.padding = const EdgeInsets.fromLTRB(32, 32, 32, 16),
   });
 
   final String title;

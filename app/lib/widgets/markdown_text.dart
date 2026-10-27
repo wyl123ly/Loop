@@ -73,7 +73,7 @@ class MarkdownText extends StatelessWidget {
       // 分割线
       if (RegExp(r'^(-{3,}|\*{3,}|_{3,})$').hasMatch(trimmed)) {
         widgets.add(const Padding(
-          padding: EdgeInsets.symmetric(vertical: 10),
+          padding: EdgeInsets.symmetric(vertical: 12),
           child: Divider(height: 1),
         ));
         i++;
@@ -87,7 +87,7 @@ class MarkdownText extends StatelessWidget {
         final content = heading.group(2)!;
         final size = switch (level) { 1 => 20.0, 2 => 17.5, 3 => 16.0, _ => 15.0 };
         widgets.add(Padding(
-          padding: EdgeInsets.only(top: i == 0 ? 0 : 14, bottom: 6),
+          padding: EdgeInsets.only(top: i == 0 ? 0 : 16, bottom: 8),
           child: Text.rich(
             TextSpan(
               children: _inline(context, content, style),
@@ -123,7 +123,7 @@ class MarkdownText extends StatelessWidget {
           i++;
         }
         widgets.add(Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
+          margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           decoration: BoxDecoration(
             border: Border(left: BorderSide(color: pal.accent, width: 3)),
@@ -214,7 +214,7 @@ class MarkdownText extends StatelessWidget {
                       children: List.generate(columns, (index) {
                         final text = index < header.length ? header[index] : '';
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           child: Text.rich(TextSpan(
                             children: _inline(context, text, style),
                             style: style.copyWith(fontWeight: FontWeight.w600, fontSize: LoopType.body),
@@ -227,7 +227,7 @@ class MarkdownText extends StatelessWidget {
                         children: List.generate(columns, (index) {
                           final text = index < row.length ? row[index] : '';
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             child: Text.rich(TextSpan(
                               children: _inline(context, text, style),
                               style: style.copyWith(fontSize: LoopType.body),
@@ -247,7 +247,7 @@ class MarkdownText extends StatelessWidget {
 
   Widget _listRow(BuildContext context, String marker, String content, TextStyle style, int index) {
     return Padding(
-      padding: EdgeInsets.only(top: index == 0 ? 2 : 4, left: 2),
+      padding: EdgeInsets.only(top: index == 0 ? 4 : 4, left: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -269,7 +269,7 @@ class MarkdownText extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: pal.codeBg,
         borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -293,7 +293,7 @@ class MarkdownText extends StatelessWidget {
   Widget _blockMath(String tex, TextStyle style) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       // 宽公式在 360 浮窗里允许横向滚动，避免撑破气泡。
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -315,7 +315,7 @@ class MarkdownText extends StatelessWidget {
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         decoration: BoxDecoration(
           color: pal.codeBg,
           borderRadius: BorderRadius.circular(LoopRadius.small),

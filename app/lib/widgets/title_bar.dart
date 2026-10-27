@@ -69,7 +69,7 @@ class TitleBar extends StatelessWidget {
               onPanStart: (_) => WindowController.instance.startDragging(),
               onDoubleTap: () => WindowController.instance.toggleMaximize(),
               child: Padding(
-                padding: const EdgeInsets.only(left: 18),
+                padding: const EdgeInsets.only(left: 20),
                 child: Row(
                   children: [
                     Container(
@@ -188,7 +188,7 @@ class _WindowButtonState extends State<_WindowButton> {
             duration: const Duration(milliseconds: 140),
             width: 42,
             height: 30,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
               borderRadius: BorderRadius.circular(LoopRadius.small),

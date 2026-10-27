@@ -372,7 +372,7 @@ class _AttachmentBadge extends StatelessWidget {
         child: Container(
         key: const Key('minimal-attachment-badge'),
         height: 20,
-        margin: const EdgeInsets.only(left: 4, right: 2),
+        margin: const EdgeInsets.only(left: 4, right: 4),
         padding: url == null
             ? const EdgeInsets.symmetric(horizontal: 4)
             : EdgeInsets.zero,
@@ -425,7 +425,7 @@ class _MinimalHoverLabel extends StatelessWidget {
     final p = pal;
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: p.toastBg,
         borderRadius: BorderRadius.circular(LoopRadius.small),

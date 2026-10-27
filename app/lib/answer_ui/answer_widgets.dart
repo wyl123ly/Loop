@@ -508,13 +508,13 @@ class _QuestionLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 1),
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             decoration: BoxDecoration(
               color: p.chip,
               borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -553,7 +553,7 @@ class _StatusLine extends StatelessWidget {
     };
     return Padding(
       key: const Key('answer-status'),
-      padding: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           if (state.waitingApproval) ...[
@@ -587,7 +587,7 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       key: const Key('answer-error'),
       margin: const EdgeInsets.only(top: 4, bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: p.danger.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -620,7 +620,7 @@ class _PlanSection extends StatelessWidget {
     final p = pal;
     return Container(
       margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: p.chip,
         borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -636,7 +636,7 @@ class _PlanSection extends StatelessWidget {
           const SizedBox(height: 3),
           for (final item in plan.take(5))
             Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
                   Icon(
@@ -678,7 +678,7 @@ class _AnswerBody extends StatelessWidget {
         children: [
           if (state.busy)
             Padding(
-              padding: const EdgeInsets.only(top: 2, right: 6),
+              padding: const EdgeInsets.only(top: 4, right: 8),
               child: Icon(Icons.hourglass_top_rounded, size: 12, color: p.accent),
             ),
           Expanded(
@@ -713,7 +713,7 @@ class _RefsSection extends StatelessWidget {
         children: [
           for (final ref in refs.take(6))
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: p.chip,
                 borderRadius: BorderRadius.circular(LoopRadius.small),
@@ -747,7 +747,7 @@ class _ScrollBottomCapsule extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(LoopRadius.pill),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             color: p.cardSolid,
             borderRadius: BorderRadius.circular(LoopRadius.pill),

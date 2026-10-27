@@ -51,13 +51,13 @@ class Sidebar extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: compact ? 76 : 248,
-          margin: EdgeInsets.fromLTRB(compact ? 10 : 16, 8, compact ? 8 : 12, 16),
+          margin: EdgeInsets.fromLTRB(compact ? 12 : 16, 8, compact ? 8 : 12, 16),
           child: GlassPanel(
             radius: LoopRadius.panel,
             blur: 26,
             padding: compact
-                ? const EdgeInsets.fromLTRB(8, 14, 8, 10)
-                : const EdgeInsets.fromLTRB(12, 20, 12, 14),
+                ? const EdgeInsets.fromLTRB(8, 16, 8, 12)
+                : const EdgeInsets.fromLTRB(12, 20, 12, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -98,7 +98,7 @@ class Sidebar extends StatelessWidget {
         for (final item in _subjectNav) _navItem(item.$1, item.$2, item.$3),
         const SizedBox(height: 18),
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
+          padding: const EdgeInsets.fromLTRB(12, 0, 8, 8),
           child: Text('最近对话',
               style: TextStyle(
                   fontSize: LoopType.micro,
@@ -108,7 +108,7 @@ class Sidebar extends StatelessWidget {
         ),
         if (items.isEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
             child: Text('这个学科还没有对话', style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           )
         else
@@ -171,7 +171,7 @@ class Sidebar extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 20),
       child: Row(
         children: [
           mark,
@@ -279,7 +279,7 @@ class Sidebar extends StatelessWidget {
       // 紧凑态 7 个页签 + 学科切换器必须在 900×600 的侧栏高度内放下
       // （§10.5 不得 overflow）：纵向留白收到 1，单项 40。
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 1),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Tooltip(
           message: label,
           child: Material(
@@ -308,7 +308,7 @@ class Sidebar extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
       child: Material(
         color: selected ? pal.chip : Colors.transparent,
         borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -316,7 +316,7 @@ class Sidebar extends StatelessWidget {
           borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => onSelect(target),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(LoopRadius.control),
               border: Border.all(
@@ -408,7 +408,7 @@ class _HistoryTileState extends State<_HistoryTile> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.only(bottom: 4),
         child: Material(
           color: selected ? pal.chip : Colors.transparent,
           borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -416,7 +416,7 @@ class _HistoryTileState extends State<_HistoryTile> {
             borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Icon(Icons.chat_bubble_outline_rounded,
@@ -440,7 +440,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                       borderRadius: BorderRadius.circular(LoopRadius.small),
                       onTap: widget.onDelete,
                       child: Padding(
-                        padding: const EdgeInsets.all(3),
+                        padding: const EdgeInsets.all(4),
                         child: Icon(Icons.delete_outline_rounded, size: 13, color: pal.faint),
                       ),
                     )

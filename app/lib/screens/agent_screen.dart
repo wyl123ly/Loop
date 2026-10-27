@@ -105,7 +105,7 @@ class _AgentScreenState extends State<AgentScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
               Text('代理',
@@ -124,7 +124,7 @@ class _AgentScreenState extends State<AgentScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(32, 4, 32, 10),
+          padding: const EdgeInsets.fromLTRB(32, 4, 32, 12),
           child: Row(
             children: [
               SegmentedButton<int>(
@@ -145,7 +145,7 @@ class _AgentScreenState extends State<AgentScreen> {
           child: _loading && _settings == null
               ? const Center(child: CircularProgressIndicator(strokeWidth: 2.4))
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(32, 4, 32, 40),
+                  padding: const EdgeInsets.fromLTRB(32, 4, 32, 48),
                   children: [
                     if (_tab == 0) _permissionsTab(),
                     if (_tab == 1) _mcpTab(),
@@ -281,7 +281,7 @@ class _AgentScreenState extends State<AgentScreen> {
         ),
         const SizedBox(height: 14),
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           decoration: panelDecoration(),
           child: Row(
             children: [
@@ -349,8 +349,8 @@ class _AgentScreenState extends State<AgentScreen> {
           ),
         for (final server in _servers)
           Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
             decoration: panelDecoration(radius: LoopRadius.card),
             child: Row(
               children: [
@@ -485,8 +485,8 @@ class _AgentScreenState extends State<AgentScreen> {
           ),
         for (final job in _jobs)
           Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
             decoration: panelDecoration(radius: LoopRadius.card),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +579,7 @@ class _AgentScreenState extends State<AgentScreen> {
         for (final item in _audits)
           Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             decoration: panelDecoration(radius: LoopRadius.control),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -229,7 +229,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 ),
                 if (chips.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 8),
                     child: Wrap(spacing: 6, runSpacing: 6, children: chips),
                   ),
               ],
@@ -248,7 +248,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   Widget _profileChip(String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: pal.chip,
         borderRadius: BorderRadius.circular(LoopRadius.pill),
@@ -309,7 +309,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _notice(String text, Color color) {
     return Container(
       margin: const EdgeInsets.fromLTRB(32, 0, 32, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -345,7 +345,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
     final recent = _recentTopics(topics);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         Wrap(
           spacing: 12,
@@ -382,7 +382,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _metricCard(String label, String value, String unit, Color color) {
     return Container(
       width: 148,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,7 +436,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _hint(String text) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: softDecoration(radius: LoopRadius.control),
       child: Text(text, style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6)),
     );
@@ -505,7 +505,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         .toList();
     if (topics.isEmpty) return _emptyState();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(32, 8, 32, 36),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -595,7 +595,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _topicShell(TopicItem topic, {required Widget trailing, required String meta}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: panelDecoration(radius: LoopRadius.control),
       child: Row(
         children: [
@@ -666,7 +666,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       _ => ('学习中', pal.accent2),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(LoopRadius.pill),
@@ -680,7 +680,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _emptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -709,7 +709,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   Widget _errorView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

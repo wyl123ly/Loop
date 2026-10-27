@@ -190,7 +190,7 @@ class SubjectSwitcher extends StatelessWidget {
           final canSwitch = enabled && !busy;
           if (compact) {
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               child: Tooltip(
                 message: busy ? '回答中，停止后再切换学科' : '学科：$name（点击切换）',
                 child: Material(
@@ -222,7 +222,7 @@ class SubjectSwitcher extends StatelessWidget {
             );
           }
           return Padding(
-            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
             child: Material(
               key: const Key('subject-switcher'),
               color: pal.chip,
@@ -235,7 +235,7 @@ class SubjectSwitcher extends StatelessWidget {
                       ? () => showSubjectMenu(context, state: _state)
                       : null,
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(LoopRadius.control),
                       border: Border.all(color: pal.glassBorder),
@@ -331,7 +331,7 @@ class SubjectChip extends StatelessWidget {
                     ? null
                     : () => showSubjectMenu(context, state: _state),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: narrow ? 7 : 9, vertical: 5),
+                  padding: EdgeInsets.symmetric(horizontal: narrow ? 8 : 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: pal.chip,
                     borderRadius: BorderRadius.circular(LoopRadius.panel),
@@ -722,11 +722,11 @@ class _NewSubjectDialogState extends State<_NewSubjectDialog> {
             ),
             if (_error != null)
               Padding(
-                padding: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.only(top: 12),
                 child: Text(_error!, style: TextStyle(fontSize: LoopType.secondary, color: pal.danger)),
               ),
             Padding(
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
                 '每个学科有独立的对话、资料、进度与技能，互不串数据。',
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted),

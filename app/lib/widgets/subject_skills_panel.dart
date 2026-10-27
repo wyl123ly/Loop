@@ -596,7 +596,7 @@ class SkillsPanelState extends State<SkillsPanel> {
             borderRadius: BorderRadius.circular(LoopRadius.control),
             onTap: () => setState(() => _tab = value),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(color: selected ? pal.glassBorder : pal.border),
@@ -616,7 +616,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 10, 28, 6),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 8),
       child: Row(
         children: [
           // Expanded（不是 Flexible+Spacer）：窄窗下 tab 条拿到全部剩余宽度，
@@ -645,8 +645,8 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _offlineBanner() {
     return Container(
       key: const Key('skills-offline-banner'),
-      margin: const EdgeInsets.fromLTRB(28, 4, 28, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      margin: const EdgeInsets.fromLTRB(32, 4, 32, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: pal.chip,
         borderRadius: BorderRadius.circular(LoopRadius.control),
@@ -688,7 +688,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     if (skills.isEmpty) return _emptyInstalled();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 32),
+      padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         _policyNote(library?.policy),
         const SizedBox(height: 10),
@@ -725,7 +725,7 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _policyNote(SkillPolicyInfo? policy) {
     final note = policy?.verifyNote ?? '';
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: softDecoration(radius: LoopRadius.control),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -757,7 +757,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     final label = _library?.hubLabel ?? 'EduHub';
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -791,7 +791,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     return Container(
       key: Key('skill-card-${skill.slug}'),
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -838,7 +838,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                     ),
                     if (skill.description.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           skill.description,
                           maxLines: 2,
@@ -877,7 +877,7 @@ class SkillsPanelState extends State<SkillsPanel> {
               const SizedBox(width: 6),
               if (busy)
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   child: SizedBox(
                     width: 15,
                     height: 15,
@@ -976,7 +976,7 @@ class SkillsPanelState extends State<SkillsPanel> {
 
   Widget _badge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(LoopRadius.pill),
@@ -1010,7 +1010,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(28, 6, 28, 8),
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 8),
           child: Row(
             children: [
               Expanded(
@@ -1031,7 +1031,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(28, 0, 28, 6),
+          padding: const EdgeInsets.fromLTRB(32, 0, 32, 8),
           child: Text(
             '按需浏览：请求只带关键词，由你点击触发；不发送学科名或资料内容，也不自动更新。'
             '只接 ${_library?.hubLabel ?? 'EduHub'}（后端白名单固定）。',
@@ -1051,7 +1051,7 @@ class SkillsPanelState extends State<SkillsPanel> {
     if (catalog == null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1076,7 +1076,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       );
     }
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 4, 28, 32),
+      padding: const EdgeInsets.fromLTRB(32, 4, 32, 32),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -1129,7 +1129,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                 ),
                 if (item.summary.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       item.summary,
                       maxLines: 2,
@@ -1138,7 +1138,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     '${item.owner.isEmpty ? '发布者未知' : item.owner} · 下载 ${item.downloads}（弱信号）',
                     maxLines: 1,
@@ -1152,7 +1152,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           const SizedBox(width: 8),
           if (busy)
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: SizedBox(
                 width: 15,
                 height: 15,
@@ -1293,14 +1293,14 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                 if (widget.hasScripts) _row('脚本', '包含脚本文件，Loop 不会执行'),
                 if (verdict.summary.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'registry security.summary 原文：${verdict.summary}',
                       style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     '说明：verify 只是 registry 侧的静态扫描参考信号，包没有签名，'
                     'Loop 不把它当作安全保证；真正的防线是导入管线（zip 防护 + 逐文件 sha256）'
@@ -1352,7 +1352,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                 ],
                 if (widget.disabledNote.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 10),
+                    padding: const EdgeInsets.only(top: 12),
                     child: Text(
                       widget.disabledNote,
                       style: TextStyle(fontSize: LoopType.caption, color: pal.muted),

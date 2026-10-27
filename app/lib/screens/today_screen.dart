@@ -126,7 +126,7 @@ class _TodayScreenState extends State<TodayScreen> {
       children: [
         Container(
           height: 78,
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
+          padding: const EdgeInsets.fromLTRB(32, 20, 32, 8),
           child: Row(
             children: [
               Text('今日', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
@@ -168,7 +168,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
     final remaining = data.tasks.length;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(32, 24, 32, 40),
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
       children: [
         _hero(data, remaining),
         const SizedBox(height: 16),
@@ -245,7 +245,7 @@ class _TodayScreenState extends State<TodayScreen> {
 
   Widget _tasksCard(TodayData data) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       decoration: panelDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +267,7 @@ class _TodayScreenState extends State<TodayScreen> {
             ),
           for (final task in data.tasks) _taskRow(task, data),
           Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 6),
+            padding: const EdgeInsets.only(top: 4, bottom: 8),
             child: Row(
               children: [
                 Icon(Icons.add_rounded, size: 17, color: pal.muted),
@@ -302,7 +302,7 @@ class _TodayScreenState extends State<TodayScreen> {
         ? '未排期'
         : (task.due == data.date ? '今天' : (overdue ? '逾期 · ${task.due.substring(5)}' : task.due));
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           SizedBox(

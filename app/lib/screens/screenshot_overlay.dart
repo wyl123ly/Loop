@@ -210,8 +210,8 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                   child: Center(
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 10 : 14,
-                        vertical: compact ? 6 : 8,
+                        horizontal: compact ? 12 : 16,
+                        vertical: compact ? 8 : 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.62),
@@ -225,7 +225,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: ratioMismatch ? pal.dangerInk : Colors.white,
-                          fontSize: compact ? 11.5 : 12.5,
+                          fontSize: compact ? LoopType.caption : LoopType.secondary,
                         ),
                       ),
                     ),
@@ -239,7 +239,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: compact ? 4 : 8,
-                        vertical: compact ? 4 : 6,
+                        vertical: compact ? 4 : 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.72),
@@ -277,7 +277,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(
                                 horizontal: compact ? 16 : 20,
-                                vertical: compact ? 10 : 14,
+                                vertical: compact ? 12 : 16,
                               ),
                             ),
                             child: Text(_cropping ? '处理中…' : '完成'),
@@ -304,7 +304,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
 
   ButtonStyle _textStyle(bool compact) {
     return TextButton.styleFrom(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 8 : 10),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 8 : 12),
       minimumSize: Size(compact ? 44 : 52, compact ? 34 : 38),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
