@@ -53,7 +53,7 @@ class Sidebar extends StatelessWidget {
           width: compact ? 76 : 248,
           margin: EdgeInsets.fromLTRB(compact ? 10 : 16, 8, compact ? 8 : 12, 16),
           child: GlassPanel(
-            radius: 24,
+            radius: LoopRadius.panel,
             blur: 26,
             padding: compact
                 ? const EdgeInsets.fromLTRB(8, 14, 8, 10)
@@ -101,7 +101,7 @@ class Sidebar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 0, 8, 6),
           child: Text('最近对话',
               style: TextStyle(
-                  fontSize: 10,
+                  fontSize: LoopType.micro,
                   letterSpacing: 1.2,
                   color: pal.faint,
                   fontWeight: FontWeight.w600)),
@@ -109,7 +109,7 @@ class Sidebar extends StatelessWidget {
         if (items.isEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
-            child: Text('这个学科还没有对话', style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            child: Text('这个学科还没有对话', style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           )
         else
           for (final conversation in items)
@@ -182,9 +182,9 @@ class Sidebar extends StatelessWidget {
               children: [
                 Text('回路',
                     style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
+                        fontSize: LoopType.title, fontWeight: FontWeight.w700, color: pal.ink, height: 1.2)),
                 Text('Loop · 学习工作台',
-                    style: TextStyle(fontSize: 10, color: pal.muted, height: 1.4)),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.4)),
               ],
             ),
           ),
@@ -199,9 +199,9 @@ class Sidebar extends StatelessWidget {
       message: expand ? '展开侧栏' : '收起侧栏',
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           onTap: onToggleCollapse,
           child: SizedBox(
             width: 24,
@@ -210,7 +210,7 @@ class Sidebar extends StatelessWidget {
               child: Text(
                 expand ? '›' : '‹',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: LoopType.display,
                   height: 1,
                   fontWeight: FontWeight.w500,
                   color: pal.muted,
@@ -284,14 +284,14 @@ class Sidebar extends StatelessWidget {
           message: label,
           child: Material(
             color: selected ? pal.chip : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             child: InkWell(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               onTap: () => onSelect(target),
               child: Container(
                 height: 38,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                   border: Border.all(
                     color: selected ? pal.glassBorder : Colors.transparent,
                   ),
@@ -341,7 +341,7 @@ class Sidebar extends StatelessWidget {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontSize: LoopType.body,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected ? pal.ink : pal.muted,
                     ),

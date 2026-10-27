@@ -480,7 +480,7 @@ class ChatScreenState extends State<ChatScreen> {
   void _snack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: 13)),
+      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
       backgroundColor: isError ? pal.danger : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
@@ -588,7 +588,7 @@ class ChatScreenState extends State<ChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: pal.glassFill,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(LoopRadius.control),
                       border: Border.all(color: pal.accent),
                     ),
                     child: Row(
@@ -596,7 +596,7 @@ class ChatScreenState extends State<ChatScreen> {
                       children: [
                         Icon(Icons.file_download_outlined, size: 17, color: pal.accent),
                         const SizedBox(width: 8),
-                        Text('松开即可添加附件', style: TextStyle(fontSize: 12.5, color: pal.ink)),
+                        Text('松开即可添加附件', style: TextStyle(fontSize: LoopType.secondary, color: pal.ink)),
                       ],
                     ),
                   ),
@@ -855,7 +855,7 @@ class ChatScreenState extends State<ChatScreen> {
     return Container(
       margin: EdgeInsets.fromLTRB(widget.compact ? 12 : 24, 6, widget.compact ? 12 : 24, 0),
       padding: EdgeInsets.fromLTRB(widget.compact ? 12 : 16, 12, widget.compact ? 12 : 16, 10),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -868,7 +868,7 @@ class ChatScreenState extends State<ChatScreen> {
                   '需要你确认：$tool',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink),
                 ),
               ),
             ],
@@ -878,7 +878,7 @@ class ChatScreenState extends State<ChatScreen> {
             constraints: const BoxConstraints(maxHeight: 180),
             child: SingleChildScrollView(
               child: Text(clipped,
-                  style: TextStyle(fontSize: 11.5, height: 1.5, color: pal.muted, fontFamily: 'monospace')),
+                  style: TextStyle(fontSize: LoopType.caption, height: 1.5, color: pal.muted, fontFamily: 'monospace')),
             ),
           ),
           const SizedBox(height: 8),
@@ -1082,7 +1082,7 @@ class ChatScreenState extends State<ChatScreen> {
                   child: Text(
                     mode.name,
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: LoopType.secondary,
                       color: mode.id == _mode ? pal.ink : pal.muted,
                       fontWeight: mode.id == _mode ? FontWeight.w600 : FontWeight.w400,
                     ),
@@ -1099,7 +1099,7 @@ class ChatScreenState extends State<ChatScreen> {
           child: Row(children: [
             Icon(Icons.add_rounded, size: 15),
             SizedBox(width: 8),
-            Text('新建模式…', style: TextStyle(fontSize: 12.5)),
+            Text('新建模式…', style: TextStyle(fontSize: LoopType.secondary)),
           ]),
         ),
         if (_currentCustom != null) ...[
@@ -1108,7 +1108,7 @@ class ChatScreenState extends State<ChatScreen> {
             child: Row(children: [
               Icon(Icons.edit_outlined, size: 15),
               SizedBox(width: 8),
-              Text('编辑当前模式', style: TextStyle(fontSize: 12.5)),
+              Text('编辑当前模式', style: TextStyle(fontSize: LoopType.secondary)),
             ]),
           ),
           const PopupMenuItem(
@@ -1116,7 +1116,7 @@ class ChatScreenState extends State<ChatScreen> {
             child: Row(children: [
               Icon(Icons.delete_outline_rounded, size: 15),
               SizedBox(width: 8),
-              Text('删除当前模式', style: TextStyle(fontSize: 12.5)),
+              Text('删除当前模式', style: TextStyle(fontSize: LoopType.secondary)),
             ]),
           ),
         ],
@@ -1129,7 +1129,7 @@ class ChatScreenState extends State<ChatScreen> {
             Icon(Icons.tune_rounded, size: 13, color: pal.muted),
             const SizedBox(width: 5),
             Text(_modeLabel,
-                style: TextStyle(fontSize: 12.5, color: pal.ink, fontWeight: FontWeight.w500)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.ink, fontWeight: FontWeight.w500)),
             Icon(Icons.expand_more_rounded, size: 15, color: pal.muted),
           ],
         ),
@@ -1154,7 +1154,7 @@ class ChatScreenState extends State<ChatScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                      fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                 ),
               ),
               // §10.4：对话页是当前学科的作用域，页头必须显示学科名（窄宽退化为色点）。
@@ -1167,11 +1167,11 @@ class ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
                     color: pal.chip,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(LoopRadius.panel),
                   ),
                   child: Text(
                     _appState.settings?.model ?? 'deepseek-flash',
-                    style: TextStyle(fontSize: 11, color: pal.muted),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                   ),
                 ),
               ],
@@ -1215,11 +1215,11 @@ class ChatScreenState extends State<ChatScreen> {
             bottom: 10,
             child: Material(
               color: pal.toastBg,
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(LoopRadius.pill),
               elevation: 2,
               child: InkWell(
                 key: const Key('chat-scroll-bottom'),
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(LoopRadius.pill),
                 onTap: _scrollToBottomNow,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -1229,7 +1229,7 @@ class ChatScreenState extends State<ChatScreen> {
                       Icon(Icons.arrow_downward_rounded, size: 14, color: pal.toastFg),
                       const SizedBox(width: 4),
                       Text('回到底部',
-                          style: TextStyle(fontSize: 11.5, color: pal.toastFg)),
+                          style: TextStyle(fontSize: LoopType.caption, color: pal.toastFg)),
                     ],
                   ),
                 ),
@@ -1266,18 +1266,18 @@ class ChatScreenState extends State<ChatScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     gradient: accentGradient,
-                    borderRadius: BorderRadius.circular(13),
+                    borderRadius: BorderRadius.circular(LoopRadius.control),
                   ),
                   child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 23),
                 ),
                 const SizedBox(height: 12),
                 const Text('今天想学点什么？',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4)),
+                    style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.4)),
                 const SizedBox(height: 6),
                 Text(
                   'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12.5, color: pal.muted, height: 1.55),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.55),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -1287,7 +1287,7 @@ class ChatScreenState extends State<ChatScreen> {
                   children: [
                     for (final example in examples)
                       ActionChip(
-                        label: Text(example, style: const TextStyle(fontSize: 12)),
+                        label: Text(example, style: const TextStyle(fontSize: LoopType.secondary)),
                         backgroundColor: pal.chip,
                         side: BorderSide(color: pal.border),
                         onPressed: () {
@@ -1316,18 +1316,18 @@ class ChatScreenState extends State<ChatScreen> {
             height: 36,
             decoration: BoxDecoration(
               gradient: accentGradient,
-              borderRadius: BorderRadius.circular(11),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
             ),
             child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 19),
           ),
           const SizedBox(height: 10),
           const Text('今天想学点什么？',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const SizedBox(height: 6),
           Text(
             '发文字、贴截图或传 PDF，都可以问。',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.5),
           ),
         ],
       ),
@@ -1367,19 +1367,19 @@ class ChatScreenState extends State<ChatScreen> {
                   const SizedBox(height: 16),
                   const Text('今天想学点什么？',
                       style: TextStyle(
-                          fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8)),
+                          fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.8)),
                   const SizedBox(height: 6),
                   Text(
                     'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: pal.muted, height: 1.6),
+                    style: TextStyle(fontSize: LoopType.body, color: pal.muted, height: 1.6),
                   ),
                   if (_appState.conversations.isEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       '这个学科还没有对话。问一个问题就开始。',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: pal.faint),
+                      style: TextStyle(fontSize: LoopType.secondary, color: pal.faint),
                     ),
                   ],
                   const SizedBox(height: 22),
@@ -1390,7 +1390,7 @@ class ChatScreenState extends State<ChatScreen> {
                     children: [
                       for (final example in examples)
                         ActionChip(
-                          label: Text(example, style: const TextStyle(fontSize: 12.5)),
+                          label: Text(example, style: const TextStyle(fontSize: LoopType.secondary)),
                           backgroundColor: pal.chip,
                           side: BorderSide(color: pal.border),
                           onPressed: () {
@@ -1417,7 +1417,7 @@ class ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.only(left: 8, right: 2),
         decoration: BoxDecoration(
           color: pal.chip,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           border: Border.all(color: pal.border),
         ),
         child: Row(
@@ -1430,7 +1430,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: Text(
                 item.name,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11.5, color: pal.ink),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.ink),
               ),
             ),
             IconButton(
@@ -1458,12 +1458,12 @@ class ChatScreenState extends State<ChatScreen> {
               width: tile,
               height: tile,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(color: pal.border),
                 color: pal.chip,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(11),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 child: Image.network(
                   url,
                   fit: BoxFit.cover,
@@ -1513,7 +1513,7 @@ class ChatScreenState extends State<ChatScreen> {
               title: item.name,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               child: Image.network(
                 _appState.api.imageUrl(item.id),
                 width: 138,
@@ -1544,7 +1544,7 @@ class ChatScreenState extends State<ChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1556,7 +1556,7 @@ class ChatScreenState extends State<ChatScreen> {
                   child: Text(
                     item.name,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11.5, color: Colors.white),
+                    style: const TextStyle(fontSize: LoopType.caption, color: Colors.white),
                   ),
                 ),
               ],
@@ -1577,10 +1577,10 @@ class ChatScreenState extends State<ChatScreen> {
           decoration: BoxDecoration(
             gradient: accentGradient,
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(14),
-              topRight: Radius.circular(4),
-              bottomLeft: Radius.circular(14),
-              bottomRight: Radius.circular(14),
+              topLeft: Radius.circular(LoopRadius.control),
+              topRight: Radius.circular(LoopRadius.small),
+              bottomLeft: Radius.circular(LoopRadius.control),
+              bottomRight: Radius.circular(LoopRadius.control),
             ),
           ),
           child: Column(
@@ -1640,7 +1640,7 @@ class ChatScreenState extends State<ChatScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 SizedBox(width: 10),
-                Text('正在思考…', style: TextStyle(fontSize: 13, color: pal.muted)),
+                Text('正在思考…', style: TextStyle(fontSize: LoopType.body, color: pal.muted)),
               ],
             ),
           if (!empty) MarkdownText(message.content),
@@ -1655,10 +1655,10 @@ class ChatScreenState extends State<ChatScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: pal.chip,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(LoopRadius.small),
                     ),
                     child: Text('${ref.name} p.${ref.page}',
-                        style: TextStyle(fontSize: 11, color: pal.muted)),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                   ),
               ],
             ),
@@ -1673,7 +1673,7 @@ class ChatScreenState extends State<ChatScreen> {
               child: Text(
                 '${message.tokensIn} in · ${message.tokensOut} out'
                 '${message.cost > 0 ? ' · ¥${(message.cost * 7.2).toStringAsFixed(4)}' : ''}',
-                style: TextStyle(fontSize: 10.5, color: pal.faint),
+                style: TextStyle(fontSize: LoopType.micro, color: pal.faint),
               ),
             ),
         ],
@@ -1699,7 +1699,7 @@ class ChatScreenState extends State<ChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
               color: pal.chip,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(LoopRadius.panel),
               border: Border.all(color: pal.border),
             ),
             child: Row(
@@ -1714,14 +1714,14 @@ class ChatScreenState extends State<ChatScreen> {
                     : Icon(Icons.check_circle_rounded, size: 12, color: pal.success),
                 SizedBox(width: 5),
                 Text(latest[name]!.label,
-                    style: TextStyle(fontSize: 11.5, color: pal.ink)),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.ink)),
                 if (counts[name]! > 1)
                   Text(' ×${counts[name]}',
-                      style: TextStyle(fontSize: 11, color: pal.muted)),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                 if (latest[name]!.detail.isNotEmpty) ...[
                   SizedBox(width: 4),
                   Text(latest[name]!.detail,
-                      style: TextStyle(fontSize: 11, color: pal.muted)),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                 ],
               ],
             ),
@@ -1750,7 +1750,7 @@ class ChatScreenState extends State<ChatScreen> {
     return TextButton.icon(
       onPressed: _generating ? null : onTap,
       icon: Icon(icon, size: 15),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
+      label: Text(label, style: const TextStyle(fontSize: LoopType.secondary)),
       style: TextButton.styleFrom(
         foregroundColor: pal.muted,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1772,7 +1772,7 @@ class ChatScreenState extends State<ChatScreen> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: pal.glassFill,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(LoopRadius.card)),
         border: Border(top: BorderSide(color: pal.glassBorder)),
       ),
       padding: pad,
@@ -1801,7 +1801,7 @@ class ChatScreenState extends State<ChatScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: pal.glassFill,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(LoopRadius.control),
                   border: Border.all(color: pal.border),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
@@ -1862,7 +1862,7 @@ class ChatScreenState extends State<ChatScreen> {
                           minLines: 1,
                           maxLines: widget.compact ? 4 : 6,
                           textInputAction: TextInputAction.newline,
-                          style: const TextStyle(fontSize: 14.5, height: 1.55),
+                          style: const TextStyle(fontSize: LoopType.reading, height: 1.55),
                           decoration: InputDecoration(
                             hintText: hint,
                             filled: false,
@@ -1902,7 +1902,7 @@ class ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
                     'Enter 发送 · Shift + Enter 换行 · 每个对话独立上下文',
-                    style: TextStyle(fontSize: 11, color: pal.faint),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.faint),
                   ),
                 ),
               ],
@@ -2004,7 +2004,7 @@ class _ModeEditorDialogState extends State<_ModeEditorDialog> {
             const SizedBox(height: 14),
             Row(
               children: [
-                const Text('思考强度', style: TextStyle(fontSize: 13)),
+                const Text('思考强度', style: TextStyle(fontSize: LoopType.body)),
                 const Spacer(),
                 SegmentedButton<String>(
                   segments: const [
@@ -2021,7 +2021,7 @@ class _ModeEditorDialogState extends State<_ModeEditorDialog> {
             const SizedBox(height: 6),
             Text(
               '高强度会改用推理模型并先完整推理，速度更慢。',
-              style: TextStyle(fontSize: 11, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
             ),
           ],
         ),

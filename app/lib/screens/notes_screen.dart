@@ -158,9 +158,9 @@ class _NotesScreenState extends State<NotesScreen> {
           padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
-              Text('笔记', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              Text('笔记', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
-              Text('${_items.length} 篇', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              Text('${_items.length} 篇', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
               const SizedBox(width: 10),
               // §10.4：笔记属于当前学科，页头必须显示学科名。
               SubjectChip(state: _state),
@@ -185,7 +185,7 @@ class _NotesScreenState extends State<NotesScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -199,10 +199,10 @@ class _NotesScreenState extends State<NotesScreen> {
           children: [
             Icon(Icons.menu_book_outlined, size: 40, color: pal.faint),
             const SizedBox(height: 12),
-            const Text('还没有笔记', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            const Text('还没有笔记', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text('在对话里点回答下方的「存笔记」，整理好的笔记会出现在这里。',
-                style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
           ],
         ),
       );
@@ -227,9 +227,9 @@ class _NotesScreenState extends State<NotesScreen> {
           padding: const EdgeInsets.only(bottom: 2),
           child: Material(
             color: selected ? pal.chip : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(LoopRadius.control),
             child: InkWell(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(LoopRadius.control),
               onTap: () => setState(() => _selectedId = note.id),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -241,7 +241,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: LoopType.body,
                         height: 1.4,
                         fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                         color: selected ? pal.accent : pal.ink,
@@ -251,10 +251,10 @@ class _NotesScreenState extends State<NotesScreen> {
                     Row(
                       children: [
                         Text(_fmt(note.createdAt),
-                            style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                            style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
                         const Spacer(),
                         Text('${note.body.length} 字',
-                            style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                            style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
                       ],
                     ),
                   ],
@@ -271,7 +271,7 @@ class _NotesScreenState extends State<NotesScreen> {
     final note = _selected;
     if (note == null) {
       return Center(
-        child: Text('选一篇笔记查看', style: TextStyle(fontSize: 13, color: pal.muted)),
+        child: Text('选一篇笔记查看', style: TextStyle(fontSize: LoopType.body, color: pal.muted)),
       );
     }
     return Column(
@@ -283,16 +283,16 @@ class _NotesScreenState extends State<NotesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(note.title,
-                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, height: 1.4)),
+                  style: const TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, height: 1.4)),
               SizedBox(height: 6),
               Row(
                 children: [
                   Text(_fmt(note.createdAt),
-                      style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                   if (note.sourceRef.isNotEmpty) ...[
                     const SizedBox(width: 10),
                     Text(_sourceLabel(note.sourceRef),
-                        style: TextStyle(fontSize: 11.5, color: pal.faint)),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.faint)),
                   ],
                   const Spacer(),
                   TextButton.icon(
@@ -324,7 +324,7 @@ class _NotesScreenState extends State<NotesScreen> {
             padding: const EdgeInsets.fromLTRB(32, 20, 32, 40),
             child: MarkdownText(
               note.body,
-              baseStyle: TextStyle(fontSize: 14.5, height: 1.75, color: pal.ink),
+              baseStyle: TextStyle(fontSize: LoopType.reading, height: 1.75, color: pal.ink),
             ),
           ),
         ),

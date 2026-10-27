@@ -110,10 +110,10 @@ class _AgentScreenState extends State<AgentScreen> {
             children: [
               Text('代理',
                   style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, color: pal.ink, letterSpacing: -0.5)),
+                      fontSize: LoopType.display, fontWeight: FontWeight.w700, color: pal.ink, letterSpacing: -0.5)),
               const SizedBox(width: 10),
               Text('本地能力 · MCP · 审计',
-                  style: TextStyle(fontSize: 12, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
               const Spacer(),
               IconButton(
                 tooltip: '刷新',
@@ -170,10 +170,10 @@ class _AgentScreenState extends State<AgentScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('代理设置暂不可用',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
             const SizedBox(height: 6),
             Text('连不上本地服务或加载失败，请稍后重试。',
-                style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -190,10 +190,10 @@ class _AgentScreenState extends State<AgentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('工作区',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                  style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
               const SizedBox(height: 4),
               Text('Agent 只能读写这个目录。Shell 的工作目录也限制在这里。',
-                  style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -226,10 +226,10 @@ class _AgentScreenState extends State<AgentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('能力开关',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                  style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
               const SizedBox(height: 4),
               Text('关闭后 Agent 无法调用对应工具；所有危险操作仍会逐次审批。',
-                  style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               const SizedBox(height: 10),
               _switchRow('Shell', '在工作区内执行 PowerShell', s.shell,
                   (value) => _save(shell: value)),
@@ -255,7 +255,7 @@ class _AgentScreenState extends State<AgentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('审批策略',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                  style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
               const SizedBox(height: 4),
               Text(
                 switch (s.approval) {
@@ -263,7 +263,7 @@ class _AgentScreenState extends State<AgentScreen> {
                   'files' => '自动批准工作区内文件操作；Shell、浏览器、MCP 仍逐次确认。',
                   _ => '所有危险操作逐次确认（默认）。',
                 },
-                style: TextStyle(fontSize: 11.5, color: pal.muted),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
               const SizedBox(height: 10),
               SegmentedButton<String>(
@@ -290,7 +290,7 @@ class _AgentScreenState extends State<AgentScreen> {
               Expanded(
                 child: Text(
                   '安全说明：Shell 不是内核级沙箱；文件访问限制在工作区；所有命令/写入/浏览器/MCP 调用都会写审计记录。默认逐次确认，选择自动批准时请自行承担风险。',
-                  style: TextStyle(fontSize: 11.5, height: 1.6, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.caption, height: 1.6, color: pal.muted),
                 ),
               ),
             ],
@@ -309,8 +309,8 @@ class _AgentScreenState extends State<AgentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontSize: 13, color: pal.ink)),
-                Text(subtitle, style: TextStyle(fontSize: 11, color: pal.muted)),
+                Text(title, style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
+                Text(subtitle, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               ],
             ),
           ),
@@ -327,7 +327,7 @@ class _AgentScreenState extends State<AgentScreen> {
         Row(
           children: [
             Text('MCP 服务器',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
             const Spacer(),
             FilledButton.icon(
               onPressed: _showMcpDialog,
@@ -338,20 +338,20 @@ class _AgentScreenState extends State<AgentScreen> {
         ),
         const SizedBox(height: 4),
         Text('stdio 命令或 Streamable HTTP 地址；工具默认每次调用都需审批。',
-            style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
         const SizedBox(height: 12),
         if (_servers.isEmpty)
           Container(
             padding: const EdgeInsets.all(20),
             decoration: panelDecoration(),
             child: Text('还没有 MCP 服务器。可以添加本地 stdio 服务或远程 HTTP 服务。',
-                style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
           ),
         for (final server in _servers)
           Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
-            decoration: panelDecoration(radius: 16),
+            decoration: panelDecoration(radius: LoopRadius.card),
             child: Row(
               children: [
                 Icon(server.transport == 'http' ? Icons.cloud_outlined : Icons.terminal_rounded,
@@ -363,14 +363,14 @@ class _AgentScreenState extends State<AgentScreen> {
                     children: [
                       Text(server.name,
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink)),
+                              fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
                       Text(
                         server.transport == 'http'
                             ? server.url
                             : '${server.command} ${server.args}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: pal.muted),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                       ),
                     ],
                   ),
@@ -460,7 +460,7 @@ class _AgentScreenState extends State<AgentScreen> {
         Row(
           children: [
             Text('定时任务',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
             const Spacer(),
             FilledButton.icon(
               onPressed: _showJobDialog,
@@ -474,20 +474,20 @@ class _AgentScreenState extends State<AgentScreen> {
           enabled
               ? '应用运行期间每 30 秒检查一次，任务串行执行；危险工具不会在后台启用。'
               : '后台任务已关闭。请在上方「权限 → 后台任务」打开。',
-          style: TextStyle(fontSize: 11.5, color: pal.muted),
+          style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
         ),
         const SizedBox(height: 12),
         if (_jobs.isEmpty)
           Container(
             padding: const EdgeInsets.all(20),
             decoration: panelDecoration(),
-            child: Text('还没有定时任务。', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+            child: Text('还没有定时任务。', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
           ),
         for (final job in _jobs)
           Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
-            decoration: panelDecoration(radius: 16),
+            decoration: panelDecoration(radius: LoopRadius.card),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -498,7 +498,7 @@ class _AgentScreenState extends State<AgentScreen> {
                     Expanded(
                       child: Text(job.title,
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink)),
+                              fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
                     ),
                     Switch(
                       value: job.enabled,
@@ -513,7 +513,7 @@ class _AgentScreenState extends State<AgentScreen> {
                   job.scheduleKind == 'daily'
                       ? '每天 ${job.scheduleValue}'
                       : '每 ${job.scheduleValue} 分钟',
-                  style: TextStyle(fontSize: 11, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -535,7 +535,7 @@ class _AgentScreenState extends State<AgentScreen> {
                     const Spacer(),
                     Text(
                       job.lastStatus.isEmpty ? '未运行' : job.lastStatus,
-                      style: TextStyle(fontSize: 10.5, color: pal.faint),
+                      style: TextStyle(fontSize: LoopType.micro, color: pal.faint),
                     ),
                   ],
                 ),
@@ -571,7 +571,7 @@ class _AgentScreenState extends State<AgentScreen> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: panelDecoration(),
-        child: Text('还没有工具调用记录。', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+        child: Text('还没有工具调用记录。', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
       );
     }
     return Column(
@@ -580,7 +580,7 @@ class _AgentScreenState extends State<AgentScreen> {
           Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-            decoration: panelDecoration(radius: 14),
+            decoration: panelDecoration(radius: LoopRadius.control),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -602,20 +602,20 @@ class _AgentScreenState extends State<AgentScreen> {
                         children: [
                           Text(item.tool,
                               style: TextStyle(
-                                  fontSize: 12.5, fontWeight: FontWeight.w600, color: pal.ink)),
+                                  fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink)),
                           const SizedBox(width: 8),
                           Text('${item.durationMs}ms',
-                              style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                              style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
                           const Spacer(),
                           Text(item.createdAt.length > 16 ? item.createdAt.substring(11, 16) : '',
-                              style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                              style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text(item.result,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                          style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     ],
                   ),
                 ),
@@ -726,7 +726,7 @@ class _McpDialogState extends State<_McpDialog> {
                 ),
               const SizedBox(height: 8),
               Text('stdio 服务器会以子进程方式运行；只添加你信任的程序。',
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ],
           ),
         ),
@@ -822,7 +822,7 @@ class _JobDialogState extends State<_JobDialog> {
               ),
               const SizedBox(height: 8),
               Text('后台任务只会使用资料/任务/笔记等安全工具，不会执行 Shell、浏览器或 MCP。',
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ],
           ),
         ),

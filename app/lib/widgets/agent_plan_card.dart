@@ -15,7 +15,7 @@ class AgentPlanCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -24,10 +24,10 @@ class AgentPlanCard extends StatelessWidget {
               Icon(Icons.checklist_rounded, size: 15, color: pal.accent),
               const SizedBox(width: 6),
               Text('执行计划',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: pal.ink)),
+                  style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink)),
               const Spacer(),
               Text('$done/${plan.length}',
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ],
           ),
           const SizedBox(height: 8),
@@ -43,7 +43,7 @@ class AgentPlanCard extends StatelessWidget {
                     child: Text(
                       item.title,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: LoopType.secondary,
                         height: 1.45,
                         color: item.status == 'skipped' ? pal.faint : pal.ink,
                         decoration: item.status == 'done' ? TextDecoration.lineThrough : null,

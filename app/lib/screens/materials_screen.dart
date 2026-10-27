@@ -231,9 +231,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
-              Text('资料', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              Text('资料', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
-              Text('${_items.length} 份', style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              Text('${_items.length} 份', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
               const SizedBox(width: 10),
               // §10.4：资料库属于当前学科，页头必须显示学科名（含上传/导入入口）。
               SubjectChip(state: _state),
@@ -269,7 +269,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     return Container(
       margin: const EdgeInsets.fromLTRB(32, 0, 32, 10),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -280,7 +280,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Expanded(
                 child: Text(
                   _importTotal > 0 ? '导入文件夹 $_importDone / $_importTotal' : '正在准备导入…',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink),
                 ),
               ),
               TextButton(onPressed: _cancelImport, child: const Text('取消')),
@@ -289,7 +289,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           if (progress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(LoopRadius.pill),
               child: LinearProgressIndicator(value: progress, minHeight: 5),
             ),
           ],
@@ -299,7 +299,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               child: Text(_importCurrent,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             ),
         ],
       ),
@@ -313,7 +313,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -327,10 +327,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           children: [
             Icon(Icons.folder_outlined, size: 40, color: pal.faint),
             const SizedBox(height: 12),
-            const Text('还没有资料', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            const Text('还没有资料', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text('上传 PDF / Word / Markdown，或导入一个文件夹。',
-                style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -366,7 +366,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       children.add(Padding(
         padding: const EdgeInsets.fromLTRB(4, 10, 4, 6),
         child: Text('单独上传',
-            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: pal.muted)),
+            style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
       ));
       for (final item in loose) {
         children.add(_materialTile(item));
@@ -458,9 +458,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       padding: EdgeInsets.only(left: depth * 18.0, top: 1, bottom: 1),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(LoopRadius.small),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
@@ -470,16 +470,16 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   width: 15,
                   child: Text(
                     expanded ? '▾' : '▸',
-                    style: TextStyle(fontSize: 14, height: 1, color: pal.muted),
+                    style: TextStyle(fontSize: LoopType.reading, height: 1, color: pal.muted),
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.folder_outlined, size: 15, color: pal.muted),
                 const SizedBox(width: 6),
                 Text(dir.name,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: pal.muted)),
+                    style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
                 const SizedBox(width: 6),
-                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: 10.5, color: pal.faint)),
+                Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: LoopType.micro, color: pal.faint)),
               ],
             ),
           ),
@@ -501,7 +501,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     return Container(
       margin: const EdgeInsets.only(top: 8, bottom: 4),
       padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-      decoration: panelDecoration(radius: 16),
+      decoration: panelDecoration(radius: LoopRadius.card),
       child: Row(
         children: [
           IconButton(
@@ -513,13 +513,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             },
             icon: Text(
               expanded ? '▾' : '▸',
-              style: TextStyle(fontSize: 17, height: 1, color: pal.muted),
+              style: TextStyle(fontSize: LoopType.title, height: 1, color: pal.muted),
             ),
           ),
           Container(
             width: 34,
             height: 34,
-            decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(9)),
+            decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
             child: Icon(Icons.folder_outlined, size: 18, color: pal.accent),
           ),
           const SizedBox(width: 10),
@@ -528,15 +528,15 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(folder.name,
-                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: pal.ink)),
+                    style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
                 Text(folder.rootPath,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: pal.muted)),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
           ),
-          Text('$count 份', style: TextStyle(fontSize: 11, color: pal.muted)),
+          Text('$count 份', style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           TextButton(
             onPressed: () => _toggleAll(folder, files),
             style: TextButton.styleFrom(
@@ -544,7 +544,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
             child: Text(_hasExpanded(folder.id, files) ? '全部收起' : '全部展开',
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ),
           if (_deletingFolderId == folder.id)
             const Padding(
@@ -579,19 +579,19 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
       padding: EdgeInsets.only(left: depth * 18.0, bottom: 6),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(LoopRadius.control),
           onTap: () => _showPreview(item),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: panelDecoration(radius: 12),
+            decoration: panelDecoration(radius: LoopRadius.control),
             child: Row(
               children: [
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
                   child: Icon(_icon(item.kind), size: 17, color: pal.accent),
                 ),
                 const SizedBox(width: 10),
@@ -602,11 +602,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                       Text(item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pal.ink)),
+                          style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
                       const SizedBox(height: 2),
                       Text(
                         '${item.kind.toUpperCase()} · ${item.pages} 页 · ${_formatChars(item.chars)}',
-                        style: TextStyle(fontSize: 11, color: pal.muted),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                       ),
                     ],
                   ),
@@ -676,10 +676,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(item.name, style: const TextStyle(fontSize: 16)),
+            Text(item.name, style: const TextStyle(fontSize: LoopType.title)),
             const SizedBox(height: 4),
             Text('${item.pages} 页 · ${_formatChars(item.chars)}',
-                style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ],
         ),
         content: SizedBox(
@@ -693,13 +693,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               }
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString(),
-                    style: TextStyle(fontSize: 12.5, color: pal.danger));
+                    style: TextStyle(fontSize: LoopType.secondary, color: pal.danger));
               }
               final text = (snapshot.data?['text'] ?? '') as String;
               return SingleChildScrollView(
                 child: SelectableText(
                   text,
-                  style: TextStyle(fontSize: 13, height: 1.75, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.body, height: 1.75, color: pal.ink),
                 ),
               );
             },
@@ -783,21 +783,21 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text((_scan['name'] ?? '').toString(),
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
             Text((_scan['root'] ?? '').toString(),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             const SizedBox(height: 12),
             Text(
               '共 $total 个文件，可导入 ${supported.length} 个，跳过 ${total - supported.length} 个 · ${_size(bytes)}',
-              style: TextStyle(fontSize: 12.5, color: pal.ink),
+              style: TextStyle(fontSize: LoopType.secondary, color: pal.ink),
             ),
             if (_scan['truncated'] == true)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text('文件很多，预览只显示前 1000 个。',
-                    style: TextStyle(fontSize: 11, color: pal.warm)),
+                    style: TextStyle(fontSize: LoopType.caption, color: pal.warm)),
               ),
             if (_scanning)
               Padding(
@@ -807,13 +807,13 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
             const SizedBox(height: 10),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('包含子文件夹', style: TextStyle(fontSize: 13)),
+              title: const Text('包含子文件夹', style: TextStyle(fontSize: LoopType.body)),
               value: _recursive,
               onChanged: _scanning ? null : _rescan,
             ),
             Row(
               children: [
-                Text('重复文件', style: TextStyle(fontSize: 13, color: pal.ink)),
+                Text('重复文件', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
                 const Spacer(),
                 SegmentedButton<String>(
                   segments: const [
@@ -828,11 +828,11 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
             ),
             const SizedBox(height: 8),
             Text('只支持 PDF/DOCX/PPTX/TXT/MD；文件数量不限制，单个文件 ≤30MB。',
-                style: TextStyle(fontSize: 11, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             if (supported.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text('将导入：',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
               const SizedBox(height: 4),
               SizedBox(
                 height: 120,
@@ -844,10 +844,10 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
                         Text('· ${file['relative']}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11.5, color: pal.ink)),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.ink)),
                       if (supported.length > 8)
                         Text('… 还有 ${supported.length - 8} 个',
-                            style: TextStyle(fontSize: 11, color: pal.muted)),
+                            style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     ],
                   ),
                 ),

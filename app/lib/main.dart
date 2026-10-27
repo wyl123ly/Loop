@@ -207,7 +207,7 @@ class _Splash extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2.4, color: p.accent),
             ),
             const SizedBox(height: 16),
-            Text('正在唤醒回路…', style: TextStyle(color: p.muted, fontSize: 13)),
+            Text('正在唤醒回路…', style: TextStyle(color: p.muted, fontSize: LoopType.body)),
           ],
         ),
       ),
@@ -238,9 +238,9 @@ class _BootError extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('连不上本地后端',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: p.ink)),
+                  style: TextStyle(fontSize: LoopType.title, fontWeight: FontWeight.w700, color: p.ink)),
               const SizedBox(height: 8),
-              Text(message, style: TextStyle(color: p.muted, fontSize: 13)),
+              Text(message, style: TextStyle(color: p.muted, fontSize: LoopType.body)),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () {
@@ -577,7 +577,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
     _lastSnackMessage = message;
     _lastSnackAt = now;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: 13)),
+      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
       backgroundColor: isError ? pal.danger : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));

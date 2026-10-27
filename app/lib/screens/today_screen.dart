@@ -103,7 +103,7 @@ class _TodayScreenState extends State<TodayScreen> {
   void _snack(String message, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: 13)),
+      content: Text(message, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
       backgroundColor: isError ? pal.danger : pal.toastBg,
     ));
   }
@@ -129,9 +129,9 @@ class _TodayScreenState extends State<TodayScreen> {
           padding: const EdgeInsets.fromLTRB(32, 20, 32, 6),
           child: Row(
             children: [
-              Text('今日', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+              Text('今日', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
               SizedBox(width: 10),
-              Text(_dateLabel, style: TextStyle(fontSize: 12.5, color: pal.muted)),
+              Text(_dateLabel, style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
               const SizedBox(width: 10),
               // §10.4：今日是当前学科的作用域，页头必须显示学科名。
               SubjectChip(state: _state),
@@ -156,7 +156,7 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, style: TextStyle(color: pal.muted, fontSize: 13)),
+            Text(_error!, style: TextStyle(color: pal.muted, fontSize: LoopType.body)),
             const SizedBox(height: 12),
             OutlinedButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -252,10 +252,10 @@ class _TodayScreenState extends State<TodayScreen> {
         children: [
           Row(
             children: [
-              Text('待办', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('待办', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
               SizedBox(width: 8),
               Text('${data.tasks.length} 件',
-                  style: TextStyle(fontSize: 12, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             ],
           ),
           const SizedBox(height: 6),
@@ -263,7 +263,7 @@ class _TodayScreenState extends State<TodayScreen> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Text('还没有待办。可以手动加，也可以在对话里说「帮我安排今天的学习」。',
-                  style: TextStyle(fontSize: 12.5, color: pal.muted)),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             ),
           for (final task in data.tasks) _taskRow(task, data),
           Padding(
@@ -276,7 +276,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   child: TextField(
                     controller: _taskInput,
                     onSubmitted: (_) => _addTask(),
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: LoopType.body),
                     decoration: const InputDecoration(
                       hintText: '加一件事，回车确认',
                       filled: false,
@@ -318,7 +318,7 @@ class _TodayScreenState extends State<TodayScreen> {
             child: Text(
               task.title,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: LoopType.body,
                 color: task.done ? pal.muted : pal.ink,
                 decoration: task.done ? TextDecoration.lineThrough : null,
               ),
@@ -328,7 +328,7 @@ class _TodayScreenState extends State<TodayScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: LoopType.caption,
                 color: overdue ? pal.danger : pal.faint,
               ),
             ),
@@ -336,7 +336,7 @@ class _TodayScreenState extends State<TodayScreen> {
             Padding(
               padding: const EdgeInsets.only(left: 8),
               child: Text('${task.estimateMin}min',
-                  style: TextStyle(fontSize: 11, color: pal.faint)),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.faint)),
             ),
           IconButton(
             tooltip: '删除',
@@ -357,16 +357,16 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 11.5, color: pal.muted)),
+            Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             SizedBox(height: 6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(value,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700)),
                 SizedBox(width: 3),
-                Text(unit, style: TextStyle(fontSize: 11, color: pal.muted)),
+                Text(unit, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               ],
             ),
           ],

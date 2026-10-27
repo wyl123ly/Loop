@@ -79,7 +79,7 @@ class _UpdateAvailableDialog extends StatelessWidget {
       child: Container(
         width: 580,
         padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-        decoration: panelDecoration(color: pal.cardSolid, radius: 20),
+        decoration: panelDecoration(color: pal.cardSolid, radius: LoopRadius.panel),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +89,7 @@ class _UpdateAvailableDialog extends StatelessWidget {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.control)),
                   child: Icon(Icons.system_update_alt_rounded, size: 19, color: pal.accent),
                 ),
                 const SizedBox(width: 12),
@@ -98,9 +98,9 @@ class _UpdateAvailableDialog extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('发现新版本 v${info.version}',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: pal.ink)),
+                          style: TextStyle(fontSize: LoopType.title, fontWeight: FontWeight.w700, color: pal.ink)),
                       Text('当前 v${AppVersion.current} · ${info.tag}',
-                          style: TextStyle(fontSize: 11.5, color: pal.muted)),
+                          style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     ],
                   ),
                 ),
@@ -108,7 +108,7 @@ class _UpdateAvailableDialog extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text('更新说明',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: pal.muted)),
+                style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
@@ -116,13 +116,13 @@ class _UpdateAvailableDialog extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: pal.codeBg,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 border: Border.all(color: pal.border),
               ),
               child: SingleChildScrollView(
                 child: SelectableText(
                   info.notes.trim().isEmpty ? '（没有填写更新说明）' : info.notes.trim(),
-                  style: TextStyle(fontSize: 12.3, height: 1.6, color: pal.ink),
+                  style: TextStyle(fontSize: LoopType.secondary, height: 1.6, color: pal.ink),
                 ),
               ),
             ),
@@ -231,19 +231,19 @@ class _ProgressDialogState extends State<_ProgressDialog> {
       child: Container(
         width: 460,
         padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
-        decoration: panelDecoration(color: pal.cardSolid, radius: 20),
+        decoration: panelDecoration(color: pal.cardSolid, radius: LoopRadius.panel),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('更新到 v${widget.info.version}',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: pal.ink)),
+                style: TextStyle(fontSize: LoopType.title, fontWeight: FontWeight.w700, color: pal.ink)),
             const SizedBox(height: 6),
-            Text(_stage, style: TextStyle(fontSize: 12, color: pal.muted)),
+            Text(_stage, style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 16),
             if (_error == null) ...[
               ClipRRect(
-                borderRadius: BorderRadius.circular(99),
+                borderRadius: BorderRadius.circular(LoopRadius.pill),
                 child: LinearProgressIndicator(
                   value: _total > 0 && _stage == '正在下载更新…' ? _progress : null,
                   minHeight: 6,
@@ -252,15 +252,15 @@ class _ProgressDialogState extends State<_ProgressDialog> {
               const SizedBox(height: 8),
               Text(
                 _total > 0 ? '${_size(_received)} / ${_size(_total)}' : _size(_received),
-                style: TextStyle(fontSize: 11, color: pal.muted),
+                style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
             ] else ...[
-              Text(_error!, style: TextStyle(fontSize: 12, height: 1.5, color: pal.danger)),
+              Text(_error!, style: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: pal.danger)),
               if (_error!.contains('Process is detached')) ...[
                 const SizedBox(height: 6),
                 Text(
                   '自动替换没能启动，请点下方按钮手动下载新版本压缩包，解压覆盖当前目录即可。',
-                  style: TextStyle(fontSize: 11.5, height: 1.5, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.caption, height: 1.5, color: pal.muted),
                 ),
               ],
             ],

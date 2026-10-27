@@ -204,7 +204,7 @@ class MarkdownText extends StatelessWidget {
             child: SizedBox(
               width: tableWidth,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(LoopRadius.control),
                 child: Table(
                   border: TableBorder.all(color: pal.border, width: 1),
                   defaultColumnWidth: const FlexColumnWidth(),
@@ -217,7 +217,7 @@ class MarkdownText extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           child: Text.rich(TextSpan(
                             children: _inline(context, text, style),
-                            style: style.copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                            style: style.copyWith(fontWeight: FontWeight.w600, fontSize: LoopType.body),
                           )),
                         );
                       }),
@@ -230,7 +230,7 @@ class MarkdownText extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             child: Text.rich(TextSpan(
                               children: _inline(context, text, style),
-                              style: style.copyWith(fontSize: 13),
+                              style: style.copyWith(fontSize: LoopType.body),
                             )),
                           );
                         }),
@@ -272,7 +272,7 @@ class MarkdownText extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: pal.codeBg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(LoopRadius.control),
         border: Border.all(color: pal.border),
       ),
       child: SingleChildScrollView(
@@ -281,7 +281,7 @@ class MarkdownText extends StatelessWidget {
           code,
           style: TextStyle(
             fontFamily: 'monospace',
-            fontSize: 12.8,
+            fontSize: LoopType.secondary,
             height: 1.55,
             color: pal.ink,
           ),
@@ -300,7 +300,7 @@ class MarkdownText extends StatelessWidget {
         child: Math.tex(
           tex.trim(),
           mathStyle: MathStyle.display,
-          textStyle: style.copyWith(fontSize: 17),
+          textStyle: style.copyWith(fontSize: LoopType.title),
           onErrorFallback: (error) => Text(
             '\$\$${tex.trim()}\$\$',
             style: style.copyWith(fontFamily: 'monospace', color: pal.muted),
@@ -318,14 +318,14 @@ class MarkdownText extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
         decoration: BoxDecoration(
           color: pal.codeBg,
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(LoopRadius.small),
           border: Border.all(color: pal.accent.withValues(alpha: 0.22), width: 0.8),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontFamily: ascii ? 'monospace' : 'NotoSC',
-            fontSize: 12.8,
+            fontSize: LoopType.secondary,
             height: 1.35,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.1,

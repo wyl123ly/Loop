@@ -241,7 +241,7 @@ void main() {
     final composerDecoration = composer.decoration! as BoxDecoration;
     expect(
       composerDecoration.borderRadius,
-      const BorderRadius.vertical(top: Radius.circular(18)),
+      const BorderRadius.vertical(top: Radius.circular(16)),
       reason: '输入框后面的横向背景必须与整体 UI 一样有顶部圆角',
     );
     expect(composer.clipBehavior, Clip.antiAlias);

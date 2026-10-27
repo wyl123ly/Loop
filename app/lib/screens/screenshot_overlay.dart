@@ -215,7 +215,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.62),
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(LoopRadius.pill),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Text(
@@ -243,7 +243,7 @@ class _ScreenshotOverlayState extends State<ScreenshotOverlay> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.72),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(LoopRadius.card),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Row(
@@ -355,7 +355,7 @@ class _SelectionPainter extends CustomPainter {
     final painter = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+        style: const TextStyle(color: Colors.white, fontSize: LoopType.caption, fontWeight: FontWeight.w600),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -366,7 +366,7 @@ class _SelectionPainter extends CustomPainter {
       painter.height + 6,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(labelRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(labelRect, const Radius.circular(LoopRadius.small)),
       Paint()..color = Colors.black.withValues(alpha: 0.7),
     );
     painter.paint(canvas, labelRect.topLeft + const Offset(6, 3));

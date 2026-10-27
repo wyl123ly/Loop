@@ -124,7 +124,7 @@ class FloatingBar extends StatelessWidget {
                           height: compact ? 18 : 20,
                           decoration: BoxDecoration(
                             gradient: p.accentGradient,
-                            borderRadius: BorderRadius.circular(7),
+                            borderRadius: BorderRadius.circular(LoopRadius.small),
                           ),
                           child: Icon(
                             Icons.loop_rounded,
@@ -136,7 +136,7 @@ class FloatingBar extends StatelessWidget {
                         Text(
                           '回路',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: LoopType.secondary,
                             fontWeight: FontWeight.w700,
                             color: p.ink,
                             letterSpacing: 0.2,
@@ -148,12 +148,12 @@ class FloatingBar extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: p.chip,
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(LoopRadius.small),
                               border: Border.all(color: p.border),
                             ),
                             child: Text(
                               '浮窗',
-                              style: TextStyle(fontSize: 9.5, color: p.muted),
+                              style: TextStyle(fontSize: LoopType.micro, color: p.muted),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -162,7 +162,7 @@ class FloatingBar extends StatelessWidget {
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 11, color: p.muted),
+                              style: TextStyle(fontSize: LoopType.caption, color: p.muted),
                             ),
                           ),
                         ] else
@@ -289,7 +289,7 @@ class _BarButtonState extends State<_BarButton> {
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(widget.icon, size: 16, color: iconColor),
           ),

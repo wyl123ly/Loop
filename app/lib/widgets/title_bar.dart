@@ -77,7 +77,7 @@ class TitleBar extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         gradient: p.accentGradient,
-                        borderRadius: BorderRadius.circular(7),
+                        borderRadius: BorderRadius.circular(LoopRadius.small),
                       ),
                       child: Icon(Icons.loop_rounded, color: p.onAccent, size: 13),
                     ),
@@ -85,14 +85,14 @@ class TitleBar extends StatelessWidget {
                     Text(
                       '回路',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: LoopType.secondary,
                         fontWeight: FontWeight.w700,
                         color: p.ink,
                         letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text(pageTitle, style: TextStyle(fontSize: 11, color: p.muted)),
+                    Text(pageTitle, style: TextStyle(fontSize: LoopType.caption, color: p.muted)),
                   ],
                 ),
               ),
@@ -191,7 +191,7 @@ class _WindowButtonState extends State<_WindowButton> {
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
               color: _hover && widget.enabled ? bg : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(LoopRadius.small),
             ),
             child: Icon(
               widget.icon,

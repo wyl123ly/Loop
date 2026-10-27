@@ -84,7 +84,7 @@ class ImagePreview extends StatelessWidget {
                               const Icon(Icons.broken_image_outlined, size: 36, color: Colors.white54),
                               const SizedBox(height: 8),
                               Text('图片加载失败',
-                                  style: TextStyle(fontSize: 12, color: pal.muted)),
+                                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
                             ],
                           ),
                         ),
