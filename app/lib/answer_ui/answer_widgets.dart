@@ -484,10 +484,10 @@ class _StatusDot extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = pal;
     final color = switch (state.status) {
-      'error' => p.danger,
-      'waiting_approval' => p.warm,
-      'tool' => p.warm,
-      'stopped' => p.faint,
+      'error' => p.dangerInk,
+      'waiting_approval' => p.warningInk,
+      'tool' => p.warningInk,
+      'stopped' => p.muted,
       'thinking' || 'streaming' => p.accent,
       _ => p.accent,
     };
@@ -547,8 +547,8 @@ class _StatusLine extends StatelessWidget {
     final p = pal;
     final label = state.resyncing ? '同步中…' : state.label;
     final color = switch (state.status) {
-      'error' => p.danger,
-      'stopped' => p.faint,
+      'error' => p.dangerInk,
+      'stopped' => p.muted,
       _ => p.muted,
     };
     return Padding(
@@ -557,14 +557,14 @@ class _StatusLine extends StatelessWidget {
       child: Row(
         children: [
           if (state.waitingApproval) ...[
-            Icon(Icons.shield_outlined, size: 12, color: p.warm),
+            Icon(Icons.shield_outlined, size: 12, color: p.warningInk),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 '需要审批，请回主窗口处理',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: LoopType.caption, color: p.warm),
+                style: TextStyle(fontSize: LoopType.caption, color: p.warningInk),
               ),
             ),
           ] else
@@ -589,19 +589,19 @@ class _ErrorBanner extends StatelessWidget {
       margin: const EdgeInsets.only(top: 4, bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: p.danger.withValues(alpha: 0.10),
+        color: p.dangerInk.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(LoopRadius.small),
-        border: Border.all(color: p.danger.withValues(alpha: 0.35)),
+        border: Border.all(color: p.dangerInk.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded, size: 13, color: p.danger),
+          Icon(Icons.error_outline_rounded, size: 13, color: p.dangerInk),
           const SizedBox(width: 5),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: LoopType.caption, height: 1.4, color: p.danger),
+              style: TextStyle(fontSize: LoopType.caption, height: 1.4, color: p.dangerInk),
             ),
           ),
         ],
@@ -644,7 +644,7 @@ class _PlanSection extends StatelessWidget {
                         ? Icons.check_circle_outline_rounded
                         : Icons.radio_button_unchecked_rounded,
                     size: 11,
-                    color: item.status == 'done' ? p.accent : p.faint,
+                    color: item.status == 'done' ? p.accentInk : p.muted,
                   ),
                   const SizedBox(width: 4),
                   Expanded(

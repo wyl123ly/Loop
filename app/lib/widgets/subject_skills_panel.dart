@@ -147,7 +147,7 @@ class SkillsPanelState extends State<SkillsPanel> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
       backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
@@ -859,7 +859,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                             message: 'Loop 不会运行这些脚本',
                             child: _badge('含脚本(未执行)', pal.warningInk),
                           ),
-                        if (skill.suspicious) _badge('registry 未认可', pal.danger),
+                        if (skill.suspicious) _badge('registry 未认可', pal.dangerInk),
                         _badge(skill.pinned ? '已锁定版本' : skill.licenseLabel, pal.muted),
                       ],
                     ),
@@ -933,7 +933,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                       update.isEmpty ? '更新（先检查更新）' : '更新到 $update',
                       style: TextStyle(
                         fontSize: LoopType.body,
-                        color: update.isEmpty ? pal.faint : pal.ink,
+                        color: update.isEmpty ? pal.muted : pal.ink,
                       ),
                     ),
                   ),
@@ -955,7 +955,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                           : '回退（没有上一版）',
                       style: TextStyle(
                         fontSize: LoopType.body,
-                        color: skill.canRollback ? pal.ink : pal.faint,
+                        color: skill.canRollback ? pal.ink : pal.muted,
                       ),
                     ),
                   ),
@@ -993,7 +993,7 @@ class SkillsPanelState extends State<SkillsPanel> {
   Widget _verdictBadge(SkillVerdictInfo verdict) {
     final color = switch (verdict.status) {
       'ok' => pal.muted,
-      'suspicious' => pal.danger,
+      'suspicious' => pal.dangerInk,
       _ => pal.warningInk,
     };
     return Tooltip(

@@ -420,7 +420,7 @@ class _HistoryTileState extends State<_HistoryTile> {
               child: Row(
                 children: [
                   Icon(Icons.chat_bubble_outline_rounded,
-                      size: 12, color: selected ? pal.accent : pal.faint),
+                      size: 12, color: selected ? pal.accent : pal.muted),
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(

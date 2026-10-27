@@ -591,7 +591,7 @@ class _AgentScreenState extends State<AgentScreen> {
                           ? Icons.verified_user_outlined
                           : Icons.bolt_rounded,
                   size: 16,
-                  color: item.approval == 'rejected' ? pal.danger : pal.accent,
+                  color: item.approval == 'rejected' ? pal.dangerInk : pal.accent,
                 ),
                 const SizedBox(width: 9),
                 Expanded(

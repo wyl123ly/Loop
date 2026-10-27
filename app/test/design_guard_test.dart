@@ -43,7 +43,7 @@ void main() {
     for (final entry in texts.entries) {
       if (entry.key.endsWith('theme/palette.dart')) continue;
       if (entry.value.contains('Color(0x')) colorHits.add(entry.key);
-      if (RegExp(r'pal\.(warm|accent2)\b').hasMatch(entry.value)) {
+      if (RegExp(r'\b(?:pal|p|LoopTheme\.palette)\.(?:warm|accent2|danger|faint)\b').hasMatch(entry.value)) {
         semanticHits.add(entry.key);
       }
     }
@@ -74,7 +74,6 @@ void main() {
     final chat = texts['lib/screens/chat_screen.dart'] ?? '';
     expect(chat.contains('pal.userBubbleGradient'), isTrue,
         reason: '用户气泡必须使用 userBubbleGradient');
-    expect(chat.contains('pal.userBubbleGradient'), isTrue);
     final all = texts.values.join('\n');
     for (final token in ['warningInk', 'accentInk', 'dangerInk', 'success']) {
       expect(all.contains('pal.$token'), isTrue, reason: '$token 没有被产品 UI 使用');

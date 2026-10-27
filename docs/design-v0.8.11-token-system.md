@@ -28,26 +28,26 @@
 - 圆角：字面量清零，全部走 5 档 `LoopRadius`；`answerRadius` / 图片预览 / 学科切换器动态半径已收口
 - 间距：516 个 `EdgeInsets` 数值全部落在 4px 网格（守卫测试）
 - 页头：今日/资料/设置/代理/学科/对话统一 24/w700/−0.5，内容左轴 32
-- 对话标题：桌面 18/w700/−0.3，窄窗 13.5/w700/−0.1（不再在 360 浮窗里截成 8 字）
+- 对话标题：桌面 18/w700/−0.3，窄窗 13.5/w700/−0.1（360 浮窗从 4–5 字改善到 8 字，仍按宽度省略）
 
 ### 可读性
 
 - 今日 hero：主/副行均改 `heroInk`（dark `#15131A`），dark 紫端提亮到 `#A98CF0`
 - 4 处硬编码白（上传/检查更新 spinner、极简条发送、浮窗关闭 hover）改 `onPrimaryBtn/onAccent`
-- 17 处 palette 外硬编码色清零
+- 17 处 palette 外硬编码色清零；`answer_ui`、SnackBar、语义徽标全部迁到 ink token
 
 ### 测试与证据
 
 - 新增 `test/design_tokens_test.dart`：D1–D6 覆盖卡片/渐变/hero/错误 SnackBar 对比度
 - 新增 `test/design_guard_test.dart`：G1–G5 扫描字号/圆角/色值/间距/白字回退
 - 修复 `subject_screenshots_test.dart`：补 `LoopTheme.palette` 切换、关闭 DEBUG banner、支持 `LOOP_SHOT_DIR`、补 Today/Notes
-- HEAD 证据：`docs/evidence/design-v0.8.11/screens/` 共 16 张（含 Today/Notes 双主题），`OVERFLOW.txt` = `no rendering overflow`
+- HEAD 证据：`docs/evidence/design-v0.8.11/screens/` 共 17 张（含 Today/Notes 双主题与 waitingApproval），`OVERFLOW.txt` = `no rendering overflow`
 
 ## 2. 验收结果
 
 | 判据 | 结果 |
 | --- | --- |
-| A1 文字对比度 | PASS（token + 真实用法迁移；D1–D3/D6） |
+| A1 文字对比度 | PASS（token + 真实用法迁移；D1–D3/D6；answer_ui/SnackBar 已收口） |
 | A2 非文本对比度 | PASS（accent/dangerInk ≥3:1） |
 | A3 字号档位 | PASS（守卫 G1：无数字字面量；动态值均来源于 token） |
 | A4 行高档位 | PARTIAL（未全量收敛，见 gap） |
@@ -57,10 +57,10 @@
 | A8 对齐轴 | PARTIAL（七个页头 32；聊天消息列表仍 24） |
 | A9 越权色 | PASS（palette 外 `Color(0x…)` = 0；`Colors.white` 仅叠加/截图豁免） |
 | A10 进度圈 | PARTIAL（颜色统一；`strokeWidth` 仍多档） |
-| A11 截图回归 | PASS（16 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
+| A11 截图回归 | PASS（17 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
 
 - `flutter analyze`：0 issues
-- 全量测试：**510 passed / 1 skipped**
+- 全量测试：**510 passed / 1 skipped**；`design_guard_test` G2 已覆盖 `p.` 别名
 
 ## 3. 已知 gap
 

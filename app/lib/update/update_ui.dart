@@ -60,7 +60,7 @@ Future<void> checkForUpdates(BuildContext context, {required bool manual}) async
       return;
     }
     messenger.showSnackBar(SnackBar(
-      content: Text(error.toString(), style: TextStyle(color: pal.toastFg)),
+      content: Text(error.toString(), style: TextStyle(color: pal.onPrimaryBtn)),
       backgroundColor: pal.dangerInk,
     ));
   }

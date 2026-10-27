@@ -144,7 +144,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
   void _snack(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(text, style: TextStyle(color: pal.toastFg, fontSize: LoopType.body)),
+      content: Text(text, style: TextStyle(color: isError ? pal.onPrimaryBtn : pal.toastFg, fontSize: LoopType.body)),
       backgroundColor: isError ? pal.dangerInk : pal.toastBg,
       duration: const Duration(seconds: 3),
     ));
@@ -164,7 +164,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         _tabBar(),
         if (_readOnly) _notice('学科已归档（只读）：可以查看资料与进度，写操作会被拒绝。', pal.warningInk),
         if (subject != null && subject.integrity != 'ok')
-          _notice('找不到这个学科的数据文件，界面只显示注册信息。可重建空库或移除记录。', pal.danger),
+          _notice('找不到这个学科的数据文件，界面只显示注册信息。可重建空库或移除记录。', pal.dangerInk),
         Expanded(
           child: _tab == 2
               ? SkillsPanel(
@@ -662,7 +662,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
       'mastered' => ('已掌握', pal.accent),
       'review_due' => ('待复习', pal.warningInk),
       'new' => ('新', pal.muted),
-      'archived' => ('已归档', pal.faint),
+      'archived' => ('已归档', pal.muted),
       _ => ('学习中', pal.accentInk),
     };
     return Container(
@@ -856,7 +856,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
               subject?.isDefault == true ? '归档（默认学科不支持）' : '归档学科',
               style: TextStyle(
                 fontSize: LoopType.body,
-                color: subject?.isDefault == true ? pal.faint : pal.ink,
+                color: subject?.isDefault == true ? pal.muted : pal.ink,
               ),
             ),
           ),
@@ -868,7 +868,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
             subject?.archived == true ? '删除学科（移入回收站）' : '删除（先归档）',
             style: TextStyle(
               fontSize: LoopType.body,
-              color: subject?.archived == true ? pal.danger : pal.faint,
+              color: subject?.archived == true ? pal.dangerInk : pal.muted,
             ),
           ),
         ),

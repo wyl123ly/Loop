@@ -838,7 +838,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 _testResult!,
                                 style: TextStyle(
                                   fontSize: LoopType.secondary,
-                                  color: _testOk ? pal.accent : pal.danger,
+                                  color: _testOk ? pal.accent : pal.dangerInk,
                                 ),
                               ),
                             ),

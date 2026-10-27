@@ -17,6 +17,7 @@ import 'package:loop/screens/materials_screen.dart';
 import 'package:loop/screens/settings_screen.dart';
 import 'package:loop/screens/today_screen.dart';
 import 'package:loop/screens/notes_screen.dart';
+import 'package:loop/answer_ui/answer_widgets.dart';
 import 'package:loop/screens/subject_screen.dart';
 import 'package:loop/state.dart';
 import 'package:loop/theme.dart';
@@ -648,6 +649,25 @@ void main() {
           name: '15-notes-light-1440.png', size: wide, dark: false);
       await _shot(tester, NotesScreen(active: true, state: state),
           name: '16-notes-dark-1440.png', size: wide);
+      await _shot(
+        tester,
+        AnswerPanel(
+          state: const AnswerViewState(
+            question: '帮我把这段证明整理成三步。',
+            answer: '第一步：写出特征方程。\n第二步：求特征值。\n第三步：代入特征向量。',
+            status: 'waiting_approval',
+            approvalRequired: true,
+            hasSnapshot: true,
+            dark: false,
+          ),
+          onClose: () {},
+          onCollapse: () {},
+          onExpand: () {},
+        ),
+        name: '17-floating-answer-light.png',
+        size: const Size(460, 360),
+        dark: false,
+      );
     }
 
     final dir = Directory(_screenDir);
@@ -661,9 +681,9 @@ void main() {
     final main = files
         .where((f) => !f.uri.pathSegments.last.startsWith('real-'))
         .toList();
-    expect(main.length, customDir ? 16 : 12,
+    expect(main.length, customDir ? 17 : 12,
         reason: customDir ? '设计证据要求 16 张主图' : 'AC-07 要求 12 张主图');
-    expect(files.length, 16, reason: '两种模式都应为 16 张');
+    expect(files.length, customDir ? 17 : 16, reason: '默认 16 张；设计证据 17 张');
     for (final file in files) {
       expect(file.lengthSync(), greaterThan(1000), reason: '${file.path} 内容过小');
     }

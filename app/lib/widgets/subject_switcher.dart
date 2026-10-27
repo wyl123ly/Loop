@@ -88,7 +88,7 @@ Color subjectTokenColor(String token) {
       return pal.ink;
     case 'rose':
     case 'red':
-      return pal.danger;
+      return pal.dangerInk;
     case 'accent':
     case 'blue':
     case 'indigo':

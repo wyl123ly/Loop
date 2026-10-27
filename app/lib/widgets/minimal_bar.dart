@@ -200,7 +200,7 @@ class _MinimalBarState extends State<MinimalBar> {
                         inputFormatters: const [_SingleLineFormatter()],
                         decoration: InputDecoration(
                           hintText: hint,
-                          hintStyle: TextStyle(fontSize: LoopType.body, color: p.faint),
+                          hintStyle: TextStyle(fontSize: LoopType.body, color: p.muted),
                           filled: false,
                           isDense: true,
                           border: InputBorder.none,
@@ -234,10 +234,10 @@ class _MinimalBarState extends State<MinimalBar> {
                         size: 16,
                       ),
                       style: IconButton.styleFrom(
-                        backgroundColor: sending ? p.danger : p.accent,
+                        backgroundColor: sending ? p.dangerInk : p.accent,
                         foregroundColor: pal.onAccent,
                         disabledBackgroundColor: p.chip,
-                        disabledForegroundColor: p.faint,
+                        disabledForegroundColor: p.muted,
                         minimumSize: const Size.square(30),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: EdgeInsets.zero,
@@ -475,7 +475,7 @@ class _MinimalIconButtonState extends State<_MinimalIconButton> {
   @override
   Widget build(BuildContext context) {
     final p = pal;
-    final color = widget.enabled ? p.ink : p.faint;
+    final color = widget.enabled ? p.ink : p.muted;
     return Semantics(
       label: widget.tooltip,
       button: true,

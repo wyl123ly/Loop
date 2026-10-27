@@ -45,9 +45,9 @@ class AgentPlanCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: LoopType.secondary,
                         height: 1.45,
-                        color: item.status == 'skipped' ? pal.faint : pal.ink,
+                        color: item.status == 'skipped' ? pal.muted : pal.ink,
                         decoration: item.status == 'done' ? TextDecoration.lineThrough : null,
-                        decorationColor: pal.faint,
+                        decorationColor: pal.muted,
                       ),
                     ),
                   ),

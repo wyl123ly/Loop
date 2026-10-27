@@ -329,7 +329,7 @@ class _TodayScreenState extends State<TodayScreen> {
               label,
               style: TextStyle(
                 fontSize: LoopType.caption,
-                color: overdue ? pal.danger : pal.faint,
+                color: overdue ? pal.dangerInk : pal.muted,
               ),
             ),
           if (task.estimateMin > 0)

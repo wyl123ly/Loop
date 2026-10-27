@@ -1890,7 +1890,7 @@ class ChatScreenState extends State<ChatScreen> {
                           size: 18,
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: _sending ? pal.danger : pal.accent,
+                          backgroundColor: _sending ? pal.dangerInk : pal.accent,
                           foregroundColor: pal.onAccent,
                           minimumSize: Size.square(widget.compact ? 34 : 38),
                         ),

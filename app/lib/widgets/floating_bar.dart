@@ -268,7 +268,7 @@ class _BarButtonState extends State<_BarButton> {
         ? (p.dangerInk)
         : p.hover;
     final iconColor = !widget.enabled
-        ? p.faint
+        ? p.muted
         : widget.danger
             ? (_hover ? p.onAccent : p.muted)
             : (widget.active ? p.accent : p.ink);
