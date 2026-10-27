@@ -277,7 +277,7 @@ class SubjectSwitcher extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: LoopType.micro,
                                   color: pal.muted,
-                                  height: 1.3,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -346,7 +346,7 @@ class SubjectChip extends StatelessWidget {
                         selected: true,
                       ),
                       if (!narrow) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 120),
                           child: Text(
@@ -489,7 +489,7 @@ Future<_MenuChoice?> _openMenu(
                 size: 20,
                 selected: subject.key == st.activeKey,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   subject.name,
@@ -564,7 +564,7 @@ Future<_MenuChoice?> _openMenu(
                   colorToken: subject.color,
                   size: 20,
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     subject.name,
@@ -708,13 +708,13 @@ class _NewSubjectDialogState extends State<_NewSubjectDialog> {
               decoration: const InputDecoration(hintText: '学科名（必填），如：线性代数'),
               onSubmitted: (_) => _saving ? null : _save(),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-new-goal'),
               controller: _goal,
               decoration: const InputDecoration(hintText: '学习目标（可选），如：考研数学一'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-new-exam'),
               controller: _exam,

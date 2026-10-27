@@ -95,6 +95,34 @@ void main() {
     expect(bad, isEmpty, reason: bad.join('\n'));
   });
 
+  test('G7 行高/描边/小间距口径锁定', () {
+    const heights = <double>[1.2, 1.4, 1.6, 1.75];
+    const strokes = <double>[2.0, 2.4];
+    const grid = {0, 4, 8, 12, 16, 20, 24};
+    final bad = <String>[];
+    for (final entry in texts.entries) {
+      for (final m in RegExp(r'height:\s*(1\.\d+)').allMatches(entry.value)) {
+        if (!heights.contains(double.parse(m.group(1)!))) {
+          bad.add('${entry.key}: height ${m.group(1)}');
+        }
+      }
+      for (final m in RegExp(r'strokeWidth:\s*(\d+(?:\.\d+)?)').allMatches(entry.value)) {
+        if (!strokes.contains(double.parse(m.group(1)!))) {
+          bad.add('${entry.key}: strokeWidth ${m.group(1)}');
+        }
+      }
+      for (final m in RegExp(r'SizedBox\(\s*(?:width|height):\s*(\d+)').allMatches(entry.value)) {
+        final v = int.parse(m.group(1)!);
+        if (v <= 24 && !grid.contains(v)) bad.add('${entry.key}: SizedBox $v');
+      }
+      for (final m in RegExp(r'(?:spacing|runSpacing):\s*(\d+)').allMatches(entry.value)) {
+        final v = int.parse(m.group(1)!);
+        if (!grid.contains(v)) bad.add('${entry.key}: spacing $v');
+      }
+    }
+    expect(bad, isEmpty, reason: bad.take(30).join('\n'));
+  });
+
   test('G5 Colors.white 只允许装饰/叠加层', () {
     const allow = {
       'lib/theme/palette.dart',

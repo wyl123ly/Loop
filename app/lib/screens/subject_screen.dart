@@ -230,7 +230,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 if (chips.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Wrap(spacing: 6, runSpacing: 6, children: chips),
+                    child: Wrap(spacing: 8, runSpacing: 8, children: chips),
                   ),
               ],
             ),
@@ -320,7 +320,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
           Icon(Icons.info_outline_rounded, size: 15, color: color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.5)),
+            child: Text(text, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6)),
           ),
         ],
       ),
@@ -360,7 +360,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
             _metricCard('待复习', '${_int(summary['review_due'])}', '个知识点', pal.warningInk),
           ],
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         _sectionTitle('待复习', due.isEmpty ? '' : '最多显示 5 个'),
         if (due.isEmpty)
           _hint('暂时没有到期的复习。新学的知识点会按掌握度自动排期。')
@@ -389,7 +389,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -444,8 +444,8 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   Widget _countsRow(Map<String, dynamic> summary) {
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: 12,
+      runSpacing: 12,
       children: [
         _profileChip('资料', '${_int(summary['materials_total'])} 份'),
         _profileChip('已学资料', '${_int(summary['materials_studied'])} 份'),
@@ -515,7 +515,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                 child: Text(
                   '${topics.length} 个知识点 · 掌握度与状态可以手工纠正（重算不会覆盖手工值）',
                   maxLines: 2,
-                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
+                  style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                 ),
               ),
               const SizedBox(width: 8),
@@ -575,7 +575,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           _masteryBar(topic.mastery),
           IconButton(
             tooltip: '编辑掌握度/状态',
@@ -610,7 +610,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   meta,
                   maxLines: 1,
@@ -687,7 +687,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
             Icon(Icons.insights_outlined, size: 38, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有学习记录', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               '在对话里问一个问题，AI 会开始记录这个学科的进度。',
               textAlign: TextAlign.center,
@@ -1089,12 +1089,12 @@ class _TopicEditorDialogState extends State<_TopicEditorDialog> {
               divisions: 20,
               onChanged: (value) => setState(() => _mastery = value),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text('状态', style: TextStyle(fontSize: LoopType.secondary, color: pal.ink)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final status in _statuses)
                   ChoiceChip(
@@ -1105,7 +1105,7 @@ class _TopicEditorDialogState extends State<_TopicEditorDialog> {
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               '手工值会被标记，重新计算进度时整条跳过。',
               style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
@@ -1243,20 +1243,20 @@ class _ProfileDialogState extends State<_ProfileDialog> {
               controller: _goal,
               decoration: const InputDecoration(hintText: '学习目标'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-exam'),
               controller: _exam,
               decoration: const InputDecoration(hintText: '考试日（如 2026-06-07）'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-minutes'),
               controller: _minutes,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(hintText: '每日目标时长（分钟）'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('subject-profile-level'),
               controller: _level,

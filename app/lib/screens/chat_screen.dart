@@ -862,7 +862,7 @@ class ChatScreenState extends State<ChatScreen> {
           Row(
             children: [
               Icon(Icons.shield_outlined, size: 16, color: pal.warningInk),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '需要你确认：$tool',
@@ -878,7 +878,7 @@ class ChatScreenState extends State<ChatScreen> {
             constraints: const BoxConstraints(maxHeight: 180),
             child: SingleChildScrollView(
               child: Text(clipped,
-                  style: TextStyle(fontSize: LoopType.caption, height: 1.5, color: pal.muted, fontFamily: 'monospace')),
+                  style: TextStyle(fontSize: LoopType.caption, height: 1.6, color: pal.muted, fontFamily: 'monospace')),
             ),
           ),
           const SizedBox(height: 8),
@@ -886,7 +886,7 @@ class ChatScreenState extends State<ChatScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(onPressed: () => _resolveApproval(false), child: const Text('拒绝')),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               FilledButton(onPressed: () => _resolveApproval(true), child: const Text('允许')),
             ],
           ),
@@ -1127,7 +1127,7 @@ class ChatScreenState extends State<ChatScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.tune_rounded, size: 13, color: pal.muted),
-            const SizedBox(width: 5),
+            const SizedBox(width: 8),
             Text(_modeLabel,
                 style: TextStyle(fontSize: LoopType.secondary, color: pal.ink, fontWeight: FontWeight.w500)),
             Icon(Icons.expand_more_rounded, size: 15, color: pal.muted),
@@ -1162,7 +1162,7 @@ class ChatScreenState extends State<ChatScreen> {
               ),
               // §10.4：对话页是当前学科的作用域，页头必须显示学科名（窄宽退化为色点）。
               SubjectChip(state: _appState),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               _modePicker(),
               if (!narrow) ...[
                 const SizedBox(width: 12),
@@ -1197,7 +1197,7 @@ class ChatScreenState extends State<ChatScreen> {
     if (_messages.isEmpty) return _welcome(context);
     final padding = widget.compact
         ? const EdgeInsets.fromLTRB(12, 12, 12, 8)
-        : const EdgeInsets.fromLTRB(24, 20, 24, 8);
+        : const EdgeInsets.fromLTRB(32, 20, 32, 8);
     return Stack(
       children: [
         ListView.builder(
@@ -1276,11 +1276,11 @@ class ChatScreenState extends State<ChatScreen> {
                 const SizedBox(height: 12),
                 const Text('今天想学点什么？',
                     style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.4)),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.55),
+                  style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.6),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -1323,14 +1323,14 @@ class ChatScreenState extends State<ChatScreen> {
             ),
             child: Icon(Icons.loop_rounded, color: pal.onAccent, size: 19),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           const Text('今天想学点什么？',
               style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             '发文字、贴截图或传 PDF，都可以问。',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.secondary, color: pal.muted, height: 1.6),
           ),
         ],
       ),
@@ -1371,7 +1371,7 @@ class ChatScreenState extends State<ChatScreen> {
                   const Text('今天想学点什么？',
                       style: TextStyle(
                           fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.8)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     'AI、数学、英语，或者任何你想弄懂的东西。\n可以发文字、贴截图、传 PDF。',
                     textAlign: TextAlign.center,
@@ -1385,7 +1385,7 @@ class ChatScreenState extends State<ChatScreen> {
                       style: TextStyle(fontSize: LoopType.secondary, color: pal.muted),
                     ),
                   ],
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 24),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -1427,7 +1427,7 @@ class ChatScreenState extends State<ChatScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.description_outlined, size: 14, color: pal.muted),
-            const SizedBox(width: 5),
+            const SizedBox(width: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 220),
               child: Text(
@@ -1505,8 +1505,8 @@ class ChatScreenState extends State<ChatScreen> {
     final images = attachments.where((item) => item.isImage).toList();
     return Wrap(
       alignment: WrapAlignment.end,
-      spacing: 6,
-      runSpacing: 6,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final item in images)
           GestureDetector(
@@ -1539,8 +1539,8 @@ class ChatScreenState extends State<ChatScreen> {
     final files = attachments.where((item) => !item.isImage).toList();
     return Wrap(
       alignment: WrapAlignment.end,
-      spacing: 6,
-      runSpacing: 6,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final item in files)
           Container(
@@ -1553,7 +1553,7 @@ class ChatScreenState extends State<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.description_outlined, size: 13, color: pal.onAccent),
-                const SizedBox(width: 5),
+                const SizedBox(width: 8),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 220),
                   child: Text(
@@ -1632,26 +1632,26 @@ class ChatScreenState extends State<ChatScreen> {
           if (message.plan.isNotEmpty) AgentPlanCard(plan: message.plan),
           if (message.steps.isNotEmpty) ...[
             _steps(message.steps),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
           ],
           if (empty && _sending)
             Row(
               children: [
                 SizedBox(
-                  width: 14,
+                  width: 16,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2.0),
                 ),
-                SizedBox(width: 10),
+                SizedBox(width: 12),
                 Text('正在思考…', style: TextStyle(fontSize: LoopType.body, color: pal.muted)),
               ],
             ),
           if (!empty) MarkdownText(message.content),
           if (refs.isNotEmpty) ...[
-            SizedBox(height: 10),
+            SizedBox(height: 12),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 for (final ref in refs.values)
                   Container(
@@ -1667,7 +1667,7 @@ class ChatScreenState extends State<ChatScreen> {
             ),
           ],
           if (!empty && message.id != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             _actions(message),
           ],
           if (!empty && message.tokensIn + message.tokensOut > 0)
@@ -1695,7 +1695,7 @@ class ChatScreenState extends State<ChatScreen> {
     }
     return Wrap(
       spacing: 8,
-      runSpacing: 6,
+      runSpacing: 8,
       children: [
         for (final name in order)
           Container(
@@ -1710,12 +1710,12 @@ class ChatScreenState extends State<ChatScreen> {
               children: [
                 latest[name]!.status == 'running'
                     ? SizedBox(
-                        width: 10,
+                        width: 12,
                         height: 10,
-                        child: CircularProgressIndicator(strokeWidth: 1.6),
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
                       )
                     : Icon(Icons.check_circle_rounded, size: 12, color: pal.success),
-                SizedBox(width: 5),
+                SizedBox(width: 8),
                 Text(latest[name]!.label,
                     style: TextStyle(fontSize: LoopType.caption, color: pal.ink)),
                 if (counts[name]! > 1)
@@ -1735,7 +1735,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget _actions(Message message) {
     return Wrap(
-      spacing: 2,
+      spacing: 4,
       children: [
         _actionButton('复制 Markdown', Icons.copy_all_outlined, () => _copyMarkdown(message)),
         _actionButton('存笔记', Icons.note_alt_outlined, () => _generate('note', message)),
@@ -1789,8 +1789,8 @@ class ChatScreenState extends State<ChatScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       for (final item in _attachments) _attachmentTile(item),
                     ],
@@ -1865,7 +1865,7 @@ class ChatScreenState extends State<ChatScreen> {
                           minLines: 1,
                           maxLines: widget.compact ? 4 : 6,
                           textInputAction: TextInputAction.newline,
-                          style: const TextStyle(fontSize: LoopType.reading, height: 1.55),
+                          style: const TextStyle(fontSize: LoopType.reading, height: 1.6),
                           decoration: InputDecoration(
                             hintText: hint,
                             filled: false,
@@ -1900,7 +1900,7 @@ class ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               if (!widget.compact) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
@@ -2004,7 +2004,7 @@ class _ModeEditorDialogState extends State<_ModeEditorDialog> {
                 fillColor: pal.chip,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const Text('思考强度', style: TextStyle(fontSize: LoopType.body)),
@@ -2021,7 +2021,7 @@ class _ModeEditorDialogState extends State<_ModeEditorDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               '高强度会改用推理模型并先完整推理，速度更慢。',
               style: TextStyle(fontSize: LoopType.caption, color: pal.muted),

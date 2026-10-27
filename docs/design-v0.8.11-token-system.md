@@ -50,27 +50,24 @@
 | A1 文字对比度 | PASS（token + 真实用法迁移；D1–D3/D6；answer_ui/SnackBar 已收口） |
 | A2 非文本对比度 | PASS（accent/dangerInk ≥3:1） |
 | A3 字号档位 | PASS（守卫 G1：无数字字面量；动态值均来源于 token） |
-| A4 行高档位 | PARTIAL（未全量收敛，见 gap） |
+| A4 行高档位 | PASS（4 档 1.2/1.4/1.6/1.75；G7） |
 | A5 字重 | PASS（仅 w400/w500/w600/w700） |
 | A6 圆角档位 | PASS（守卫 G1：无数字字面量） |
-| A7 间距网格 | PARTIAL（`EdgeInsets` 100% 网格；`SizedBox`/runSpacing 未全量） |
-| A8 对齐轴 | PARTIAL（七个页头 32；聊天消息列表仍 24） |
+| A7 间距网格 | PASS（EdgeInsets + ≤24 SizedBox + spacing/runSpacing；G7） |
+| A8 对齐轴 | PASS（七个页头 32；聊天消息列表 32） |
 | A9 越权色 | PASS（palette 外 `Color(0x…)` = 0；`Colors.white` 仅叠加/截图豁免） |
-| A10 进度圈 | PARTIAL（颜色统一；`strokeWidth` 仍多档） |
+| A10 进度圈 | PASS（2.0/2.4 两档；颜色 accent） |
 | A11 截图回归 | PASS（17 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
 
 - `flutter analyze`：0 issues
-- 全量测试：**511–512 passed / 1 skipped（跨环境有 1 条计数波动）**；`design_guard_test` G2 已覆盖 `p.` 别名
+- 全量测试：**512 passed / 1 skipped**；`design_guard_test` G2 已覆盖 `p.` 别名
 
-## 3. 已知 gap
+## 3. 收口后剩余项
 
-1. 行高仍有 1.0–1.75 多档；建议后续收 4 档 `1.2/1.4/1.6/1.75`。
-2. 进度圈 `strokeWidth` 仍 1.6/1.8/2/2.2/2.4；建议 2.0/2.4 两档。
-3. `SizedBox`、`runSpacing` 的 6/10/14/18/22 等未全量收敛；A7 当前只覆盖 EdgeInsets。
-4. 聊天消息列表左轴 24，未与页头 32 对齐（居中 880 列设计取舍）。
-5. P2 未做：空态统一组件、图标尺寸 4 档、玻璃高光羽化、标题栏页名去重、主题切换 120ms、触控目标。
-6. 截图仍为 widget 渲染，非真机；CJK 字体使用系统替代。
-7. 未做 golden/pixel diff；截图只做“生成 + 无 overflow + 唯一哈希”。
+1. 行高已收 4 档；进度圈已收 2 档；`EdgeInsets`、≤24 `SizedBox`、`spacing/runSpacing` 已对齐 4px 网格；聊天左轴已 32 —— 四项均已闭合，由 G7 锁定。
+2. P2 仍未纳入本版：空态统一组件、图标尺寸全量收敛、玻璃高光羽化、标题栏页名去重、主题切换 120ms、触控目标复查。
+3. 截图仍为 widget 渲染，非真机；CJK 字体使用系统替代。
+4. 未做 golden/pixel diff；截图只做“生成 + 无 overflow + 唯一哈希”
 
 ## 4. 复跑
 

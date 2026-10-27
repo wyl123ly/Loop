@@ -195,7 +195,7 @@ class _MinimalBarState extends State<MinimalBar> {
                         maxLines: 1,
                         minLines: 1,
                         textInputAction: TextInputAction.none,
-                        style: TextStyle(fontSize: LoopType.body, height: 1.3, color: p.ink),
+                        style: TextStyle(fontSize: LoopType.body, height: 1.4, color: p.ink),
                         cursorColor: p.accent,
                         inputFormatters: const [_SingleLineFormatter()],
                         decoration: InputDecoration(
@@ -245,7 +245,7 @@ class _MinimalBarState extends State<MinimalBar> {
                     ),
                     ),
                   ),
-                  const SizedBox(width: 3),
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
@@ -267,7 +267,7 @@ class _MinimalBarState extends State<MinimalBar> {
             onTap: onBack,
             onHover: _setHoverTip,
           ),
-            const SizedBox(width: 2),
+            const SizedBox(width: 4),
           ],
         ),
           if (_hoverTip != null)
@@ -401,12 +401,12 @@ class _AttachmentBadge extends StatelessWidget {
               )
             else
               Icon(Icons.attach_file_rounded, size: 11, color: p.muted),
-            if (url != null) const SizedBox(width: 2),
+            if (url != null) const SizedBox(width: 4),
             Text(
               '×$count',
-              style: TextStyle(fontSize: LoopType.micro, color: p.muted, height: 1.1),
+              style: TextStyle(fontSize: LoopType.micro, color: p.muted, height: 1.2),
             ),
-            if (url == null) const SizedBox(width: 1),
+            if (url == null) const SizedBox(width: 4),
           ],
         ),
       ),
@@ -443,7 +443,7 @@ class _MinimalHoverLabel extends StatelessWidget {
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.visible,
-        style: TextStyle(fontSize: LoopType.micro, height: 1.25, color: p.toastFg),
+        style: TextStyle(fontSize: LoopType.micro, height: 1.2, color: p.toastFg),
       ),
     );
   }

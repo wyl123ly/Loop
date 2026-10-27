@@ -535,7 +535,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                   verdict.explanation,
                   style: TextStyle(fontSize: LoopType.secondary, color: pal.ink, height: 1.6),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Text(
                   'Loop 侧仍会做 zip 防护与逐文件 sha256 校验，且永不执行包内脚本，'
                   '但这不构成对内容的安全性判断。',
@@ -691,7 +691,7 @@ class SkillsPanelState extends State<SkillsPanel> {
       padding: const EdgeInsets.fromLTRB(32, 8, 32, 32),
       children: [
         _policyNote(library?.policy),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         for (final skill in skills) _installedCard(skill),
         const SizedBox(height: 12),
         Wrap(
@@ -703,9 +703,9 @@ class SkillsPanelState extends State<SkillsPanel> {
               onPressed: _readOnly || _batchChecking ? null : _checkAllUpdates,
               icon: _batchChecking
                   ? const SizedBox(
-                      width: 14,
+                      width: 16,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
                     )
                   : const Icon(Icons.refresh_rounded, size: 17),
               label: Text(_batchChecking ? '检查中…' : '检查更新（全部）'),
@@ -746,7 +746,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           Text(
             '不自动更新：版本变化只会提示，安装/升级/回退都由你点击触发。'
             '${note.isEmpty ? '' : '（$note）'}',
-            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
           ),
         ],
       ),
@@ -765,7 +765,7 @@ class SkillsPanelState extends State<SkillsPanel> {
             const SizedBox(height: 12),
             const Text('本学科还没有教学技能',
                 style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               '从 $label 按需挑选，安装后只在本学科生效；也可以随时停用或移除。',
               textAlign: TextAlign.center,
@@ -808,7 +808,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                 ),
                 child: Icon(Icons.auto_stories_outlined, size: 18, color: pal.accent),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +827,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(skill.version,
                             style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                         if (update.isNotEmpty) ...[
@@ -843,13 +843,13 @@ class SkillsPanelState extends State<SkillsPanel> {
                           skill.description,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
+                          style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                         ),
                       ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         _verdictBadge(skill.verdict),
                         _badge(skill.enabled ? '本学科已启用' : '本学科已停用',
@@ -874,14 +874,14 @@ class SkillsPanelState extends State<SkillsPanel> {
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               if (busy)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   child: SizedBox(
-                    width: 15,
+                    width: 16,
                     height: 15,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(strokeWidth: 2.0),
                   ),
                 )
               else
@@ -1035,7 +1035,7 @@ class SkillsPanelState extends State<SkillsPanel> {
           child: Text(
             '按需浏览：请求只带关键词，由你点击触发；不发送学科名或资料内容，也不自动更新。'
             '只接 ${_library?.hubLabel ?? 'EduHub'}（后端白名单固定）。',
-            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.5),
+            style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
           ),
         ),
         Expanded(child: _hubResults()),
@@ -1056,7 +1056,7 @@ class SkillsPanelState extends State<SkillsPanel> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.travel_explore_rounded, size: 36, color: pal.muted),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 _searched ? '没有结果，换个关键词试试。' : '输入关键词，或直接点「搜索」浏览列表。',
                 textAlign: TextAlign.center,
@@ -1119,7 +1119,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(item.version, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                     if (item.installed) ...[
                       const SizedBox(width: 8),
@@ -1134,7 +1134,7 @@ class SkillsPanelState extends State<SkillsPanel> {
                       item.summary,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                     ),
                   ),
                 Padding(
@@ -1154,9 +1154,9 @@ class SkillsPanelState extends State<SkillsPanel> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: SizedBox(
-                width: 15,
+                width: 16,
                 height: 15,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2.0),
               ),
             )
           else
@@ -1296,7 +1296,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'registry security.summary 原文：${verdict.summary}',
-                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
+                      style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                     ),
                   ),
                 Padding(
@@ -1305,7 +1305,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
                     '说明：verify 只是 registry 侧的静态扫描参考信号，包没有签名，'
                     'Loop 不把它当作安全保证；真正的防线是导入管线（zip 防护 + 逐文件 sha256）'
                     '与「永不执行」。',
-                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.5),
+                    style: TextStyle(fontSize: LoopType.micro, color: pal.muted, height: 1.6),
                   ),
                 ),
                 if (widget.content.isNotEmpty) ...[
@@ -1389,7 +1389,7 @@ class _SkillDetailDialogState extends State<_SkillDetailDialog> {
             child: Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
           ),
           Expanded(
-            child: Text(value, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.5)),
+            child: Text(value, style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6)),
           ),
         ],
       ),

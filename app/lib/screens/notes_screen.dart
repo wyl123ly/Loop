@@ -159,9 +159,9 @@ class _NotesScreenState extends State<NotesScreen> {
           child: Row(
             children: [
               Text('笔记', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-              SizedBox(width: 10),
+              SizedBox(width: 12),
               Text('${_items.length} 篇', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               // §10.4：笔记属于当前学科，页头必须显示学科名。
               SubjectChip(state: _state),
               Spacer(),
@@ -200,7 +200,7 @@ class _NotesScreenState extends State<NotesScreen> {
             Icon(Icons.menu_book_outlined, size: 40, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有笔记', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text('在对话里点回答下方的「存笔记」，整理好的笔记会出现在这里。',
                 style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
           ],
@@ -284,13 +284,13 @@ class _NotesScreenState extends State<NotesScreen> {
             children: [
               Text(note.title,
                   style: const TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, height: 1.4)),
-              SizedBox(height: 6),
+              SizedBox(height: 8),
               Row(
                 children: [
                   Text(_fmt(note.createdAt),
                       style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                   if (note.sourceRef.isNotEmpty) ...[
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Text(_sourceLabel(note.sourceRef),
                         style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
                   ],

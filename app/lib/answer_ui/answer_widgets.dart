@@ -356,7 +356,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                                     _ErrorBanner(message: state.error!),
                                   if (state.plan.isNotEmpty)
                                     _PlanSection(plan: state.plan),
-                                  const SizedBox(height: 6),
+                                  const SizedBox(height: 8),
                                   _AnswerBody(state: state),
                                   if (state.refs.isNotEmpty)
                                     _RefsSection(refs: state.refs),
@@ -420,7 +420,7 @@ class AnswerHeader extends StatelessWidget {
       child: Row(
         children: [
           _StatusDot(state: state),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             '回答',
             style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w700, color: p.ink),
@@ -522,13 +522,13 @@ class _QuestionLine extends StatelessWidget {
             ),
             child: Text('问', style: TextStyle(fontSize: LoopType.micro, color: p.muted)),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               question.trim(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: LoopType.secondary, height: 1.3, color: p.ink),
+              style: TextStyle(fontSize: LoopType.secondary, height: 1.4, color: p.ink),
             ),
           ),
         ],
@@ -597,7 +597,7 @@ class _ErrorBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.error_outline_rounded, size: 13, color: p.dangerInk),
-          const SizedBox(width: 5),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
@@ -633,7 +633,7 @@ class _PlanSection extends StatelessWidget {
             '执行计划',
             style: TextStyle(fontSize: LoopType.micro, fontWeight: FontWeight.w600, color: p.muted),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           for (final item in plan.take(5))
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -684,7 +684,7 @@ class _AnswerBody extends StatelessWidget {
           Expanded(
             child: Text(
               state.placeholder,
-              style: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: p.muted),
+              style: TextStyle(fontSize: LoopType.secondary, height: 1.6, color: p.muted),
             ),
           ),
         ],
@@ -692,7 +692,7 @@ class _AnswerBody extends StatelessWidget {
     }
     return MarkdownText(
       state.answer,
-      baseStyle: TextStyle(fontSize: LoopType.body, height: 1.62, color: p.ink),
+      baseStyle: TextStyle(fontSize: LoopType.body, height: 1.6, color: p.ink),
     );
   }
 }
@@ -758,7 +758,7 @@ class _ScrollBottomCapsule extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.arrow_downward_rounded, size: 12, color: p.ink),
-              const SizedBox(width: 3),
+              const SizedBox(width: 4),
               Text('回到底部', style: TextStyle(fontSize: LoopType.micro, color: p.ink)),
             ],
           ),

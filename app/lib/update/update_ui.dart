@@ -106,10 +106,10 @@ class _UpdateAvailableDialog extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Text('更新说明',
                 style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Container(
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 230),
@@ -238,7 +238,7 @@ class _ProgressDialogState extends State<_ProgressDialog> {
           children: [
             Text('更新到 v${widget.info.version}',
                 style: TextStyle(fontSize: LoopType.title, fontWeight: FontWeight.w700, color: pal.ink)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(_stage, style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 16),
             if (_error == null) ...[
@@ -255,16 +255,16 @@ class _ProgressDialogState extends State<_ProgressDialog> {
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
             ] else ...[
-              Text(_error!, style: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: pal.dangerInk)),
+              Text(_error!, style: TextStyle(fontSize: LoopType.secondary, height: 1.6, color: pal.dangerInk)),
               if (_error!.contains('Process is detached')) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   '自动替换没能启动，请点下方按钮手动下载新版本压缩包，解压覆盖当前目录即可。',
-                  style: TextStyle(fontSize: LoopType.caption, height: 1.5, color: pal.muted),
+                  style: TextStyle(fontSize: LoopType.caption, height: 1.6, color: pal.muted),
                 ),
               ],
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -279,7 +279,7 @@ class _ProgressDialogState extends State<_ProgressDialog> {
                     icon: const Icon(Icons.download_rounded, size: 16),
                     label: const Text('打开下载页'),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () => Navigator.pop(context, false),
                     child: const Text('关闭'),

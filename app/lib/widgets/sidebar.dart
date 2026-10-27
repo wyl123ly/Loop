@@ -72,12 +72,12 @@ class Sidebar extends StatelessWidget {
                     _navItem(item.$1, item.$2, item.$3),
                   const Spacer(),
                   for (final item in _globalNav) ...[
-                    if (item.$1 == settingsPageIndex) const SizedBox(height: 6),
+                    if (item.$1 == settingsPageIndex) const SizedBox(height: 8),
                     _navItem(item.$1, item.$2, item.$3),
                   ],
                 ] else ...[
                   Expanded(child: _expandedList(context)),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   for (final item in _globalNav)
                     _navItem(item.$1, item.$2, item.$3),
                 ],
@@ -96,7 +96,7 @@ class Sidebar extends StatelessWidget {
       padding: EdgeInsets.zero,
       children: [
         for (final item in _subjectNav) _navItem(item.$1, item.$2, item.$3),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 8, 8),
           child: Text('最近对话',
@@ -175,7 +175,7 @@ class Sidebar extends StatelessWidget {
       child: Row(
         children: [
           mark,
-          const SizedBox(width: 11),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +421,7 @@ class _HistoryTileState extends State<_HistoryTile> {
                 children: [
                   Icon(Icons.chat_bubble_outline_rounded,
                       size: 12, color: selected ? pal.accent : pal.muted),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       conversation.title.isEmpty ? '新对话' : conversation.title,

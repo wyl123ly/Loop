@@ -381,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (overview == null)
             Text('读取中…', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted))
           else ...[
@@ -419,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     for (final item in overview.fileErrors.take(5))
                       Text(
                         '· ${item['table']}#${item['id']} ${item['reason']}',
-                        style: TextStyle(fontSize: LoopType.caption, color: pal.warningInk, height: 1.5),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.warningInk, height: 1.6),
                       ),
                   ],
                 ),
@@ -446,7 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Expanded(
                       child: Text(
                         '旧数据已迁入默认学科：会话/资料/进度都在学科库里，原库保留为只读副本。',
-                        style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.5),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.ink, height: 1.6),
                       ),
                     ),
                     TextButton(
@@ -465,11 +465,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: (_migrationBusy || overview.pending.isEmpty) ? null : _rerunMigration,
                   icon: _migrationBusy
                       ? const SizedBox(
-                          width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                          width: 16, height: 14, child: CircularProgressIndicator(strokeWidth: 2.0))
                       : const Icon(Icons.play_arrow_rounded, size: 17),
                   label: Text(_migrationBusy ? '处理中…' : '重试迁移'),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 if (_migrationNote != null)
                   Expanded(
                     child: Text(_migrationNote!,
@@ -478,7 +478,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -486,11 +486,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('跨学科兜底检索', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         '默认关闭：只在本学科资料里检索。开启后，仅当本学科零命中时才兜底到其它学科，'
                         '并在回答里标注来源学科。',
-                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.5),
+                        style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
                       ),
                     ],
                   ),
@@ -552,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Text('外观',
                               style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
                               Text('主题', style: TextStyle(fontSize: LoopType.body, color: pal.ink)),
@@ -589,7 +589,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               title: const Text('流式输出', style: TextStyle(fontSize: LoopType.body)),
                               subtitle: Text(
                                 '开启后逐字显示；关闭后等待完整回复；对下一条消息生效。',
-                                style: TextStyle(fontSize: LoopType.caption, height: 1.5, color: pal.muted),
+                                style: TextStyle(fontSize: LoopType.caption, height: 1.6, color: pal.muted),
                               ),
                               value: _state.settings?.streamOutput ?? true,
                               onChanged: (value) async {
@@ -645,7 +645,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(height: 4),
                           Text('每个供应商独立保存 Key；Key 只存在本机 SQLite，不会上传。',
                               style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
@@ -671,7 +671,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   },
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 12),
                               OutlinedButton.icon(
                                 onPressed: _addProvider,
                                 icon: const Icon(Icons.add_rounded, size: 16),
@@ -706,7 +706,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           DropdownButtonFormField<ThinkingStyle>(
                             initialValue: _thinkingStyle,
                             decoration: const InputDecoration(labelText: '思考参数形态'),
@@ -761,10 +761,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             decoration: const InputDecoration(labelText: '对话模型 ID'),
                           ),
                           if (_selected?.models.isNotEmpty ?? false) ...[
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 for (final info in _selected!.models.take(8))
                                   ActionChip(
@@ -785,8 +785,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(height: 16),
                           Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
+                            spacing: 12,
+                            runSpacing: 12,
                             children: [
                               FilledButton(
                                 onPressed: _saving ? null : _save,
@@ -798,7 +798,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ? const SizedBox(
                                         width: 12,
                                         height: 12,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(strokeWidth: 2.0),
                                       )
                                     : const Icon(Icons.wifi_tethering_rounded, size: 16),
                                 label: Text(_testing ? '测试中…' : '测试连接'),
@@ -809,7 +809,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ? const SizedBox(
                                         width: 12,
                                         height: 12,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(strokeWidth: 2.0),
                                       )
                                     : const Icon(Icons.refresh_rounded, size: 16),
                                 label: Text(_fetchingModels ? '拉取中…' : '刷新模型列表'),
@@ -865,7 +865,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
@@ -879,9 +879,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 onPressed: _checkingUpdate ? null : _checkUpdates,
                                 icon: _checkingUpdate
                                     ? SizedBox(
-                                        width: 14,
+                                        width: 16,
                                         height: 14,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: pal.onPrimaryBtn),
+                                        child: CircularProgressIndicator(strokeWidth: 2.0, color: pal.onPrimaryBtn),
                                       )
                                     : const Icon(Icons.system_update_alt_rounded, size: 16),
                                 label: Text(_checkingUpdate ? '检查中…' : '检查更新'),
@@ -934,7 +934,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _row('本地服务', _state.api.baseUrl),
                           _row('数据位置', 'data/loop.db + data/files/'),
                           _row('版本', 'Loop ${AppVersion.current} · Dart 后端'),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           Text(
                             '后端在进程内运行，无需启动其他服务；数据备份 = 复制整个 data 目录。',
                             style: TextStyle(fontSize: LoopType.caption, color: pal.muted, height: 1.6),
@@ -951,7 +951,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: const [
                           Text('快捷键',
                               style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 10),
+                          SizedBox(height: 12),
                           _Shortcut('Enter', '发送'),
                           _Shortcut('Shift + Enter', '换行'),
                           _Shortcut('侧栏「新对话」', '开一个新会话，上下文互不影响'),

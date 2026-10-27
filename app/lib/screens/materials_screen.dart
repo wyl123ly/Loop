@@ -232,9 +232,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           child: Row(
             children: [
               Text('资料', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-              SizedBox(width: 10),
+              SizedBox(width: 12),
               Text('${_items.length} 份', style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               // §10.4：资料库属于当前学科，页头必须显示学科名（含上传/导入入口）。
               SubjectChip(state: _state),
               const Spacer(),
@@ -248,9 +248,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 onPressed: _uploading ? null : _upload,
                 icon: _uploading
                     ? SizedBox(
-                        width: 14,
+                        width: 16,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: pal.onPrimaryBtn),
+                        child: CircularProgressIndicator(strokeWidth: 2.0, color: pal.onPrimaryBtn),
                       )
                     : const Icon(Icons.upload_file_rounded, size: 18),
                 label: Text(_uploading ? '解析中…' : '上传资料'),
@@ -328,7 +328,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             Icon(Icons.folder_outlined, size: 40, color: pal.muted),
             const SizedBox(height: 12),
             const Text('还没有资料', style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text('上传 PDF / Word / Markdown，或导入一个文件夹。',
                 style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             const SizedBox(height: 16),
@@ -467,7 +467,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             child: Row(
               children: [
                 SizedBox(
-                  width: 15,
+                  width: 16,
                   child: Text(
                     expanded ? '▾' : '▸',
                     style: TextStyle(fontSize: LoopType.reading, height: 1, color: pal.muted),
@@ -475,10 +475,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 ),
                 const SizedBox(width: 4),
                 Icon(Icons.folder_outlined, size: 15, color: pal.muted),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(dir.name,
                     style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.muted)),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text('${_countFiles(dir)} 份', style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
               ],
             ),
@@ -522,7 +522,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
             child: Icon(Icons.folder_outlined, size: 18, color: pal.accent),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +552,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               child: SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(strokeWidth: 2.0),
               ),
             )
           else ...[
@@ -594,7 +594,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   decoration: BoxDecoration(color: pal.chip, borderRadius: BorderRadius.circular(LoopRadius.small)),
                   child: Icon(_icon(item.kind), size: 17, color: pal.accent),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,7 +603,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(fontSize: LoopType.body, fontWeight: FontWeight.w600, color: pal.ink)),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         '${item.kind.toUpperCase()} · ${item.pages} 页 · ${_formatChars(item.chars)}',
                         style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
@@ -689,7 +689,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             future: _state.api.materialPreview(item.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return const Center(child: CircularProgressIndicator(strokeWidth: 2.2));
+                return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
               }
               if (snapshot.hasError) {
                 return Text(snapshot.error.toString(),
@@ -804,7 +804,7 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: LinearProgressIndicator(minHeight: 2),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('包含子文件夹', style: TextStyle(fontSize: LoopType.body)),
@@ -830,7 +830,7 @@ class _FolderImportDialogState extends State<_FolderImportDialog> {
             Text('只支持 PDF/DOCX/PPTX/TXT/MD；文件数量不限制，单个文件 ≤30MB。',
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             if (supported.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text('将导入：',
                   style: TextStyle(fontSize: LoopType.caption, fontWeight: FontWeight.w600, color: pal.muted)),
               const SizedBox(height: 4),

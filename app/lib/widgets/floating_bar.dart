@@ -156,7 +156,7 @@ class FloatingBar extends StatelessWidget {
                               style: TextStyle(fontSize: LoopType.micro, color: p.muted),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               title,

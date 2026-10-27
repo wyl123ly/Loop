@@ -22,7 +22,7 @@ class AgentPlanCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.checklist_rounded, size: 15, color: pal.accent),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text('执行计划',
                   style: TextStyle(fontSize: LoopType.secondary, fontWeight: FontWeight.w600, color: pal.ink)),
               const Spacer(),
@@ -38,13 +38,13 @@ class AgentPlanCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _statusIcon(item.status),
-                  const SizedBox(width: 7),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       item.title,
                       style: TextStyle(
                         fontSize: LoopType.secondary,
-                        height: 1.45,
+                        height: 1.4,
                         color: item.status == 'skipped' ? pal.muted : pal.ink,
                         decoration: item.status == 'done' ? TextDecoration.lineThrough : null,
                         decorationColor: pal.muted,
@@ -65,9 +65,9 @@ class AgentPlanCard extends StatelessWidget {
         return Icon(Icons.check_circle_rounded, size: 14, color: pal.success);
       case 'in_progress':
         return SizedBox(
-          width: 14,
+          width: 16,
           height: 14,
-          child: CircularProgressIndicator(strokeWidth: 1.8, color: pal.accent),
+          child: CircularProgressIndicator(strokeWidth: 2.0, color: pal.accent),
         );
       case 'failed':
         return Icon(Icons.error_outline_rounded, size: 14, color: pal.dangerInk);

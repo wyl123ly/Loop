@@ -130,9 +130,9 @@ class _TodayScreenState extends State<TodayScreen> {
           child: Row(
             children: [
               Text('今日', style: TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-              SizedBox(width: 10),
+              SizedBox(width: 12),
               Text(_dateLabel, style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               // §10.4：今日是当前学科的作用域，页头必须显示学科名。
               SubjectChip(state: _state),
               Spacer(),
@@ -258,7 +258,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (data.tasks.isEmpty)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
@@ -271,7 +271,7 @@ class _TodayScreenState extends State<TodayScreen> {
             child: Row(
               children: [
                 Icon(Icons.add_rounded, size: 17, color: pal.muted),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _taskInput,
@@ -358,14 +358,14 @@ class _TodayScreenState extends State<TodayScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
-            SizedBox(height: 6),
+            SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(value,
                     style: const TextStyle(fontSize: LoopType.display, fontWeight: FontWeight.w700)),
-                SizedBox(width: 3),
+                SizedBox(width: 4),
                 Text(unit, style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
               ],
             ),

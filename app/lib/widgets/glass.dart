@@ -240,7 +240,7 @@ class GradientButton extends StatelessWidget {
               children: [
                 if (icon != null) ...[
                   Icon(icon, size: 18, color: p.onAccent),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                 ],
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: LoopSpace.x5),

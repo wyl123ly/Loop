@@ -111,7 +111,7 @@ class _AgentScreenState extends State<AgentScreen> {
               Text('代理',
                   style: TextStyle(
                       fontSize: LoopType.display, fontWeight: FontWeight.w700, color: pal.ink, letterSpacing: -0.5)),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Text('本地能力 · MCP · 审计',
                   style: TextStyle(fontSize: LoopType.secondary, color: pal.muted)),
               const Spacer(),
@@ -171,7 +171,7 @@ class _AgentScreenState extends State<AgentScreen> {
           children: [
             Text('代理设置暂不可用',
                 style: TextStyle(fontSize: LoopType.reading, fontWeight: FontWeight.w600, color: pal.ink)),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text('连不上本地服务或加载失败，请稍后重试。',
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
             const SizedBox(height: 12),
@@ -203,7 +203,7 @@ class _AgentScreenState extends State<AgentScreen> {
                       decoration: const InputDecoration(hintText: r'例如 C:\Users\你\LoopWorkspace'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   FilledButton(
                     onPressed: () => _save(workspace: _workspace.text.trim()),
                     child: const Text('保存'),
@@ -218,7 +218,7 @@ class _AgentScreenState extends State<AgentScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: panelDecoration(),
@@ -230,7 +230,7 @@ class _AgentScreenState extends State<AgentScreen> {
               const SizedBox(height: 4),
               Text('关闭后 Agent 无法调用对应工具；所有危险操作仍会逐次审批。',
                   style: TextStyle(fontSize: LoopType.caption, color: pal.muted)),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               _switchRow('Shell', '在工作区内执行 PowerShell', s.shell,
                   (value) => _save(shell: value)),
               _switchRow('浏览器', '用本地 Edge 打开/读取/点击网页', s.browser,
@@ -247,7 +247,7 @@ class _AgentScreenState extends State<AgentScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: panelDecoration(),
@@ -265,7 +265,7 @@ class _AgentScreenState extends State<AgentScreen> {
                 },
                 style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SegmentedButton<String>(
                 key: const Key('agent-approval'),
                 segments: const [
@@ -279,14 +279,14 @@ class _AgentScreenState extends State<AgentScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: panelDecoration(),
           child: Row(
             children: [
               Icon(Icons.shield_outlined, size: 18, color: pal.warningInk),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   '安全说明：Shell 不是内核级沙箱；文件访问限制在工作区；所有命令/写入/浏览器/MCP 调用都会写审计记录。默认逐次确认，选择自动批准时请自行承担风险。',
@@ -356,7 +356,7 @@ class _AgentScreenState extends State<AgentScreen> {
               children: [
                 Icon(server.transport == 'http' ? Icons.cloud_outlined : Icons.terminal_rounded,
                     size: 18, color: pal.accent),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -515,7 +515,7 @@ class _AgentScreenState extends State<AgentScreen> {
                       : '每 ${job.scheduleValue} 分钟',
                   style: TextStyle(fontSize: LoopType.caption, color: pal.muted),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     TextButton(
@@ -593,7 +593,7 @@ class _AgentScreenState extends State<AgentScreen> {
                   size: 16,
                   color: item.approval == 'rejected' ? pal.dangerInk : pal.accent,
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +611,7 @@ class _AgentScreenState extends State<AgentScreen> {
                               style: TextStyle(fontSize: LoopType.micro, color: pal.muted)),
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(item.result,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -681,7 +681,7 @@ class _McpDialogState extends State<_McpDialog> {
                 autofocus: true,
                 decoration: const InputDecoration(labelText: '名称'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(value: 'stdio', label: Text('stdio')),
@@ -691,7 +691,7 @@ class _McpDialogState extends State<_McpDialog> {
                 showSelectedIcon: false,
                 onSelectionChanged: (value) => setState(() => _transport = value.first),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               if (_transport == 'stdio') ...[
                 TextField(
                   controller: _command,
@@ -700,7 +700,7 @@ class _McpDialogState extends State<_McpDialog> {
                     hintText: r'例如 C:\Python312\python.exe',
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _cwd,
                   decoration: const InputDecoration(
@@ -708,7 +708,7 @@ class _McpDialogState extends State<_McpDialog> {
                     hintText: r'C:\path\to\server',
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _args,
                   decoration: const InputDecoration(
@@ -790,7 +790,7 @@ class _JobDialogState extends State<_JobDialog> {
                 autofocus: true,
                 decoration: const InputDecoration(labelText: '任务名称'),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _prompt,
                 maxLines: 4,
@@ -800,7 +800,7 @@ class _JobDialogState extends State<_JobDialog> {
                   hintText: '例如：总结今天的资料，生成明天要复习的 3 个待办',
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               SegmentedButton<String>(
                 segments: const [
                   ButtonSegment(value: 'interval', label: Text('每隔 N 分钟')),
@@ -813,7 +813,7 @@ class _JobDialogState extends State<_JobDialog> {
                   _value.text = _kind == 'daily' ? '08:00' : '60';
                 }),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _value,
                 decoration: InputDecoration(

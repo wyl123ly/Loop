@@ -258,7 +258,7 @@ class MarkdownText extends StatelessWidget {
         children: [
           SizedBox(
             width: marker == '•' ? 18 : 26,
-            child: Text(marker, style: style.copyWith(color: pal.muted, height: 1.65)),
+            child: Text(marker, style: style.copyWith(color: pal.muted, height: 1.6)),
           ),
           Expanded(
             child: Text.rich(
@@ -287,7 +287,7 @@ class MarkdownText extends StatelessWidget {
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: LoopType.secondary,
-            height: 1.55,
+            height: 1.6,
             color: pal.ink,
           ),
         ),
@@ -331,7 +331,7 @@ class MarkdownText extends StatelessWidget {
           style: TextStyle(
             fontFamily: ascii ? 'monospace' : 'NotoSC',
             fontSize: LoopType.secondary,
-            height: 1.35,
+            height: 1.4,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.1,
             color: pal.codeFg,

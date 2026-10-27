@@ -91,7 +91,7 @@ class TitleBar extends StatelessWidget {
                         letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Text(pageTitle, style: TextStyle(fontSize: LoopType.caption, color: p.muted)),
                   ],
                 ),

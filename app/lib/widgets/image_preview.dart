@@ -74,7 +74,7 @@ class ImagePreview extends StatelessWidget {
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
                           );
                         },
                         errorBuilder: (context, error, stack) => Center(

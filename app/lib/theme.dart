@@ -73,7 +73,7 @@ ThemeData loopTheme(LoopPalette p) {
     splashFactory: InkSparkle.splashFactory,
     textTheme: TextTheme(
       bodyMedium: TextStyle(fontSize: LoopType.reading, height: 1.6, color: p.ink),
-      bodySmall: TextStyle(fontSize: LoopType.secondary, height: 1.5, color: p.muted),
+      bodySmall: TextStyle(fontSize: LoopType.secondary, height: 1.6, color: p.muted),
       titleMedium: TextStyle(
         fontSize: LoopType.reading,
         fontWeight: FontWeight.w600,
