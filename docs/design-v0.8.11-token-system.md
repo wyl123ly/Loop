@@ -60,7 +60,7 @@
 | A11 截图回归 | PASS（17 张 HEAD 截图；无 overflow；#12 显示 v0.8.11） |
 
 - `flutter analyze`：0 issues
-- 全量测试：**511 passed / 1 skipped**；`design_guard_test` G2 已覆盖 `p.` 别名
+- 全量测试：**511–512 passed / 1 skipped（跨环境有 1 条计数波动）**；`design_guard_test` G2 已覆盖 `p.` 别名
 
 ## 3. 已知 gap
 

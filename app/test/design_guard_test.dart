@@ -86,7 +86,7 @@ void main() {
       final source = entry.value;
       for (final match in RegExp(r'SnackBar\([\s\S]*?\)\);').allMatches(source)) {
         final block = match.group(0)!;
-        if (block.contains('backgroundColor: pal.dangerInk') &&
+        if (block.contains('pal.dangerInk') &&
             !block.contains('onPrimaryBtn')) {
           bad.add('${entry.key}: SnackBar 使用 dangerInk 但未配 onPrimaryBtn');
         }
