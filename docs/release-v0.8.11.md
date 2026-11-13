@@ -50,3 +50,11 @@
 
 - 替代 v0.8.10，直接覆盖 `Loop.exe` 与运行库即可；用户数据不受影响。
 - 自动更新会按 `version.json` 的 `0.8.11` 识别。
+
+## 许可证
+
+Loop 采用 **GNU Affero General Public License v3.0（AGPL-3.0）**。
+
+Copyright (C) 2026 wyl123ly
+
+完整条款见仓库根目录 `LICENSE`。
