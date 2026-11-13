@@ -25,6 +25,10 @@ if (Test-Path (Join-Path $out 'loop.exe')) {
 }
 # 清理旧版遗留的 sidecar（如果存在）
 Remove-Item (Join-Path $out 'LoopServer.exe') -Force -ErrorAction SilentlyContinue
+# Include the project license in the distributable package.
+if (Test-Path (Join-Path $root 'LICENSE')) {
+    Copy-Item (Join-Path $root 'LICENSE') (Join-Path $out 'LICENSE') -Force
+}
 if (Test-Path 'packaging\native-readme.txt') {
     # 用码点拼中文文件名，避免 Windows PowerShell 5.1 按 ANSI 读取脚本导致文件名乱码
     $readmeName = (-join @([char]0x4F7F, [char]0x7528, [char]0x8BF4, [char]0x660E)) + '.txt'

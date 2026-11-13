@@ -350,6 +350,14 @@ Windows 桌面 AI 学习工作台，当前版本 **v0.8.11**。
 
 > 本仓库从 v0.3.0 开始记录版本改动。
 
+## 许可证
+
+Loop 采用 **GNU Affero General Public License v3.0（AGPL-3.0）**。
+
+Copyright (C) 2026 wyl123ly
+
+完整条款见 [LICENSE](LICENSE)。AGPL-3.0 允许使用、修改和分发；如果你修改本程序并通过网络向用户提供服务，第 13 条要求向这些用户提供对应的源代码。
+
 ## 相关文档
 - 完整 v0.8.0 说明（含验收与已知限制）：[docs/release-v0.8.0.md](docs/release-v0.8.0.md)
 - 学科功能需求与架构规格：[docs/subject-feature-spec.md](docs/subject-feature-spec.md)
